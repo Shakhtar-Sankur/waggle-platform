@@ -83,4 +83,7 @@ accounts. Not yet published to the Play Store.
 
 ## Licence
 
-All rights reserved. Published for reading, not for reuse.
+Licensed under the GNU Affero General Public License v3.0. See `LICENSE`.
+
+In short: you may use, modify and redistribute this, including over a network,
+provided your derivative is released under the same licence.
