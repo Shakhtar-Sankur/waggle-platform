@@ -430,7 +430,15 @@ export const SupabaseService = {
   // history in route_points is untouched — that is their data, not shared data.
   async stopSharingLocation(userId: string) {
     if (!supabase) return;
-    await supabase.from("worker_locations").delete().eq("user_id", userId);
+    // This is the one write whose failure is a privacy problem rather than a
+    // sync problem: if the delete does not land, the driver's position stays
+    // published while the app shows sharing as off. Surface it instead of
+    // discarding the error like the other fire-and-forget writes.
+    const { error } = await supabase.from("worker_locations").delete().eq("user_id", userId);
+    if (error) {
+      console.error("Could not stop sharing location — position may still be public:", error);
+      throw error;
+    }
   },
 
   async saveLocation(

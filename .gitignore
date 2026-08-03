@@ -21,3 +21,6 @@ agents/.env.agents
 
 # Superseded by Populace, which now lives in its own repository.
 agents/
+
+# editor/tooling config
+.claude/
