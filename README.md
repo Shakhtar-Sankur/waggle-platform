@@ -45,9 +45,34 @@ pnpm dev
 ```
 
 Point it at a Supabase project by copying `.env.example` to `.env` and filling in your project URL
-and publishable key. The SQL in `supabase/` builds the schema and policies — run `schema.sql` first,
-then the feature migrations. `supabase/PUSH_SETUP.md` covers Firebase push, which stays off behind
-`VITE_ENABLE_PUSH` until configured.
+and publishable key.
+
+### Database setup, in order
+
+```
+schema.sql              tables, row-level security, the core policies
+social_features.sql     likes, comments, connections
+direct_messages.sql     one-to-one threads
+groups.sql              joinable groups
+post_photos.sql         image column on posts
+presence.sql            last_seen
+read_receipts.sql       message status transitions
+realtime.sql            adds tables to the realtime publication
+notify_social.sql       triggers for like/comment/message notifications
+daily_reset.sql         pg_cron job zeroing daily stats at local midnight
+```
+
+`privacy_lockdown.sql` is a **migration for projects created before the policies were tightened**.
+A fresh `schema.sql` is already closed; run the lockdown only if your project predates it.
+
+> **Why the read policies require a session.** The publishable key ships inside the APK and can be
+> extracted from it in minutes, so in practice "anonymous" means anyone who downloads the app. These
+> tables hold phone numbers and live GPS positions. Read access therefore requires an authenticated
+> session, `profiles.phone` is revoked from the API entirely, and the community map honours each
+> driver's "Share stats" switch at the database level rather than only in the UI.
+
+`supabase/PUSH_SETUP.md` covers Firebase push, which stays off behind `VITE_ENABLE_PUSH` until
+configured.
 
 Android build:
 

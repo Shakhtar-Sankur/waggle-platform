@@ -12,7 +12,8 @@ create table if not exists public.post_likes (
 );
 alter table public.post_likes enable row level security;
 drop policy if exists "likes readable" on public.post_likes;
-create policy "likes readable" on public.post_likes for select using (true);
+create policy "likes readable" on public.post_likes
+  for select using (auth.role() = 'authenticated');
 drop policy if exists "likes own insert" on public.post_likes;
 create policy "likes own insert" on public.post_likes for insert with check (auth.uid() = user_id);
 drop policy if exists "likes own delete" on public.post_likes;
@@ -31,7 +32,8 @@ create table if not exists public.post_comments (
 );
 alter table public.post_comments enable row level security;
 drop policy if exists "comments readable" on public.post_comments;
-create policy "comments readable" on public.post_comments for select using (true);
+create policy "comments readable" on public.post_comments
+  for select using (auth.role() = 'authenticated');
 drop policy if exists "comments own insert" on public.post_comments;
 create policy "comments own insert" on public.post_comments for insert with check (auth.uid() = user_id);
 drop policy if exists "comments own delete" on public.post_comments;

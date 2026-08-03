@@ -109,6 +109,16 @@ create table if not exists public.notifications (
   created_at timestamptz not null default now()
 );
 
+-- Needed by the worker_locations read policy below.
+alter table public.worker_locations
+  add column if not exists share_stats boolean not null default true;
+
+-- PostgREST honours column-level GRANTs. The client never SELECTs profiles.phone
+-- (it is written at signup and read from the auth session), so revoking it costs
+-- nothing and keeps phone numbers off the API entirely.
+revoke select (phone) on public.profiles from anon;
+revoke select (phone) on public.profiles from authenticated;
+
 alter table public.profiles enable row level security;
 alter table public.driver_settings enable row level security;
 alter table public.worker_locations enable row level security;
@@ -120,12 +130,23 @@ alter table public.chat_thread_members enable row level security;
 alter table public.chat_messages enable row level security;
 alter table public.notifications enable row level security;
 
-create policy "profiles readable" on public.profiles for select using (true);
+-- `using (true)` means EVERYONE, including the anonymous role. The publishable
+-- key ships inside the APK and can be extracted from it in about a minute, so
+-- anonymous in practice means anybody who downloads the app. These tables hold
+-- phone numbers and live GPS, so read access requires a session.
+create policy "profiles readable" on public.profiles
+  for select using (auth.role() = 'authenticated');
 create policy "profiles own write" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
 
 create policy "settings own" on public.driver_settings for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
-create policy "locations readable" on public.worker_locations for select using (true);
+-- Honours the driver's "Share stats with community" switch. A driver can always
+-- see their own row.
+create policy "locations readable" on public.worker_locations
+  for select using (
+    auth.role() = 'authenticated'
+    and (share_stats or user_id = auth.uid())
+  );
 create policy "locations own write" on public.worker_locations for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create policy "route own" on public.route_points for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
@@ -133,7 +154,8 @@ create policy "route own" on public.route_points for all using (auth.uid() = use
 create policy "jobs readable" on public.jobs for select using (assigned_to is null or assigned_to = auth.uid());
 create policy "jobs update assignee" on public.jobs for update using (assigned_to is null or assigned_to = auth.uid()) with check (assigned_to is null or assigned_to = auth.uid());
 
-create policy "posts readable" on public.feed_posts for select using (true);
+create policy "posts readable" on public.feed_posts
+  for select using (auth.role() = 'authenticated');
 create policy "posts own insert" on public.feed_posts for insert with check (auth.uid() = user_id);
 create policy "posts own update" on public.feed_posts for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
