@@ -74,6 +74,22 @@ A fresh `schema.sql` is already closed; run the lockdown only if your project pr
 `supabase/PUSH_SETUP.md` covers Firebase push, which stays off behind `VITE_ENABLE_PUSH` until
 configured.
 
+### Authentication, and what it does not yet do
+
+Sign-in is phone plus password. The phone number is mapped to a synthetic email
+(`919776194201@masaya.local`) because Supabase's password provider is email-based; the mapping is
+deterministic, so the login identifier for any phone number is predictable.
+
+**There is no phone verification.** Sending an SMS one-time code needs a paid provider wired into
+Supabase phone auth, which is not set up here. The practical consequence is that someone can
+register an account against a phone number they do not own, provided nobody has registered it
+already — an existing account cannot be taken over, but an unclaimed number can be squatted on.
+
+For a community app where a driver's identity is their phone number, OTP is the right fix and is the
+main thing standing between this and a real launch. The client enforces a minimum password of eight
+characters with a letter and a digit; treat that as a user-experience nicety rather than a control,
+since it lives in the client.
+
 Android build:
 
 ```bash
