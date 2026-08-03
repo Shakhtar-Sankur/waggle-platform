@@ -7,7 +7,7 @@ connects those identities. More than half of gig workers operate across multiple
 and each platform sees only its own slice. Buzz Buzz is the professional and social layer that sits
 across all of them.
 
-Built at Gigzen. Tested by [Populace](https://github.com/SankurTW/populace), which was written for
+Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populace), which was written for
 this app and then became a product of its own.
 
 ---
