@@ -1,0 +1,393 @@
+import { Pencil, Settings, Trash2, Wrench } from "lucide-react";
+import type { ReactNode } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
+import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
+import { detectCountry } from "../i18n/region";
+import { localAppCount, workAppsForCountry } from "../utils/workApps";
+import { useAuthStore } from "../stores/useAuthStore";
+import { useLocationStore } from "../stores/useLocationStore";
+import { useProfileStore } from "../stores/useProfileStore";
+import type { ProfileSettings, VehicleType } from "../types";
+import { CURRENCIES, currency, initials, km } from "../utils/format";
+
+type EarningsTab = "day" | "week" | "month";
+
+export function ProfileScreen() {
+  const navigate = useNavigate();
+  const t = useT();
+  const [searchParams] = useSearchParams();
+  const user = useAuthStore((state) => state.user);
+  const updateProfile = useAuthStore((state) => state.updateProfile);
+  const signOut = useAuthStore((state) => state.signOut);
+  const deleteAccount = useAuthStore((state) => state.deleteAccount);
+  const profile = useProfileStore();
+  const setActiveApp = useProfileStore((state) => state.setActiveApp);
+  const updateSettings = useProfileStore((state) => state.updateSettings);
+  const logMaintenance = useProfileStore((state) => state.logMaintenance);
+  const totalDistanceKm = useLocationStore((state) => state.totalDistanceKm);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [tab, setTab] = useState<EarningsTab>("week");
+  const [showAllApps, setShowAllApps] = useState(false);
+  const earnings = totalDistanceKm * profile.baseRate;
+
+  // 30+ platforms would swamp this screen, so show the ones operating in the
+  // driver's country (plus whatever they already picked) and hide the rest
+  // behind a toggle.
+  const country = useMemo(() => detectCountry(), []);
+  const orderedApps = useMemo(() => workAppsForCountry(country), [country]);
+  const nearbyCount = useMemo(() => localAppCount(country), [country]);
+  const appChoices = useMemo(() => {
+    if (showAllApps) return orderedApps;
+    const shortlist = orderedApps.slice(0, Math.max(nearbyCount, 5));
+    const selected = orderedApps.find((app) => app.id === profile.activeApp);
+    const others = orderedApps.filter((app) => app.id === "others");
+    const list = [...shortlist];
+    if (selected && !list.includes(selected)) list.push(selected);
+    others.forEach((o) => {
+      if (!list.includes(o)) list.push(o);
+    });
+    return list;
+  }, [showAllApps, orderedApps, nearbyCount, profile.activeApp]);
+  const hiddenAppCount = orderedApps.length - appChoices.length;
+
+  useEffect(() => {
+    if (searchParams.get("settings") === "true") setSettingsOpen(true);
+  }, [searchParams]);
+
+  return (
+    <main className="page-shell profile-page">
+      <section className="profile-hero">
+        <div className="avatar huge">{initials(user?.fullName ?? "Driver")}<span /></div>
+        <h2>{user?.fullName}</h2>
+      </section>
+
+      <section>
+        <h3 className="profile-section-title">{t("profile_whichApp")}</h3>
+        <div className="profile-app-grid">
+          {appChoices.map((app) => (
+            <button
+              key={app.id}
+              className={profile.activeApp === app.id ? "selected" : ""}
+              onClick={() => setActiveApp(app.id)}
+            >
+              <span>{app.logo}</span>
+              <small>{app.name}</small>
+              {profile.activeApp === app.id ? <em /> : null}
+            </button>
+          ))}
+        </div>
+        {hiddenAppCount > 0 ? (
+          <button className="profile-app-more" onClick={() => setShowAllApps((v) => !v)}>
+            {showAllApps
+              ? t("profile_showFewerApps")
+              : t("profile_showAllApps", { count: String(hiddenAppCount) })}
+          </button>
+        ) : null}
+      </section>
+
+      <button className="settings-row glass-card" onClick={() => setSettingsOpen(true)}>
+        <span><Settings size={18} /> {t("profile_settings")}</span>
+        <small>{t("profile_settingsSub")}</small>
+      </button>
+
+      <section className="dashboard-card glass-card maintenance-card">
+        <div className="section-heading">
+          <h3><Wrench size={19} /> {t("profile_maintenance")}</h3>
+          <span className={profile.maintenanceKm >= 900 ? "badge-dark" : "pill"}>{profile.maintenanceKm >= 900 ? t("profile_attention") : t("profile_good")}</span>
+        </div>
+        <p>{t(`vehicle_${profile.vehicleType}` as "vehicle_car")}</p>
+        <small>
+          {profile.maintenanceKm >= 1000
+            ? t("profile_serviceOverdue")
+            : t("profile_nextService", {
+                // Round: maintenanceKm now accumulates real GPS distance, so an
+                // unrounded value rendered as "998.51768046523 km".
+                km: String(Math.max(0, Math.round(1000 - profile.maintenanceKm))),
+              })}
+        </small>
+        <div className="maintenance-scale">
+          <div className="progress-track">
+            <span style={{ width: `${Math.min(100, (profile.maintenanceKm / 1000) * 100)}%` }} />
+          </div>
+          <div><span>0 km</span><span>500 km</span><span>1000 km</span></div>
+        </div>
+        <Button variant="outline" onClick={logMaintenance}>{t("profile_logMaintenance")}</Button>
+      </section>
+
+      <section className="dashboard-card glass-card">
+        <div className="section-heading">
+          <h3>{t("profile_earningsReport")}</h3>
+          <div className="mini-tabs">
+            {(["day", "week", "month"] as EarningsTab[]).map((item) => (
+              <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>
+                {t(`common_${item}` as "common_day")}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="earnings-report">
+          <p>{tab === "day" ? t("earnings_today") : t("earnings_projected", { period: t(`common_${tab}` as "common_week") })}</p>
+          <strong>{currency(earnings * (tab === "day" ? 1 : tab === "week" ? 7 : 30))}</strong>
+          <span>{km(totalDistanceKm * (tab === "day" ? 1 : tab === "week" ? 7 : 30))}</span>
+          {tab !== "day" ? <small className="earnings-note">{t("earnings_note")}</small> : null}
+        </div>
+      </section>
+
+      <Button className="wide-action" onClick={() => setEditOpen(true)}><Pencil size={18} /> {t("profile_editProfile")}</Button>
+      <Button
+        variant="outline"
+        className="wide-action"
+        onClick={() => {
+          signOut();
+          navigate("/auth");
+        }}
+      >
+        {t("profile_logOut")}
+      </Button>
+
+      <section className="legal-links">
+        <Link to="/privacy">Privacy Policy</Link>
+        <Link to="/terms">Terms of Service</Link>
+      </section>
+
+      <Button variant="outline" className="wide-action danger-action" onClick={() => setDeleteOpen(true)}>
+        <Trash2 size={18} /> {t("profile_deleteAccount")}
+      </Button>
+
+      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} profile={profile} onSave={updateSettings} />
+      <EditProfileModal
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        fullName={user?.fullName ?? ""}
+        phone={user?.phone ?? ""}
+        onSave={(updates) => updateProfile(updates)}
+      />
+      <DeleteAccountModal
+        open={deleteOpen}
+        deleting={deleting}
+        onClose={() => setDeleteOpen(false)}
+        onConfirm={async () => {
+          setDeleting(true);
+          try {
+            await deleteAccount();
+            setDeleteOpen(false);
+            navigate("/auth");
+          } finally {
+            setDeleting(false);
+          }
+        }}
+      />
+    </main>
+  );
+}
+
+function SettingsModal({
+  open,
+  onClose,
+  profile,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  profile: ProfileSettings;
+  onSave: (settings: Partial<ProfileSettings>) => void;
+}) {
+  const t = useT();
+  const lang = useLangStore((state) => state.lang);
+  const setLang = useLangStore((state) => state.setLang);
+  const autoRegion = useLangStore((state) => state.autoRegion);
+  const setAutoRegion = useLangStore((state) => state.setAutoRegion);
+  const [vehicleType, setVehicleType] = useState<VehicleType>(profile.vehicleType);
+  const [homeAddress, setHomeAddress] = useState(profile.homeAddress);
+  const [baseRate, setBaseRate] = useState(String(profile.baseRate));
+  const [shareStats, setShareStats] = useState(profile.shareStats);
+  const [currencyCode, setCurrencyCode] = useState(profile.currencyCode);
+
+  useEffect(() => {
+    setVehicleType(profile.vehicleType);
+    setHomeAddress(profile.homeAddress);
+    setBaseRate(String(profile.baseRate));
+    setShareStats(profile.shareStats);
+    setCurrencyCode(profile.currencyCode);
+  }, [profile.baseRate, profile.homeAddress, profile.shareStats, profile.vehicleType, profile.currencyCode, open]);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onSave({
+      vehicleType,
+      homeAddress,
+      baseRate: Number(baseRate) || profile.baseRate,
+      shareStats,
+      // Only persist a manual currency when auto mode is off.
+      ...(autoRegion ? {} : { currencyCode }),
+    });
+    onClose();
+  };
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title={t("profile_settings")}
+      description="Configure your app preferences and privacy settings"
+    >
+      <form className="settings-form" onSubmit={submit}>
+        <label className="toggle-row">
+          <span>{t("settings_autoRegion")}</span>
+          <input type="checkbox" checked={autoRegion} onChange={(event) => setAutoRegion(event.target.checked)} />
+        </label>
+        <label>
+          <span>{t("settings_language")}</span>
+          <select value={lang} onChange={(event) => setLang(event.target.value as Lang)}>
+            {LANGUAGES.map((l) => (
+              <option key={l.code} value={l.code}>{l.label}</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t("settings_currency")}</span>
+          <select
+            value={autoRegion ? profile.currencyCode : currencyCode}
+            disabled={autoRegion}
+            onChange={(event) => setCurrencyCode(event.target.value)}
+          >
+            {CURRENCIES.map((c) => (
+              <option key={c.code} value={c.code}>{c.symbol} · {c.label} ({c.code})</option>
+            ))}
+          </select>
+        </label>
+        <label>
+          <span>{t("settings_vehicle")}</span>
+          <div className="vehicle-picker">
+            {/* Emoji rather than lucide here: lucide has no motorcycle glyph, so
+                motorcycle and bicycle both rendered the identical bike icon. */}
+            <VehicleButton value="car" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🚗</span>} label={t("vehicle_car")} />
+            <VehicleButton value="motorcycle" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🏍️</span>} label={t("vehicle_motorcycle")} />
+            <VehicleButton value="bicycle" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🚲</span>} label={t("vehicle_bicycle")} />
+          </div>
+        </label>
+        <label>
+          <span>{t("settings_homeAddress")}</span>
+          <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder="Search for your home address..." />
+        </label>
+        <label>
+          <span>{t("settings_baseRate")}</span>
+          <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder="Price per km" />
+        </label>
+        <label className="toggle-row">
+          <span>{t("settings_shareStats")}</span>
+          <input type="checkbox" checked={shareStats} onChange={(event) => setShareStats(event.target.checked)} />
+        </label>
+        <Button>{t("common_save")}</Button>
+      </form>
+    </Modal>
+  );
+}
+
+function VehicleButton({
+  value,
+  selected,
+  onSelect,
+  icon,
+  label,
+}: {
+  value: VehicleType;
+  selected: VehicleType;
+  onSelect: (value: VehicleType) => void;
+  icon: ReactNode;
+  label: string;
+}) {
+  return (
+    <button type="button" className={selected === value ? "selected" : ""} onClick={() => onSelect(value)}>
+      {icon}
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function EditProfileModal({
+  open,
+  onClose,
+  fullName,
+  phone,
+  onSave,
+}: {
+  open: boolean;
+  onClose: () => void;
+  fullName: string;
+  phone: string;
+  onSave: (updates: { fullName: string; phone: string }) => void;
+}) {
+  const [name, setName] = useState(fullName);
+  const [phoneNumber, setPhoneNumber] = useState(phone);
+
+  useEffect(() => {
+    setName(fullName);
+    setPhoneNumber(phone);
+  }, [fullName, phone, open]);
+
+  const submit = (event: FormEvent) => {
+    event.preventDefault();
+    onSave({ fullName: name, phone: phoneNumber });
+    onClose();
+  };
+
+  return (
+    <Modal open={open} onClose={onClose} title="Edit Profile" description="Update your personal information below.">
+      <form className="settings-form" onSubmit={submit}>
+        <label>
+          <span>Full Name</span>
+          <input value={name} onChange={(event) => setName(event.target.value)} />
+        </label>
+        <label>
+          <span>Phone Number</span>
+          <input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} />
+        </label>
+        <Button>Save Changes</Button>
+      </form>
+    </Modal>
+  );
+}
+
+function DeleteAccountModal({
+  open,
+  deleting,
+  onClose,
+  onConfirm,
+}: {
+  open: boolean;
+  deleting: boolean;
+  onClose: () => void;
+  onConfirm: () => Promise<void>;
+}) {
+  const [confirmed, setConfirmed] = useState(false);
+
+  useEffect(() => {
+    if (open) setConfirmed(false);
+  }, [open]);
+
+  return (
+    <Modal
+      open={open}
+      onClose={onClose}
+      title="Delete Account"
+      description="This permanently removes your profile, routes, chat history, and settings. This cannot be undone."
+    >
+      <div className="settings-form">
+        <label className="consent-checkbox">
+          <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
+          <span>I understand my account and personal data will be permanently deleted.</span>
+        </label>
+        <Button variant="outline" className="danger-action" disabled={!confirmed || deleting} onClick={() => void onConfirm()}>
+          {deleting ? "Deleting..." : "Delete My Account"}
+        </Button>
+      </div>
+    </Modal>
+  );
+}

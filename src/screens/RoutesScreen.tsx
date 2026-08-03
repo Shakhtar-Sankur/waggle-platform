@@ -1,0 +1,751 @@
+import {
+  Award,
+  CalendarDays,
+  Flag,
+  Gauge,
+  Layers,
+  Loader2,
+  LocateFixed,
+  MapPin,
+  Minus,
+  Plus,
+  Route as RouteIcon,
+  Search,
+  Square,
+  Target,
+  Timer,
+  Trash2,
+  Trophy,
+  X,
+} from "lucide-react";
+import L from "leaflet";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
+import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
+import { Wordmark } from "../components/Wordmark";
+import { MANILA_CENTER } from "../config/constants";
+import { LocationService } from "../services/LocationService";
+import { SupabaseService } from "../services/SupabaseService";
+import { useLangStore, useT } from "../i18n";
+import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
+import { useAuthStore } from "../stores/useAuthStore";
+import { useChatStore } from "../stores/useChatStore";
+import { useCommunityStore } from "../stores/useCommunityStore";
+import { useLocationStore } from "../stores/useLocationStore";
+import { useProfileStore } from "../stores/useProfileStore";
+import type { Challenge, ChallengeMetric } from "../types";
+import { currency, duration, initials, km, weeklyGoalFrom } from "../utils/format";
+import { getWorkApp } from "../utils/workApps";
+
+const TILES = {
+  standard: {
+    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
+    subdomains: "abcd",
+    attribution: "&copy; OpenStreetMap &copy; CARTO",
+  },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    subdomains: "",
+    attribution: "&copy; Esri",
+  },
+} as const;
+
+type MapStyle = keyof typeof TILES;
+type StravaView = "maps" | "challenges";
+
+/** One geocoded place from the location search. */
+interface SearchHit {
+  lat: number;
+  lng: number;
+  label: string;
+  sub: string;
+  /** True for a town/city/region, as opposed to a street or a shop. */
+  isPlace?: boolean;
+}
+
+// Rough squared-degree distance — only used to rank search hits by nearness,
+// so it never needs real great-circle accuracy.
+function distanceFrom(from: { lat: number; lng: number }, hit: SearchHit): number {
+  const dLat = from.lat - hit.lat;
+  const dLng = (from.lng - hit.lng) * Math.cos((from.lat * Math.PI) / 180);
+  return dLat * dLat + dLng * dLng;
+}
+
+export function RoutesScreen() {
+  const t = useT();
+  const currentLocation = useLocationStore((state) => state.currentLocation);
+  const route = useLocationStore((state) => state.route);
+  const isTracking = useLocationStore((state) => state.isTracking);
+  const totalDistanceKm = useLocationStore((state) => state.totalDistanceKm);
+  const elapsedMinutes = useLocationStore((state) => state.elapsedMinutes);
+  const startTracking = useLocationStore((state) => state.startTracking);
+  const stopTracking = useLocationStore((state) => state.stopTracking);
+  const workers = useCommunityStore((state) => state.workers);
+  const challenges = useCommunityStore((state) => state.challenges);
+  const toggleChallenge = useCommunityStore((state) => state.toggleChallenge);
+  const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
+  const addChallenge = useCommunityStore((state) => state.addChallenge);
+  const removeChallenge = useCommunityStore((state) => state.removeChallenge);
+  const activeApp = useProfileStore((state) => state.activeApp);
+  const currencyCode = useProfileStore((state) => state.currencyCode);
+  const dailyGoal = useProfileStore((state) => state.dailyGoal);
+  const app = getWorkApp(activeApp);
+  const user = useAuthStore((state) => state.user);
+  const weekDistanceKm = useLocationStore((state) => state.weekDistanceKm);
+  const weekEarnings = useLocationStore((state) => state.weekEarnings);
+  const chatMessages = useChatStore((state) => state.messages);
+
+  // Real challenge progress from this week's actual activity.
+  const weekStart = useMemo(() => {
+    const now = new Date();
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - ((now.getDay() + 6) % 7));
+    monday.setHours(0, 0, 0, 0);
+    return monday.getTime();
+  }, []);
+  const myWeekMessages = useMemo(
+    () => chatMessages.filter((m) => m.senderId === user?.id && m.createdAt >= weekStart).length,
+    [chatMessages, user?.id, weekStart],
+  );
+  // Built-in challenges map their metric from a known id; custom ones carry it
+  // explicitly. Either way progress comes from this week's real activity.
+  const metricOf = (challenge: Challenge): ChallengeMetric | undefined =>
+    challenge.metric ??
+    (challenge.id === "challenge_distance"
+      ? "distance"
+      : challenge.id === "challenge_earn"
+        ? "earnings"
+        : challenge.id === "challenge_social"
+          ? "social"
+          : undefined);
+  // The built-in earnings challenge shipped a fixed 2500 target — sensible as
+  // ₱2,500/week, impossible as $2,500/week (~3,570 km). Derive it from the
+  // driver's own daily goal instead. Custom challenges keep their own target.
+  const targetOf = (challenge: Challenge): number =>
+    challenge.id === "challenge_earn" && !challenge.custom
+      ? weeklyGoalFrom(dailyGoal)
+      : challenge.target;
+
+  // Seeded earnings challenges carry an {amount} token so the goal renders in
+  // the driver's own currency instead of a hardcoded peso figure.
+  const titleOf = (challenge: Challenge): string =>
+    challenge.title.includes("{amount}")
+      ? challenge.title.replace("{amount}", currency(targetOf(challenge)))
+      : challenge.title;
+  const progressFor = (challenge: Challenge): number => {
+    const target = targetOf(challenge);
+    switch (metricOf(challenge)) {
+      case "distance":
+        return Math.min(target, weekDistanceKm);
+      case "earnings":
+        return Math.min(target, weekEarnings);
+      case "social":
+        return Math.min(target, myWeekMessages);
+      default:
+        return challenge.progress;
+    }
+  };
+
+  const [view, setView] = useState<StravaView>("maps");
+  const [map, setMap] = useState<L.Map | null>(null);
+  const [mapStyle, setMapStyle] = useState<MapStyle>("standard");
+
+  // Location search (OpenStreetMap Nominatim — free, no API key).
+  const [locQuery, setLocQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchMsg, setSearchMsg] = useState("");
+  const [results, setResults] = useState<SearchHit[]>([]);
+  const [searchPin, setSearchPin] = useState<SearchHit | null>(null);
+  // While recording, the map auto-follows the driver. A search would be yanked
+  // back on the next GPS fix, so pause following until they re-centre on themselves.
+  const [followPaused, setFollowPaused] = useState(false);
+
+  const searchLocation = async (event: FormEvent) => {
+    event.preventDefault();
+    const q = locQuery.trim();
+    if (!q || searching) return;
+    setSearching(true);
+    setSearchMsg("");
+    setResults([]);
+    try {
+      // TWO searches, merged — neither alone is enough:
+      //   • local only  → "Jakarta" returns Manila side-streets named Jakarta
+      //                   and never the Indonesian capital.
+      //   • global only → "7-Eleven" returns branches in Thailand and Malaysia
+      //                   instead of the one down the road.
+      // Run both and let the ranking below decide.
+      const d = 1.5; // ~165 km box around the driver
+      const viewbox = [
+        currentLocation.lng - d,
+        currentLocation.lat + d,
+        currentLocation.lng + d,
+        currentLocation.lat - d,
+      ].join(",");
+      const fetchHits = async (bounded: 0 | 1) => {
+        const response = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=12&addressdetails=1` +
+            `&viewbox=${viewbox}&bounded=${bounded}&q=${encodeURIComponent(q)}`,
+          { headers: { Accept: "application/json" } },
+        );
+        return (await response.json()) as Array<{
+          lat: string;
+          lon: string;
+          display_name: string;
+          name?: string;
+          class?: string;
+          type?: string;
+        }>;
+      };
+      // In parallel so the driver isn't waiting twice.
+      const [nearby, worldwide] = await Promise.all([fetchHits(1), fetchHits(0)]);
+      const raw = [...(Array.isArray(nearby) ? nearby : []), ...(Array.isArray(worldwide) ? worldwide : [])];
+      const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+      const wanted = key(q);
+
+      if (Array.isArray(raw) && raw.length) {
+        const seen = new Set<string>();
+        const hits: SearchHit[] = raw
+          .filter((r) => {
+            const id = `${r.lat},${r.lon}`;
+            if (seen.has(id)) return false;
+            seen.add(id);
+            return true;
+          })
+          .map((r) => {
+            const parts = (r.display_name || "").split(",").map((s) => s.trim());
+            return {
+              lat: Number(r.lat),
+              lng: Number(r.lon),
+              label: r.name || parts[0] || q,
+              sub: parts.slice(1, 4).join(", "),
+              // A genuine settlement rather than a shop or a street. Measured:
+              // Jakarta and Cebu City come back as boundary/administrative,
+              // while every 7-Eleven is shop/convenience. The `place` class is
+              // deliberately narrowed to settlement types — a stray POI tagged
+              // place/neighbourhood must not outrank the branch down the road.
+              // (Nominatim's `importance` is NOT usable here: the far 7-Elevens
+              //  score 0.53 while the Manila ones score 0.0001.)
+              isPlace:
+                (r.class === "boundary" && r.type === "administrative") ||
+                (r.class === "place" &&
+                  ["city", "town", "village", "state", "region", "province", "municipality", "county", "country"].includes(
+                    r.type ?? "",
+                  )),
+            };
+          })
+          // Ranking, in order:
+          //  1. name actually matches what was typed;
+          //  2. a real town/city beats a street or shop of the same name —
+          //     this is what puts Jakarta above Manila's "Jakarta" side-street;
+          //  3. nearest first, which is what decides between branches of a
+          //     chain like 7-Eleven, since none of them is a "place".
+          .sort((a, b) => {
+            const matches = (hit: SearchHit) => {
+              const name = key(hit.label);
+              return name.includes(wanted) || wanted.includes(name) ? 0 : 1;
+            };
+            const byMatch = matches(a) - matches(b);
+            if (byMatch !== 0) return byMatch;
+            const byPlace = Number(b.isPlace) - Number(a.isPlace);
+            if (byPlace !== 0) return byPlace;
+            return distanceFrom(currentLocation, a) - distanceFrom(currentLocation, b);
+          })
+          .slice(0, 6);
+        // A single confident match jumps straight there; otherwise let the
+        // driver pick, since "Jollibee" legitimately matches many branches.
+        if (hits.length === 1) selectResult(hits[0]);
+        else setResults(hits);
+      } else {
+        setSearchMsg(t("sv_searchNoResult"));
+      }
+    } catch {
+      setSearchMsg(t("sv_searchFailed"));
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const selectResult = (hit: SearchHit) => {
+    setFollowPaused(true);
+    setSearchPin(hit);
+    setResults([]);
+    setLocQuery(hit.label);
+    map?.setView([hit.lat, hit.lng], 16, { animate: true });
+  };
+
+  const clearSearch = () => {
+    setLocQuery("");
+    setResults([]);
+    setSearchMsg("");
+    setSearchPin(null);
+  };
+
+  // Challenge-creation modal + its form state.
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState<{
+    title: string;
+    description: string;
+    metric: ChallengeMetric;
+    target: string;
+    icon: string;
+  }>({ title: "", description: "", metric: "distance", target: "", icon: "🎯" });
+
+  const metricUnit = (metric: ChallengeMetric) =>
+    metric === "distance" ? "km" : metric === "earnings" ? currencyCode : t("sv_metricMsgUnit");
+
+  const canCreate = form.title.trim().length > 0 && Number(form.target) > 0;
+  const submitChallenge = (event: FormEvent) => {
+    event.preventDefault();
+    if (!canCreate) return;
+    addChallenge({
+      title: form.title,
+      description: form.description.trim() || t("sv_challengeNoDesc"),
+      icon: form.icon.trim() || "🎯",
+      target: Math.round(Number(form.target)),
+      metric: form.metric,
+    });
+    setForm({ title: "", description: "", metric: "distance", target: "", icon: "🎯" });
+    setCreating(false);
+  };
+
+  const routePositions = route.map((point) => [point.lat, point.lng] as [number, number]);
+  const onlineWorkers = workers.filter((worker) => worker.isOnline);
+
+  // Keep the map live. Realtime broadcasts are unreliable for these RLS-heavy
+  // tables, so without this a driver who joins — or a friend who starts moving —
+  // only appeared after closing and reopening the app. Poll while the map is on
+  // screen; the interval is cleared as soon as they navigate away.
+  useEffect(() => {
+    if (!user || !SupabaseService.enabled || view !== "maps") return undefined;
+    void loadCloudCommunity();
+    const timer = window.setInterval(() => void loadCloudCommunity(), 10000);
+    return () => window.clearInterval(timer);
+  }, [user, loadCloudCommunity, view]);
+  const pace =
+    totalDistanceKm > 0.05 && elapsedMinutes > 0
+      ? `${(elapsedMinutes / totalDistanceKm).toFixed(1)}`
+      : "--";
+
+  const topDrivers = useMemo(
+    () => [...workers].sort((a, b) => b.distanceKm - a.distanceKm).slice(0, 5),
+    [workers],
+  );
+
+  const meIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "driver-marker-wrap",
+        html: `<div class="driver-marker me">${app?.logo ?? "📍"}</div>`,
+        iconSize: [42, 42],
+        iconAnchor: [21, 21],
+      }),
+    [app?.logo],
+  );
+
+  // Global-ready: center the map on the driver's real location on first open
+  // (falls back to the last known / Manila default if GPS is unavailable).
+  useEffect(() => {
+    if (!map || routePositions.length > 1) return;
+    let cancelled = false;
+    LocationService.currentPosition()
+      .then(async (point) => {
+        if (cancelled || !point) return;
+        map.setView([point.lat, point.lng], 14, { animate: true });
+        // Refine the currency from the actual country the driver is in.
+        // (Language stays English by default — users pick their language manually.)
+        if (useLangStore.getState().autoRegion) {
+          const country = await reverseGeocodeCountry(point.lat, point.lng);
+          if (!cancelled && country) {
+            useProfileStore.getState().applyCurrency(countryToCurrency(country));
+          }
+        }
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [map]);
+
+  const recenter = () => {
+    if (!map) return;
+    // Re-centring on yourself resumes live follow after a location search.
+    setFollowPaused(false);
+    if (routePositions.length > 1) {
+      map.fitBounds(routePositions, { padding: [60, 60], animate: true });
+    } else {
+      map.setView([currentLocation.lat, currentLocation.lng], 15, { animate: true });
+    }
+  };
+
+  const tile = TILES[mapStyle];
+  const featured = challenges[0];
+  const dateRange = useMemo(() => {
+    const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    return `${fmt(new Date())} – ${fmt(new Date(Date.now() + 14 * 86400000))}`;
+  }, []);
+
+  return (
+    <main className="strava-screen">
+      <div className="sv-nav">
+        <Wordmark size={19} className="sv-nav-brand" />
+        <div className="sv-nav-tabs">
+          <button className={view === "maps" ? "active" : ""} onClick={() => setView("maps")}>{t("sv_maps")}</button>
+          <button className={view === "challenges" ? "active" : ""} onClick={() => setView("challenges")}>{t("sv_challenges")}</button>
+        </div>
+      </div>
+
+      {view === "maps" ? (
+        <div className="sv-content maps">
+          <MapContainer
+            center={[currentLocation.lat, currentLocation.lng]}
+            zoom={13}
+            zoomControl={false}
+            scrollWheelZoom
+            className="strava-map"
+            ref={setMap}
+          >
+            <TileLayer key={tile.url} attribution={tile.attribution} url={tile.url} subdomains={tile.subdomains as never} />
+            <MapFollow lat={currentLocation.lat} lng={currentLocation.lng} follow={isTracking && !followPaused} />
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={meIcon} />
+            {routePositions.length > 1 ? (
+              <>
+                <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 10, opacity: 0.28 }} />
+                <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 4, opacity: 0.95 }} />
+              </>
+            ) : null}
+            {onlineWorkers.map((worker) => (
+              <Marker
+                key={worker.id}
+                position={[worker.location.lat, worker.location.lng]}
+                icon={L.divIcon({
+                  className: "driver-marker-wrap",
+                  html: `<div class="driver-marker">${getWorkApp(worker.app)?.logo ?? "🚗"}</div>`,
+                  iconSize: [34, 34],
+                  iconAnchor: [17, 17],
+                })}
+              />
+            ))}
+            {searchPin ? (
+              <Marker
+                position={[searchPin.lat, searchPin.lng]}
+                icon={L.divIcon({
+                  className: "search-pin-wrap",
+                  html: `<div class="search-pin">📍</div>`,
+                  iconSize: [34, 34],
+                  iconAnchor: [17, 30],
+                })}
+              />
+            ) : null}
+            <ScaleControl position="bottomleft" imperial={false} />
+          </MapContainer>
+
+          <div className="sv-top">
+            <form className="sv-searchbar" onSubmit={searchLocation}>
+              <div className="sv-brand"><RouteIcon size={18} /></div>
+              <input
+                value={locQuery}
+                onChange={(event) => {
+                  setLocQuery(event.target.value);
+                  if (searchMsg) setSearchMsg("");
+                }}
+                placeholder={t("sv_searchLocation")}
+                enterKeyHint="search"
+              />
+              {locQuery.trim() ? (
+                <>
+                  <button type="button" className="sv-search-clear" onClick={clearSearch} aria-label={t("sv_clear")}>
+                    <X size={16} />
+                  </button>
+                  <button type="submit" className="sv-search-go" disabled={searching} aria-label={t("sv_searchLocation")}>
+                    {searching ? <Loader2 size={17} className="sv-spin" /> : <Search size={17} />}
+                  </button>
+                </>
+              ) : null}
+            </form>
+            {results.length ? (
+              <ul className="sv-results">
+                {results.map((hit, index) => (
+                  <li key={`${hit.lat},${hit.lng},${index}`}>
+                    <button onClick={() => selectResult(hit)}>
+                      <MapPin size={16} />
+                      <span>
+                        <strong>{hit.label}</strong>
+                        {hit.sub ? <small>{hit.sub}</small> : null}
+                      </span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            {searchMsg ? <p className="sv-search-msg">{searchMsg}</p> : null}
+          </div>
+
+          <div className="sv-rail">
+            <button className="sv-rail-btn" aria-label="Center on me" onClick={recenter}>
+              <LocateFixed size={19} />
+            </button>
+            <div className="sv-zoom">
+              <button aria-label="Zoom in" onClick={() => map?.zoomIn()}><Plus size={18} /></button>
+              <span className="sv-zoom-div" />
+              <button aria-label="Zoom out" onClick={() => map?.zoomOut()}><Minus size={18} /></button>
+            </div>
+            <button
+              className="sv-rail-btn"
+              aria-label="Change map layer"
+              onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
+            >
+              <Layers size={19} />
+            </button>
+          </div>
+
+          <div className="sv-sheet">
+            <div className="sv-sheet-grip" />
+            <div className="sv-sheet-title">
+              <strong>{isTracking ? t("sv_recording") : t("sv_ready")}</strong>
+              <span className={`sv-live ${isTracking ? "on" : ""}`}>{isTracking ? "● LIVE" : app ? `${app.logo} ${app.name}` : t("sv_gpsReady")}</span>
+            </div>
+            <div className="sv-stats">
+              <SvStat icon={<MapPin size={16} />} value={totalDistanceKm.toFixed(2)} unit="km" label={t("sv_distance")} />
+              <SvStat icon={<Timer size={16} />} value={duration(elapsedMinutes)} label={t("sv_time")} />
+              <SvStat icon={<Gauge size={16} />} value={pace} unit="/km" label={t("sv_pace")} />
+            </div>
+            <button
+              className={`sv-record ${isTracking ? "stop" : ""}`}
+              onClick={isTracking ? stopTracking : startTracking}
+            >
+              {isTracking ? <><Square size={18} fill="currentColor" /> {t("home_stopTracking")}</> : <><span className="sv-record-dot" /> {t("home_startTracking")}</>}
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="sv-content challenges">
+          {featured ? (
+            <article className="svc-hero">
+              <div className="svc-hero-media">
+                <span className="svc-hero-emoji">{featured.icon}</span>
+              </div>
+              <div className="svc-hero-body">
+                <span className="svc-badge"><Award size={26} /></span>
+                <h3>{titleOf(featured)}</h3>
+                <div className="svc-line"><Target size={16} /> {featured.description}</div>
+                <div className="svc-line"><Trophy size={16} /> {t("sv_heroUnlock")}</div>
+                <div className="svc-line"><CalendarDays size={16} /> {dateRange}</div>
+                <button
+                  className={`svc-join ${featured.joined ? "joined" : ""}`}
+                  onClick={() => toggleChallenge(featured.id)}
+                >
+                  {featured.joined ? t("sv_joinedCheck") : t("sv_joinChallenge")}
+                </button>
+              </div>
+            </article>
+          ) : null}
+
+          <div className="svc-section-head">
+            <div>
+              <h4>{t("sv_recommended")}</h4>
+              <span>{t("sv_basedOn")}</span>
+            </div>
+            <button className="svc-create-btn" onClick={() => setCreating(true)}>
+              <Plus size={16} /> {t("sv_createChallenge")}
+            </button>
+          </div>
+          <div className="svc-list">
+            {challenges.map((challenge) => {
+              const progress = progressFor(challenge);
+              const pct = Math.min(100, Math.round((progress / targetOf(challenge)) * 100));
+              return (
+                <article className="svc-card" key={challenge.id}>
+                  <div className="svc-card-media">
+                    <span className="svc-card-emoji">{challenge.icon}</span>
+                  </div>
+                  <div className="svc-card-body">
+                    <strong>
+                      {titleOf(challenge)}
+                      {challenge.custom ? <span className="svc-tag">{t("sv_yours")}</span> : null}
+                    </strong>
+                    <p>{challenge.description}</p>
+                    <div className="svc-bar"><span style={{ width: `${pct}%` }} /></div>
+                    <div className="svc-card-foot">
+                      <small>{Math.round(progress)} / {targetOf(challenge)} · {pct}%</small>
+                      <div className="svc-card-actions">
+                        {challenge.custom ? (
+                          <button
+                            className="svc-del"
+                            aria-label={t("sv_deleteChallenge")}
+                            onClick={() => removeChallenge(challenge.id)}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        ) : null}
+                        <button
+                          className={`svc-mini ${challenge.joined ? "joined" : ""}`}
+                          onClick={() => toggleChallenge(challenge.id)}
+                        >
+                          {challenge.joined ? t("sv_joined") : t("sv_join")}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+
+          <article className="svc-board">
+            <h4><Trophy size={17} /> {t("sv_leaders")}</h4>
+            {topDrivers.length ? (
+              topDrivers.map((worker, index) => (
+                <div className="svc-rank" key={worker.id}>
+                  <span className={`svc-place p${index + 1}`}>{index + 1}</span>
+                  <span className="svc-rank-avatar">{initials(worker.name)}</span>
+                  <strong>{worker.name}</strong>
+                  <span className="svc-rank-km">{km(worker.distanceKm)}</span>
+                </div>
+              ))
+            ) : (
+              <p className="svc-board-empty">{t("sv_leadersEmpty")}</p>
+            )}
+          </article>
+        </div>
+      )}
+
+      {creating
+        ? createPortal(
+            <div className="svc-modal-scrim" onClick={() => setCreating(false)}>
+              <form
+                className="svc-modal"
+                onClick={(e) => e.stopPropagation()}
+                onSubmit={submitChallenge}
+              >
+                <header className="svc-modal-head">
+                  <span className="svc-modal-icon"><Flag size={18} /></span>
+                  <div>
+                    <strong>{t("sv_newChallenge")}</strong>
+                    <small>{t("sv_newChallengeSub")}</small>
+                  </div>
+                  <button
+                    type="button"
+                    className="svc-modal-close"
+                    aria-label={t("sv_cancel")}
+                    onClick={() => setCreating(false)}
+                  >
+                    <X size={18} />
+                  </button>
+                </header>
+
+                <label className="svc-field svc-field-icon">
+                  <span>{t("sv_challengeIcon")}</span>
+                  <input
+                    value={form.icon}
+                    maxLength={2}
+                    onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
+                    aria-label={t("sv_challengeIcon")}
+                  />
+                </label>
+
+                <label className="svc-field">
+                  <span>{t("sv_challengeTitle")}</span>
+                  <input
+                    value={form.title}
+                    placeholder={t("sv_challengeTitlePh")}
+                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+                    autoFocus
+                  />
+                </label>
+
+                <label className="svc-field">
+                  <span>{t("sv_challengeDesc")}</span>
+                  <input
+                    value={form.description}
+                    placeholder={t("sv_challengeDescPh")}
+                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
+                  />
+                </label>
+
+                <div className="svc-field">
+                  <span>{t("sv_challengeMetric")}</span>
+                  <div className="svc-metric-pills">
+                    {(["distance", "earnings", "social"] as ChallengeMetric[]).map((m) => (
+                      <button
+                        type="button"
+                        key={m}
+                        className={form.metric === m ? "active" : ""}
+                        onClick={() => setForm((f) => ({ ...f, metric: m }))}
+                      >
+                        {m === "distance"
+                          ? t("sv_metricDistance")
+                          : m === "earnings"
+                            ? t("sv_metricEarnings")
+                            : t("sv_metricSocial")}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <label className="svc-field">
+                  <span>{t("sv_challengeTarget")}</span>
+                  <div className="svc-target-row">
+                    <input
+                      type="number"
+                      min={1}
+                      inputMode="numeric"
+                      value={form.target}
+                      placeholder="0"
+                      onChange={(e) => setForm((f) => ({ ...f, target: e.target.value }))}
+                    />
+                    <em>{metricUnit(form.metric)}</em>
+                  </div>
+                </label>
+
+                <p className="svc-modal-note">{t("sv_challengeAuto")}</p>
+
+                <div className="svc-modal-actions">
+                  <button type="button" className="svc-modal-cancel" onClick={() => setCreating(false)}>
+                    {t("sv_cancel")}
+                  </button>
+                  <button type="submit" className="svc-modal-save" disabled={!canCreate}>
+                    {t("sv_createChallenge")}
+                  </button>
+                </div>
+              </form>
+            </div>,
+            document.body,
+          )
+        : null}
+    </main>
+  );
+}
+
+function SvStat({
+  icon,
+  value,
+  unit,
+  label,
+}: {
+  icon: React.ReactNode;
+  value: string;
+  unit?: string;
+  label: string;
+}) {
+  return (
+    <div className="sv-stat">
+      <span className="sv-stat-icon">{icon}</span>
+      <strong>
+        {value}
+        {unit ? <em>{unit}</em> : null}
+      </strong>
+      <small>{label}</small>
+    </div>
+  );
+}
+
+function MapFollow({ lat, lng, follow }: { lat: number; lng: number; follow: boolean }) {
+  const map = useMap();
+  useEffect(() => {
+    if (follow) {
+      map.setView([lat || MANILA_CENTER.lat, lng || MANILA_CENTER.lng], map.getZoom(), { animate: true });
+    }
+  }, [lat, lng, follow, map]);
+  return null;
+}

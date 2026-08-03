@@ -1,0 +1,23 @@
+node_modules/
+.tools/
+dist/
+.env
+.env.local
+.DS_Store
+*.log
+*.tsbuildinfo
+android/.gradle/
+android/**/build/
+android/local.properties
+android/app/google-services.json
+*.keystore
+*.jks
+*.aab
+*.apk
+*.zip
+
+# Simulated-driver harness credentials (test project keys)
+agents/.env.agents
+
+# Superseded by Populace, which now lives in its own repository.
+agents/
