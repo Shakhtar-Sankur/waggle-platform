@@ -38,8 +38,9 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
   : null;
 
 /** Shared by concurrent ensureDefaultThreads callers so the default group is
- *  created once, not once per overlapping poll. */
-let defaultThreadsInFlight: Promise<ChatThread[]> | null = null;
+ *  created once, not once per overlapping poll. Keyed by user so an overlapping
+ *  call for a different driver can never be handed the previous one's threads. */
+const defaultThreadsInFlight = new Map<string, Promise<ChatThread[]>>();
 
 export const SupabaseService = {
   enabled: isSupabaseConfigured,
@@ -587,18 +588,20 @@ export const SupabaseService = {
     // polls every 2.5s — so on a fresh account two calls would overlap, both see
     // an empty list, and both create the default group. That is exactly how a
     // real device ended up with "Manila Drivers" listed twice.
-    if (defaultThreadsInFlight) return defaultThreadsInFlight;
+    const pending = defaultThreadsInFlight.get(userId);
+    if (pending) return pending;
 
-    defaultThreadsInFlight = (async () => {
+    const run = (async () => {
       const existing = await this.loadThreads(userId);
       if (existing.length) return existing;
       return [await this.createThread(userId, "Manila Drivers", true)];
     })();
+    defaultThreadsInFlight.set(userId, run);
 
     try {
-      return await defaultThreadsInFlight;
+      return await run;
     } finally {
-      defaultThreadsInFlight = null;
+      defaultThreadsInFlight.delete(userId);
     }
   },
 
