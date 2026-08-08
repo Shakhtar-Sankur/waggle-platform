@@ -30,6 +30,10 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "CAD", symbol: "C$", label: "Canadian Dollar", locale: "en-CA" },
   { code: "PKR", symbol: "₨", label: "Pakistani Rupee", locale: "en-PK" },
   { code: "BDT", symbol: "৳", label: "Bangladeshi Taka", locale: "bn-BD" },
+  { code: "ARS", symbol: "$", label: "Argentine Peso", locale: "es-AR" },
+  { code: "COP", symbol: "$", label: "Colombian Peso", locale: "es-CO" },
+  { code: "CLP", symbol: "$", label: "Chilean Peso", locale: "es-CL" },
+  { code: "PEN", symbol: "S/", label: "Peruvian Sol", locale: "es-PE" },
 ];
 
 let activeCurrency: CurrencyOption = CURRENCIES[0];
@@ -50,6 +54,10 @@ const DEFAULT_RATE_PER_KM: Record<string, number> = {
   KRW: 800, JPY: 100, THB: 6, MXN: 8, ZAR: 6, CNY: 2.5, BRL: 2,
   MYR: 1.2, AED: 1.5, SAR: 1.5, AUD: 1, CAD: 0.9, SGD: 0.8,
   USD: 0.7, EUR: 0.65, GBP: 0.6,
+  // Latin America. ARS especially is a guess against a currency that moves fast —
+  // it is a first-launch placeholder, and the driver's own rate in Settings is
+  // what the earnings figure should be trusted to after that.
+  ARS: 900, COP: 2500, CLP: 550, PEN: 2.5,
 };
 
 export function defaultRateFor(code: string): number {

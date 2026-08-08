@@ -1,93 +1,92 @@
 import { Link } from "react-router-dom";
-import { APP_NAME } from "../config/constants";
+import { APP_NAME, PRIVACY_EMAIL } from "../config/constants";
+import { useT } from "../i18n";
+import { LegalNotice } from "../components/LegalNotice";
+import type { TKey } from "../i18n";
+
+/**
+ * "Account data: name, phone number…" renders with the part before the first
+ * colon in bold. Keeping label and body in one translation string lets each
+ * language put the colon where its own punctuation wants it, instead of forcing
+ * an English sentence shape onto sixteen of them.
+ */
+function LabelledItem({ text }: { text: string }) {
+  const split = text.indexOf(":");
+  if (split === -1) return <li>{text}</li>;
+  return (
+    <li>
+      <strong>{text.slice(0, split + 1)}</strong>
+      {text.slice(split + 1)}
+    </li>
+  );
+}
+
+const COLLECTED: TKey[] = [
+  "privacy_collect_1",
+  "privacy_collect_2",
+  "privacy_collect_3",
+  "privacy_collect_4",
+  "privacy_collect_5",
+  "privacy_collect_6",
+];
+
+const USES: TKey[] = ["privacy_use_1", "privacy_use_2", "privacy_use_3", "privacy_use_4"];
 
 export function PrivacyScreen() {
+  const t = useT();
+
   return (
     <main className="legal-page">
       <header>
-        <Link to="/auth">← Back</Link>
-        <h1>Privacy Policy</h1>
-        <p>Last updated: June 14, 2026</p>
+        <Link to="/auth">← {t("legal_back")}</Link>
+        <h1>{t("privacy_title")}</h1>
+        <p>{t("legal_updated")}</p>
       </header>
 
+      <LegalNotice />
+
       <section>
-        <h2>Overview</h2>
-        <p>
-          {APP_NAME} ("we", "our", or "the app") helps ride-hailing and delivery drivers track routes,
-          earnings, community activity, and messaging. This policy explains what we collect, why we
-          collect it, and your choices.
-        </p>
+        <h2>{t("privacy_overview_h")}</h2>
+        <p>{t("privacy_overview_b", { app: APP_NAME })}</p>
       </section>
 
       <section>
-        <h2>Data We Collect</h2>
+        <h2>{t("privacy_collect_h")}</h2>
         <ul>
-          <li>
-            <strong>Account data:</strong> name, phone number, and authentication credentials stored
-            securely with Supabase Auth.
-          </li>
-          <li>
-            <strong>Location data:</strong> GPS coordinates while you actively start tracking, used
-            for route history, distance, and optional community map sharing.
-          </li>
-          <li>
-            <strong>Profile &amp; vehicle settings:</strong> home address, vehicle type, earnings
-            rate, and work app preferences.
-          </li>
-          <li>
-            <strong>Chat &amp; community content:</strong> messages, posts, and attachments you
-            choose to share.
-          </li>
-          <li>
-            <strong>Camera/photos:</strong> only when you attach images in chat or profile flows.
-          </li>
-          <li>
-            <strong>Push tokens:</strong> device tokens for job and message notifications when you
-            grant notification permission.
-          </li>
+          {COLLECTED.map((key) => (
+            <LabelledItem key={key} text={t(key)} />
+          ))}
         </ul>
       </section>
 
       <section>
-        <h2>How We Use Data</h2>
+        <h2>{t("privacy_use_h")}</h2>
         <ul>
-          <li>Provide core app features: tracking, routes, chat, and community.</li>
-          <li>Sync your data across devices when cloud mode is enabled.</li>
-          <li>Send local and push notifications you opt into.</li>
-          <li>Improve reliability and security of the service.</li>
+          {USES.map((key) => (
+            <li key={key}>{t(key)}</li>
+          ))}
         </ul>
       </section>
 
       <section>
-        <h2>Sharing</h2>
-        <p>
-          We do not sell personal data. Location and stats may be visible to other drivers only when
-          you enable "Share stats with community." Data is processed by Supabase (hosting/database)
-          and Firebase Cloud Messaging (push delivery) under their respective terms.
-        </p>
+        <h2>{t("privacy_sharing_h")}</h2>
+        <p>{t("privacy_sharing_b")}</p>
       </section>
 
       <section>
-        <h2>Retention &amp; Deletion</h2>
-        <p>
-          You may delete your account at any time from Profile → Delete Account. This removes your
-          profile, settings, routes, chat memberships, and notifications from our database. Some
-          logs may persist briefly in backup systems per our infrastructure providers.
-        </p>
+        <h2>{t("privacy_retention_h")}</h2>
+        <p>{t("privacy_retention_b")}</p>
       </section>
 
       <section>
-        <h2>Your Rights</h2>
-        <p>
-          You can access and update profile data in-app, revoke location or notification
-          permissions in device settings, and contact us to request data export or deletion.
-        </p>
+        <h2>{t("privacy_rights_h")}</h2>
+        <p>{t("privacy_rights_b")}</p>
       </section>
 
       <section>
-        <h2>Contact</h2>
+        <h2>{t("privacy_contact_h")}</h2>
         <p>
-          Privacy questions: <a href="mailto:privacy@masayaako.app">privacy@masayaako.app</a>
+          {t("privacy_contact_label")}: <a href={`mailto:${PRIVACY_EMAIL}`}>{PRIVACY_EMAIL}</a>
         </p>
       </section>
     </main>

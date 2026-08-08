@@ -2,6 +2,18 @@ import type { WorkApp } from "../types";
 
 export const APP_NAME = "Buzz Buzz";
 
+/**
+ * Contact addresses on the legal pages.
+ *
+ * These used to be support@ and privacy@masayaako.app — a domain from the app's
+ * old name that has never been registered and does not resolve. A privacy policy
+ * whose contact address bounces fails Play Store review and, in a GDPR market,
+ * fails the law. Point them somewhere that receives mail; move them to a company
+ * domain once one exists.
+ */
+export const SUPPORT_EMAIL = "sankur.kundu.tw@gmail.com";
+export const PRIVACY_EMAIL = "sankur.kundu.tw@gmail.com";
+
 export const MANILA_CENTER = {
   lat: 14.5995,
   lng: 120.9842,

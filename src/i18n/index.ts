@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { legalDicts, legalEn } from "./legal";
 
 export type Lang =
   | "en" | "fil" | "es" | "hi" | "bn" | "id" | "ms" | "th"
@@ -33,7 +34,9 @@ export const LANGUAGES: LanguageOption[] = [
 ];
 
 // English is the source of truth and the fallback for any missing key.
+// The legal text lives in ./legal.ts and is folded in here.
 const en = {
+  ...legalEn,
   nav_home: "Home",
   nav_community: "Community",
   nav_routes: "Routes",
@@ -845,7 +848,22 @@ const ar: Dict = {
 };
 
 const dictionaries: Record<Lang, Dict> = {
-  en, fil, es, hi, bn, id, ms, th, vi, pt, fr, de, zh, ja, ko, ar,
+  en,
+  fil: { ...fil, ...legalDicts.fil },
+  es: { ...es, ...legalDicts.es },
+  hi: { ...hi, ...legalDicts.hi },
+  bn: { ...bn, ...legalDicts.bn },
+  id: { ...id, ...legalDicts.id },
+  ms: { ...ms, ...legalDicts.ms },
+  th: { ...th, ...legalDicts.th },
+  vi: { ...vi, ...legalDicts.vi },
+  pt: { ...pt, ...legalDicts.pt },
+  fr: { ...fr, ...legalDicts.fr },
+  de: { ...de, ...legalDicts.de },
+  zh: { ...zh, ...legalDicts.zh },
+  ja: { ...ja, ...legalDicts.ja },
+  ko: { ...ko, ...legalDicts.ko },
+  ar: { ...ar, ...legalDicts.ar },
 };
 
 interface LangState {

@@ -30,10 +30,8 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   LT: "EUR", LV: "EUR", EE: "EUR", CY: "EUR", MT: "EUR", LU: "EUR",
   // Officially dollarised — USD is the actual currency in the driver's hand.
   EC: "USD", SV: "USD", PA: "USD",
-  // Spanish-speaking Latin America without a listed local currency. USD is a
-  // display stand-in, not what the driver is paid in; they can override it in
-  // Settings. Adding ARS/COP/CLP/PEN needs real local per-km rates first.
-  AR: "USD", CO: "USD", CL: "USD", PE: "USD",
+  // Spanish-speaking Latin America, in the money the driver is actually paid in.
+  AR: "ARS", CO: "COP", CL: "CLP", PE: "PEN",
 };
 
 // Country → app UI language. Falls through to the device UI language, then English.
