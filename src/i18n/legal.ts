@@ -16,6 +16,9 @@ export const legalEn = {
   legal_updated: "Last updated: June 14, 2026",
   legal_authoritative:
     "This is a translation provided for your convenience. The English version is the authoritative one.",
+  // Names the company these policies are an agreement with. A policy that never
+  // says who holds your data does not identify its controller.
+  legal_operator: "{app} is operated by {company}, {location}.",
 
   terms_title: "Terms of Service",
   terms_acceptance_h: "Acceptance",
@@ -77,6 +80,7 @@ export type LegalKey = keyof typeof legalEn;
 type LegalDict = Partial<Record<LegalKey, string>>;
 
 const fil: LegalDict = {
+  legal_operator: "Ang {app} ay pinapatakbo ng {company}, {location}.",
   legal_back: "Bumalik", legal_updated: "Huling na-update: Hunyo 14, 2026",
   legal_authoritative: "Ito ay isang salin para sa iyong kaginhawaan. Ang bersyong Ingles ang opisyal at may bisa.",
   terms_title: "Mga Tuntunin ng Serbisyo",
@@ -104,6 +108,7 @@ const fil: LegalDict = {
 };
 
 const es: LegalDict = {
+  legal_operator: "{app} es operada por {company}, {location}.",
   legal_back: "Atrás", legal_updated: "Última actualización: 14 de junio de 2026",
   legal_authoritative: "Esta es una traducción proporcionada para tu comodidad. La versión en inglés es la que tiene validez legal.",
   terms_title: "Términos del Servicio",
@@ -131,6 +136,7 @@ const es: LegalDict = {
 };
 
 const hi: LegalDict = {
+  legal_operator: "{app} का संचालन {company}, {location} द्वारा किया जाता है।",
   legal_back: "वापस", legal_updated: "अंतिम अद्यतन: 14 जून 2026",
   legal_authoritative: "यह आपकी सुविधा के लिए किया गया अनुवाद है। अंग्रेज़ी संस्करण ही मान्य है।",
   terms_title: "सेवा की शर्तें",
@@ -158,6 +164,7 @@ const hi: LegalDict = {
 };
 
 const bn: LegalDict = {
+  legal_operator: "{app} পরিচালনা করে {company}, {location}।",
   legal_back: "পেছনে", legal_updated: "সর্বশেষ হালনাগাদ: ১৪ জুন ২০২৬",
   legal_authoritative: "এটি আপনার সুবিধার্থে করা একটি অনুবাদ। ইংরেজি সংস্করণটিই আইনত কার্যকর।",
   terms_title: "পরিষেবার শর্তাবলি",
@@ -185,6 +192,7 @@ const bn: LegalDict = {
 };
 
 const id: LegalDict = {
+  legal_operator: "{app} dioperasikan oleh {company}, {location}.",
   legal_back: "Kembali", legal_updated: "Terakhir diperbarui: 14 Juni 2026",
   legal_authoritative: "Ini adalah terjemahan untuk memudahkanmu. Versi bahasa Inggris adalah yang mengikat secara hukum.",
   terms_title: "Ketentuan Layanan",
@@ -212,6 +220,7 @@ const id: LegalDict = {
 };
 
 const ms: LegalDict = {
+  legal_operator: "{app} dikendalikan oleh {company}, {location}.",
   legal_back: "Kembali", legal_updated: "Kemas kini terakhir: 14 Jun 2026",
   legal_authoritative: "Ini ialah terjemahan untuk kemudahan anda. Versi bahasa Inggeris ialah versi yang sah di sisi undang-undang.",
   terms_title: "Terma Perkhidmatan",
@@ -239,6 +248,7 @@ const ms: LegalDict = {
 };
 
 const th: LegalDict = {
+  legal_operator: "{app} ดำเนินการโดย {company}, {location}",
   legal_back: "ย้อนกลับ", legal_updated: "อัปเดตล่าสุด: 14 มิถุนายน 2026",
   legal_authoritative: "นี่คือคำแปลเพื่อความสะดวกของคุณ ฉบับภาษาอังกฤษเป็นฉบับที่มีผลตามกฎหมาย",
   terms_title: "ข้อกำหนดการให้บริการ",
@@ -266,6 +276,7 @@ const th: LegalDict = {
 };
 
 const vi: LegalDict = {
+  legal_operator: "{app} do {company}, {location} vận hành.",
   legal_back: "Quay lại", legal_updated: "Cập nhật lần cuối: 14 tháng 6, 2026",
   legal_authoritative: "Đây là bản dịch nhằm giúp bạn thuận tiện. Bản tiếng Anh là bản có giá trị pháp lý.",
   terms_title: "Điều khoản Dịch vụ",
@@ -293,6 +304,7 @@ const vi: LegalDict = {
 };
 
 const pt: LegalDict = {
+  legal_operator: "O {app} é operado pela {company}, {location}.",
   legal_back: "Voltar", legal_updated: "Última atualização: 14 de junho de 2026",
   legal_authoritative: "Esta é uma tradução oferecida para sua conveniência. A versão em inglês é a que tem validade legal.",
   terms_title: "Termos de Serviço",
@@ -320,6 +332,7 @@ const pt: LegalDict = {
 };
 
 const fr: LegalDict = {
+  legal_operator: "{app} est exploitée par {company}, {location}.",
   legal_back: "Retour", legal_updated: "Dernière mise à jour : 14 juin 2026",
   legal_authoritative: "Ceci est une traduction fournie pour votre confort. La version anglaise est la version qui fait foi.",
   terms_title: "Conditions d'utilisation",
@@ -347,6 +360,7 @@ const fr: LegalDict = {
 };
 
 const de: LegalDict = {
+  legal_operator: "{app} wird betrieben von {company}, {location}.",
   legal_back: "Zurück", legal_updated: "Zuletzt aktualisiert: 14. Juni 2026",
   legal_authoritative: "Dies ist eine Übersetzung zu deiner Bequemlichkeit. Maßgeblich ist die englische Fassung.",
   terms_title: "Nutzungsbedingungen",
@@ -374,6 +388,7 @@ const de: LegalDict = {
 };
 
 const zh: LegalDict = {
+  legal_operator: "{app} 由 {company}（{location}）运营。",
   legal_back: "返回", legal_updated: "最后更新：2026 年 6 月 14 日",
   legal_authoritative: "本文为方便你阅读而提供的译文。以英文版本为准。",
   terms_title: "服务条款",
@@ -401,6 +416,7 @@ const zh: LegalDict = {
 };
 
 const ja: LegalDict = {
+  legal_operator: "{app} は {company}（{location}）が運営しています。",
   legal_back: "戻る", legal_updated: "最終更新: 2026年6月14日",
   legal_authoritative: "これは便宜のための翻訳です。正式な効力を持つのは英語版です。",
   terms_title: "利用規約",
@@ -428,6 +444,7 @@ const ja: LegalDict = {
 };
 
 const ko: LegalDict = {
+  legal_operator: "{app}은(는) {company}({location})에서 운영합니다.",
   legal_back: "뒤로", legal_updated: "최종 업데이트: 2026년 6월 14일",
   legal_authoritative: "편의를 위해 제공되는 번역본입니다. 법적 효력을 갖는 것은 영문본입니다.",
   terms_title: "서비스 이용약관",
@@ -455,6 +472,7 @@ const ko: LegalDict = {
 };
 
 const ar: LegalDict = {
+  legal_operator: "يُشغّل {app} شركة {company}، {location}.",
   legal_back: "رجوع", legal_updated: "آخر تحديث: 14 يونيو 2026",
   legal_authoritative: "هذه ترجمة مقدَّمة لتيسير الاطلاع. النسخة الإنجليزية هي النسخة المعتمدة قانونًا.",
   terms_title: "شروط الخدمة",

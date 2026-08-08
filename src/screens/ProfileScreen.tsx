@@ -4,6 +4,8 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { GigzenByline } from "../components/GigzenMark";
+import { COMPANY_SITE } from "../config/constants";
 import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
 import { detectCountry } from "../i18n/region";
 import { localAppCount, workAppsForCountry } from "../utils/workApps";
@@ -155,6 +157,10 @@ export function ProfileScreen() {
         <Link to="/privacy">{t("consent_privacyPolicy")}</Link>
         <Link to="/terms">{t("consent_terms")}</Link>
       </section>
+
+      <a className="gigzen-link" href={COMPANY_SITE} target="_blank" rel="noreferrer">
+        <GigzenByline />
+      </a>
 
       <Button variant="outline" className="wide-action danger-action" onClick={() => setDeleteOpen(true)}>
         <Trash2 size={18} /> {t("profile_deleteAccount")}

@@ -1817,6 +1817,49 @@ select:focus {
   margin-bottom: 24px;
 }
 
+/* Who the policy is an agreement with. Sits under the notice on both pages. */
+.legal-operator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 24px;
+  color: var(--muted-foreground);
+  font-size: 13px;
+}
+
+.legal-operator svg {
+  flex: none;
+  opacity: 0.8;
+}
+
+/* "A Gigzen product". Deliberately quiet — it names the maker without
+   competing with the Buzz Buzz mark it sits beneath. */
+.gigzen-byline {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.01em;
+}
+
+.gigzen-byline.muted {
+  color: var(--muted-foreground);
+}
+
+/* On the orange auth screen, inherit white at reduced strength. */
+.gigzen-byline.solid {
+  color: inherit;
+  opacity: 0.75;
+  margin-top: 14px;
+}
+
+.gigzen-link {
+  display: block;
+  margin: 4px 0 18px;
+  text-align: center;
+  text-decoration: none;
+}
+
 /* Says the English text is the binding one. Quiet, but never hidden. */
 .legal-notice {
   margin: 0 0 24px;

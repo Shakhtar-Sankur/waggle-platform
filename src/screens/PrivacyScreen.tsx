@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { APP_NAME, PRIVACY_EMAIL } from "../config/constants";
 import { useT } from "../i18n";
-import { LegalNotice } from "../components/LegalNotice";
+import { LegalNotice, LegalOperator } from "../components/LegalNotice";
 import type { TKey } from "../i18n";
 
 /**
@@ -44,6 +44,7 @@ export function PrivacyScreen() {
       </header>
 
       <LegalNotice />
+      <LegalOperator />
 
       <section>
         <h2>{t("privacy_overview_h")}</h2>

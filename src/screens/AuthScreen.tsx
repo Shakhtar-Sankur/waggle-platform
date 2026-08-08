@@ -1,5 +1,6 @@
 import { Eye, EyeOff, Lock, MapPin, Phone, UserRound, Zap } from "lucide-react";
 import { BeeMark } from "../components/Wordmark";
+import { GigzenByline } from "../components/GigzenMark";
 import { FormEvent, useState } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { APP_NAME } from "../config/constants";
@@ -82,6 +83,8 @@ export function AuthScreen() {
             <span><Zap size={18} /> {t("auth_earn")}</span>
             <span><UserRound size={18} /> {t("auth_connect")}</span>
           </div>
+          {/* Who is asking for the phone number below. */}
+          <GigzenByline tone="solid" />
         </div>
 
         <form className="auth-form" onSubmit={submit}>

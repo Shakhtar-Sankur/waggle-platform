@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
 import { APP_NAME, SUPPORT_EMAIL } from "../config/constants";
 import { useT } from "../i18n";
-import { LegalNotice } from "../components/LegalNotice";
+import { LegalNotice, LegalOperator } from "../components/LegalNotice";
 
 export function TermsScreen() {
   const t = useT();
@@ -16,6 +16,7 @@ export function TermsScreen() {
       </header>
 
       <LegalNotice />
+      <LegalOperator />
 
       <section>
         <h2>{t("terms_acceptance_h")}</h2>

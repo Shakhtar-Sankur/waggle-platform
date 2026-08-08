@@ -1,4 +1,29 @@
+import { APP_NAME, COMPANY_LOCATION, COMPANY_NAME } from "../config/constants";
+import { GigzenMark } from "./GigzenMark";
 import { useLangStore, useT } from "../i18n";
+
+/**
+ * Names the company the policy is an agreement with.
+ *
+ * Both policies used to say "we", "our" and "the app" and never once name the
+ * company. A privacy policy that does not identify its controller does not tell
+ * the reader who holds their data.
+ */
+export function LegalOperator() {
+  const t = useT();
+  return (
+    <p className="legal-operator">
+      <GigzenMark size={14} />
+      <span>
+        {t("legal_operator", {
+          app: APP_NAME,
+          company: COMPANY_NAME,
+          location: COMPANY_LOCATION,
+        })}
+      </span>
+    </p>
+  );
+}
 
 /**
  * Shown above translated legal text.

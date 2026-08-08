@@ -3,6 +3,19 @@ import type { WorkApp } from "../types";
 export const APP_NAME = "Buzz Buzz";
 
 /**
+ * The company behind the app.
+ *
+ * Buzz Buzz shipped without naming its maker anywhere — not on the auth screen,
+ * not in the profile, and not in the privacy policy, which is a contract that
+ * has to say who the other party is. A driver handing over their location is
+ * entitled to know whose company holds it.
+ */
+export const COMPANY_NAME = "Gigzen Private Limited";
+export const COMPANY_SHORT = "Gigzen";
+export const COMPANY_LOCATION = "Bhubaneswar, India";
+export const COMPANY_SITE = "https://shakhtar-sankur.github.io/gigzen/";
+
+/**
  * Contact addresses on the legal pages.
  *
  * These used to be support@ and privacy@masayaako.app — a domain from the app's
