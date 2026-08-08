@@ -37,6 +37,10 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
+/** Shared by concurrent ensureDefaultThreads callers so the default group is
+ *  created once, not once per overlapping poll. */
+let defaultThreadsInFlight: Promise<ChatThread[]> | null = null;
+
 export const SupabaseService = {
   enabled: isSupabaseConfigured,
 
@@ -579,10 +583,23 @@ export const SupabaseService = {
   },
 
   async ensureDefaultThreads(userId: string): Promise<ChatThread[]> {
-    const existing = await this.loadThreads(userId);
-    if (existing.length) return existing;
-    const thread = await this.createThread(userId, "Manila Drivers", true);
-    return [thread];
+    // Single-flight. loadCloudChats calls this on every poll, and MessagesScreen
+    // polls every 2.5s — so on a fresh account two calls would overlap, both see
+    // an empty list, and both create the default group. That is exactly how a
+    // real device ended up with "Manila Drivers" listed twice.
+    if (defaultThreadsInFlight) return defaultThreadsInFlight;
+
+    defaultThreadsInFlight = (async () => {
+      const existing = await this.loadThreads(userId);
+      if (existing.length) return existing;
+      return [await this.createThread(userId, "Manila Drivers", true)];
+    })();
+
+    try {
+      return await defaultThreadsInFlight;
+    } finally {
+      defaultThreadsInFlight = null;
+    }
   },
 
   async sendMessage(message: ChatMessage): Promise<void> {
