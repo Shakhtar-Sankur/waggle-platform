@@ -203,7 +203,7 @@ export function MessagesScreen() {
         ? createPortal(
         <div className="wa-convo">
           <header className="wa-convo-header">
-            <button className="wa-back" onClick={() => setOpenId(null)} aria-label="Back">
+            <button className="wa-back" onClick={() => setOpenId(null)} aria-label={t("a11y_back")}>
               <ArrowLeft size={22} />
             </button>
             <span className="wa-avatar-wrap">
@@ -227,7 +227,7 @@ export function MessagesScreen() {
                 );
               })()}
             </div>
-            <button className="wa-back" aria-label="Options"><MoreVertical size={20} /></button>
+            <button className="wa-back" aria-label={t("a11y_options")}><MoreVertical size={20} /></button>
           </header>
 
           <div className="wa-messages" ref={messagesRef}>
@@ -274,7 +274,7 @@ export function MessagesScreen() {
             <button
               type="button"
               className={`wa-attach ${attachment ? "active" : ""}`}
-              aria-label="Attach photo"
+              aria-label={t("a11y_attachPhoto")}
               onClick={async () => {
                 if (attachment) {
                   setAttachment(undefined);
@@ -291,7 +291,7 @@ export function MessagesScreen() {
               onChange={(event) => setDraft(event.target.value)}
               placeholder={attachment ? t("wa_caption") : t("wa_typeMessage")}
             />
-            <button type="submit" className="wa-send" aria-label="Send">
+            <button type="submit" className="wa-send" aria-label={t("a11y_send")}>
               <Send size={18} />
             </button>
           </form>

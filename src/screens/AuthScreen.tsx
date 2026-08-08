@@ -22,7 +22,7 @@ function passwordMeetsMinimum(pw: string): boolean {
   return pw.length >= 8 && /[A-Za-z]/.test(pw) && /\d/.test(pw);
 }
 
-const STRENGTH_LABELS = ["Too weak", "Weak", "Fair", "Good", "Strong"];
+const STRENGTH_KEYS = ["pw_tooWeak", "pw_weak", "pw_fair", "pw_good", "pw_strong"] as const;
 const STRENGTH_COLORS = ["#ef4444", "#ef4444", "#f59e0b", "#3b9e4f", "#16c784"];
 
 export function AuthScreen() {
@@ -46,11 +46,11 @@ export function AuthScreen() {
     event.preventDefault();
     setError("");
     if (mode === "signup" && !acceptedTerms) {
-      setError("Please accept the Privacy Policy and Terms of Service.");
+      setError(t("err_acceptTerms"));
       return;
     }
     if (mode === "signup" && !passwordMeetsMinimum(password)) {
-      setError("Password must be at least 8 characters and include a letter and a number.");
+      setError(t("err_passwordSignup"));
       return;
     }
     setLoading(true);
@@ -62,7 +62,7 @@ export function AuthScreen() {
       }
       navigate("/home");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "An unexpected error occurred.");
+      setError(err instanceof Error ? err.message : t("err_unexpected"));
     } finally {
       setLoading(false);
     }
@@ -93,7 +93,7 @@ export function AuthScreen() {
                 <input
                   value={fullName}
                   onChange={(event) => setFullName(event.target.value)}
-                  placeholder="Enter your full name"
+                  placeholder={t("auth_phName")}
                   autoComplete="name"
                 />
               </div>
@@ -106,8 +106,9 @@ export function AuthScreen() {
               <input
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
-                placeholder="09XX XXX XXXX"
+                placeholder={t("auth_phPhone")}
                 autoComplete="tel"
+                inputMode="tel"
               />
             </div>
           </label>
@@ -118,11 +119,15 @@ export function AuthScreen() {
               <input
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
-                placeholder="Enter your password"
+                placeholder={t("auth_phPassword")}
                 type={showPassword ? "text" : "password"}
                 autoComplete={mode === "login" ? "current-password" : "new-password"}
               />
-              <button type="button" onClick={() => setShowPassword((value) => !value)} aria-label="Show password">
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                aria-label={showPassword ? t("auth_hidePassword") : t("auth_showPassword")}
+              >
                 {showPassword ? <EyeOff size={19} /> : <Eye size={19} />}
               </button>
             </div>
@@ -139,7 +144,9 @@ export function AuthScreen() {
                   ))}
                 </div>
                 <small style={{ color: STRENGTH_COLORS[passwordScore(password)] }}>
-                  {STRENGTH_LABELS[passwordScore(password)]} · min 8 chars, a letter and a number
+                  {t(STRENGTH_KEYS[passwordScore(password)])}
+                  {/* The rule is guidance until it is met; once it is, it is just noise. */}
+                  {passwordMeetsMinimum(password) ? null : ` · ${t("pw_rule")}`}
                 </small>
               </div>
             ) : null}
@@ -152,15 +159,15 @@ export function AuthScreen() {
                 onChange={(event) => setAcceptedTerms(event.target.checked)}
               />
               <span>
-                I agree to the{" "}
+                {t("auth_agreePrefix")}{" "}
                 <Link to="/privacy" target="_blank" rel="noreferrer">
-                  Privacy Policy
+                  {t("consent_privacyPolicy")}
                 </Link>{" "}
-                and{" "}
+                {t("consent_and")}{" "}
                 <Link to="/terms" target="_blank" rel="noreferrer">
-                  Terms of Service
+                  {t("consent_terms")}
                 </Link>
-                , including location collection while tracking.
+                {t("auth_agreeSuffix")}
               </span>
             </label>
           ) : null}
@@ -184,9 +191,8 @@ export function AuthScreen() {
         </p>
       </section>
       <p className="terms">
-        By continuing, you agree to our{" "}
-        <Link to="/terms">Terms of Service</Link> and{" "}
-        <Link to="/privacy">Privacy Policy</Link>.
+        {t("auth_footerPrefix")} <Link to="/terms">{t("consent_terms")}</Link>{" "}
+        {t("consent_and")} <Link to="/privacy">{t("consent_privacyPolicy")}</Link>.
       </p>
     </main>
   );

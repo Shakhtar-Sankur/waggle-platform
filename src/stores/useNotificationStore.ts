@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { translate } from "../i18n";
 import { NotificationService } from "../services/NotificationService";
 import { SupabaseService } from "../services/SupabaseService";
 import type { AppNotification } from "../types";
@@ -21,8 +22,8 @@ export const useNotificationStore = create<NotificationState>()(
     (set) => ({
       notifications: [
         NotificationService.create(
-          "Welcome to Buzz Buzz",
-          "Your driver workspace is ready.",
+          translate("notif_welcomeTitle"),
+          translate("notif_welcomeBody"),
           "system",
         ),
       ],

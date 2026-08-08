@@ -5,6 +5,7 @@ import { SupabaseService } from "../services/SupabaseService";
 import { defaultDailyGoalFor, defaultRateFor, setCurrency } from "../utils/format";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
+import { translate } from "../i18n";
 
 interface ProfileState extends ProfileSettings {
   /** True once the driver has set their own per-km rate, so auto-detected
@@ -50,7 +51,7 @@ export const useProfileStore = create<ProfileState>()(
         if (app) {
           useNotificationStore
             .getState()
-            .push("Work app updated", "GPS tracking can now attribute trips to your selected app.", "system");
+            .push(translate("notif_workAppUpdated"), translate("notif_workAppUpdatedBody"), "system");
         }
       },
       updateSettings: (updates) => {
@@ -70,7 +71,7 @@ export const useProfileStore = create<ProfileState>()(
             });
           }
         }
-        useNotificationStore.getState().push("Profile Updated", "Your changes have been saved.", "system");
+        useNotificationStore.getState().push(translate("notif_profileUpdated"), translate("notif_profileUpdatedBody"), "system");
       },
       // Auto-applied currency from location detection — local only, no toast, no cloud write.
       applyCurrency: (code) => {
@@ -99,7 +100,7 @@ export const useProfileStore = create<ProfileState>()(
         persistSettings(get());
         useNotificationStore
           .getState()
-          .push("Maintenance Recorded", "Your vehicle health has been reset. Safe travels!", "system");
+          .push(translate("notif_maintenanceRecorded"), translate("notif_maintenanceRecordedBody"), "system");
       },
     }),
     {

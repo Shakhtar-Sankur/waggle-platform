@@ -4,8 +4,10 @@ import type { Job } from "../types";
 import { currency, km } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
 import { Button } from "./ui/Button";
+import { useT } from "../i18n";
 
 export function JobCard({ job }: { job: Job }) {
+  const t = useT();
   const acceptJob = useJobStore((state) => state.acceptJob);
   const declineJob = useJobStore((state) => state.declineJob);
   const completeJob = useJobStore((state) => state.completeJob);
@@ -37,7 +39,7 @@ export function JobCard({ job }: { job: Job }) {
             <Button onClick={() => acceptJob(job.id)}>Accept</Button>
           </>
         ) : job.status === "accepted" ? (
-          <Button onClick={() => completeJob(job.id)}>Complete Job</Button>
+          <Button onClick={() => completeJob(job.id)}>{t("job_complete")}</Button>
         ) : (
           <span className="status-label">{job.status}</span>
         )}

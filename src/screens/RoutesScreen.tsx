@@ -482,17 +482,17 @@ export function RoutesScreen() {
           </div>
 
           <div className="sv-rail">
-            <button className="sv-rail-btn" aria-label="Center on me" onClick={recenter}>
+            <button className="sv-rail-btn" aria-label={t("a11y_centerOnMe")} onClick={recenter}>
               <LocateFixed size={19} />
             </button>
             <div className="sv-zoom">
-              <button aria-label="Zoom in" onClick={() => map?.zoomIn()}><Plus size={18} /></button>
+              <button aria-label={t("a11y_zoomIn")} onClick={() => map?.zoomIn()}><Plus size={18} /></button>
               <span className="sv-zoom-div" />
-              <button aria-label="Zoom out" onClick={() => map?.zoomOut()}><Minus size={18} /></button>
+              <button aria-label={t("a11y_zoomOut")} onClick={() => map?.zoomOut()}><Minus size={18} /></button>
             </div>
             <button
               className="sv-rail-btn"
-              aria-label="Change map layer"
+              aria-label={t("a11y_changeMapLayer")}
               onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
             >
               <Layers size={19} />

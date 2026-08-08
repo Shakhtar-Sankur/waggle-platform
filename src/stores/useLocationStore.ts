@@ -7,6 +7,7 @@ import type { LocationPoint } from "../types";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
 import { useProfileStore } from "./useProfileStore";
+import { translate } from "../i18n";
 
 type PermissionState = "idle" | "granted" | "denied";
 
@@ -92,7 +93,7 @@ export const useLocationStore = create<LocationState>()(
           syncLocation(point, 0);
           useNotificationStore
             .getState()
-            .push("GPS tracking active", "Your route and earnings update from live GPS.", "location");
+            .push(translate("notif_gpsActive"), translate("notif_gpsActiveBody"), "location");
         } catch (error) {
           set({ permission: "denied", isTracking: false });
           useNotificationStore
@@ -109,7 +110,7 @@ export const useLocationStore = create<LocationState>()(
         stopWatching = null;
         trackingStartedAt = null;
         set({ isTracking: false });
-        useNotificationStore.getState().push("Session Ended", "App detection and tracking stopped.", "location");
+        useNotificationStore.getState().push(translate("notif_sessionEnded"), translate("notif_sessionEndedBody"), "location");
       },
       updatePosition: (point) => {
         const state = get();

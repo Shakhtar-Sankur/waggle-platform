@@ -24,10 +24,15 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   CA: "CAD",
   PK: "PKR",
   BD: "BDT",
-  // Euro-zone
+  // Euro-zone — every member state, so a driver anywhere in it sees euros.
   DE: "EUR", FR: "EUR", ES: "EUR", IT: "EUR", NL: "EUR", BE: "EUR", AT: "EUR",
-  IE: "EUR", PT: "EUR", GR: "EUR", FI: "EUR",
-  // Spanish-speaking Latin America default to USD display
+  IE: "EUR", PT: "EUR", GR: "EUR", FI: "EUR", HR: "EUR", SK: "EUR", SI: "EUR",
+  LT: "EUR", LV: "EUR", EE: "EUR", CY: "EUR", MT: "EUR", LU: "EUR",
+  // Officially dollarised — USD is the actual currency in the driver's hand.
+  EC: "USD", SV: "USD", PA: "USD",
+  // Spanish-speaking Latin America without a listed local currency. USD is a
+  // display stand-in, not what the driver is paid in; they can override it in
+  // Settings. Adding ARS/COP/CLP/PEN needs real local per-km rates first.
   AR: "USD", CO: "USD", CL: "USD", PE: "USD",
 };
 

@@ -152,8 +152,8 @@ export function ProfileScreen() {
       </Button>
 
       <section className="legal-links">
-        <Link to="/privacy">Privacy Policy</Link>
-        <Link to="/terms">Terms of Service</Link>
+        <Link to="/privacy">{t("consent_privacyPolicy")}</Link>
+        <Link to="/terms">{t("consent_terms")}</Link>
       </section>
 
       <Button variant="outline" className="wide-action danger-action" onClick={() => setDeleteOpen(true)}>
@@ -235,7 +235,7 @@ function SettingsModal({
       open={open}
       onClose={onClose}
       title={t("profile_settings")}
-      description="Configure your app preferences and privacy settings"
+      description={t("settings_sub")}
     >
       <form className="settings-form" onSubmit={submit}>
         <label className="toggle-row">
@@ -274,11 +274,11 @@ function SettingsModal({
         </label>
         <label>
           <span>{t("settings_homeAddress")}</span>
-          <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder="Search for your home address..." />
+          <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder={t("settings_homeAddressPh")} />
         </label>
         <label>
           <span>{t("settings_baseRate")}</span>
-          <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder="Price per km" />
+          <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder={t("settings_baseRatePh")} />
         </label>
         <label className="toggle-row">
           <span>{t("settings_shareStats")}</span>
@@ -324,6 +324,7 @@ function EditProfileModal({
   phone: string;
   onSave: (updates: { fullName: string; phone: string }) => void;
 }) {
+  const t = useT();
   const [name, setName] = useState(fullName);
   const [phoneNumber, setPhoneNumber] = useState(phone);
 
@@ -339,17 +340,17 @@ function EditProfileModal({
   };
 
   return (
-    <Modal open={open} onClose={onClose} title="Edit Profile" description="Update your personal information below.">
+    <Modal open={open} onClose={onClose} title={t("profile_editProfileTitle")} description={t("profile_editProfileSub")}>
       <form className="settings-form" onSubmit={submit}>
         <label>
-          <span>Full Name</span>
+          <span>{t("profile_fullName")}</span>
           <input value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <label>
-          <span>Phone Number</span>
+          <span>{t("profile_phoneNumber")}</span>
           <input value={phoneNumber} onChange={(event) => setPhoneNumber(event.target.value)} />
         </label>
-        <Button>Save Changes</Button>
+        <Button>{t("common_saveChanges")}</Button>
       </form>
     </Modal>
   );
@@ -366,6 +367,7 @@ function DeleteAccountModal({
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }) {
+  const t = useT();
   const [confirmed, setConfirmed] = useState(false);
 
   useEffect(() => {
@@ -376,16 +378,16 @@ function DeleteAccountModal({
     <Modal
       open={open}
       onClose={onClose}
-      title="Delete Account"
-      description="This permanently removes your profile, routes, chat history, and settings. This cannot be undone."
+      title={t("profile_deleteAccount")}
+      description={t("profile_deleteAccountSub")}
     >
       <div className="settings-form">
         <label className="consent-checkbox">
           <input type="checkbox" checked={confirmed} onChange={(event) => setConfirmed(event.target.checked)} />
-          <span>I understand my account and personal data will be permanently deleted.</span>
+          <span>{t("profile_deleteConfirm")}</span>
         </label>
         <Button variant="outline" className="danger-action" disabled={!confirmed || deleting} onClick={() => void onConfirm()}>
-          {deleting ? "Deleting..." : "Delete My Account"}
+          {deleting ? t("profile_deleting") : t("profile_deleteMyAccount")}
         </Button>
       </div>
     </Modal>

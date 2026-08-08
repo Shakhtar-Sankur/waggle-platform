@@ -2,11 +2,13 @@ import { X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { Button } from "./ui/Button";
+import { useT } from "../i18n";
 
 // How long a toast stays on screen before it slides away on its own.
 const TOAST_DURATION_MS = 4500;
 
 export function Toasts() {
+  const t = useT();
   const notifications = useNotificationStore((state) => state.notifications);
   // Only surface notifications that arrive after this component mounts, so old
   // history never pops up as toasts on load/navigation.
@@ -49,7 +51,7 @@ export function Toasts() {
             variant="ghost"
             size="icon"
             onClick={() => dismiss(notification.id)}
-            aria-label="Dismiss"
+            aria-label={t("a11y_dismiss")}
           >
             <X size={16} />
           </Button>

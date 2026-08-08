@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import type { ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "./Button";
+import { useT } from "../../i18n";
 
 interface ModalProps {
   open: boolean;
@@ -13,6 +14,7 @@ interface ModalProps {
 }
 
 export function Modal({ open, title, description, children, onClose }: ModalProps) {
+  const t = useT();
   // Lock background scroll while a modal is open.
   useEffect(() => {
     if (!open) return;
@@ -36,7 +38,7 @@ export function Modal({ open, title, description, children, onClose }: ModalProp
             <h2>{title}</h2>
             {description ? <p>{description}</p> : null}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label="Close">
+          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("a11y_close")}>
             <X size={18} />
           </Button>
         </div>

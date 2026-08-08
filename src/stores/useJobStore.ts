@@ -5,6 +5,7 @@ import { SupabaseService } from "../services/SupabaseService";
 import type { Job } from "../types";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
+import { translate } from "../i18n";
 
 interface JobState {
   jobs: Job[];
@@ -39,14 +40,14 @@ export const useJobStore = create<JobState>()(
         set((state) => ({ jobs: [job, ...state.jobs] }));
         useNotificationStore
           .getState()
-          .push("New job alert", `${job.title} • ${job.pickup} to ${job.dropoff}`, "job");
+          .push(translate("notif_jobAlert"), `${job.title} • ${job.pickup} → ${job.dropoff}`, "job");
       },
       acceptJob: (id) => {
         set((state) => ({
           jobs: state.jobs.map((job) => (job.id === id ? { ...job, status: "accepted" } : job)),
         }));
         syncStatus(id, "accepted");
-        useNotificationStore.getState().push("Job accepted", "Route details are ready in your feed.", "job");
+        useNotificationStore.getState().push(translate("notif_jobAccepted"), translate("notif_jobAcceptedBody"), "job");
       },
       declineJob: (id) => {
         set((state) => ({
@@ -59,7 +60,7 @@ export const useJobStore = create<JobState>()(
           jobs: state.jobs.map((job) => (job.id === id ? { ...job, status: "completed" } : job)),
         }));
         syncStatus(id, "completed");
-        useNotificationStore.getState().push("Job completed", "Nice work. Earnings were added to today.", "job");
+        useNotificationStore.getState().push(translate("notif_jobCompleted"), translate("notif_jobCompletedBody"), "job");
       },
     }),
     { name: "masaya_jobs_v3" },

@@ -45,7 +45,7 @@ export function Header({ title }: HeaderProps) {
             size="icon"
             className="header-icon"
             onClick={() => navigate("/notifications")}
-            aria-label="Notifications"
+            aria-label={t("a11y_notifications")}
           >
             <Bell size={19} />
             {unread > 0 ? <span className="header-dot" /> : null}
@@ -55,7 +55,7 @@ export function Header({ title }: HeaderProps) {
             size="icon"
             className="header-icon"
             onClick={() => navigate("/profile?settings=true")}
-            aria-label="Settings"
+            aria-label={t("a11y_settings")}
           >
             <Settings size={19} />
           </Button>
@@ -67,7 +67,7 @@ export function Header({ title }: HeaderProps) {
               signOut();
               navigate("/auth");
             }}
-            aria-label="Log out"
+            aria-label={t("a11y_logOut")}
           >
             <LogOut size={19} />
           </Button>

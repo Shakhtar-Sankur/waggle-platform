@@ -7,6 +7,7 @@ import type { ChatMessage, ChatThread } from "../types";
 import { uid } from "../utils/format";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
+import { translate } from "../i18n";
 
 interface ChatState {
   threads: ChatThread[];
@@ -135,7 +136,7 @@ export const useChatStore = create<ChatState>()(
               item.id === threadId ? { ...item, unreadCount: item.id === latest.selectedThreadId ? 0 : 1 } : item,
             ),
           }));
-          useNotificationStore.getState().push("New message", reply.body, "chat");
+          useNotificationStore.getState().push(translate("notif_newMessage"), reply.body, "chat");
         }, 1200);
       },
       createGroup: async () => {

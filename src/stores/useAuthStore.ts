@@ -3,6 +3,7 @@ import { persist } from "zustand/middleware";
 import type { UserSession } from "../types";
 import { useNotificationStore } from "./useNotificationStore";
 import { isSupabaseConfigured, SupabaseService } from "../services/SupabaseService";
+import { translate } from "../i18n";
 
 interface AuthState {
   user: UserSession | null;
@@ -74,37 +75,37 @@ export const useAuthStore = create<AuthState>()(
         if (isSupabaseConfigured) {
           assertPhone(phone);
           if (password.trim().length < 6) {
-            throw new Error("Password must be at least 6 characters.");
+            throw new Error(translate("err_passwordMin"));
           }
           const user = await SupabaseService.signIn(phone, password);
           set({ user });
           await SupabaseService.ensureDefaultThreads(user.id);
           useNotificationStore
             .getState()
-            .push("Welcome back!", "You have successfully logged in.", "system");
+            .push(translate("notif_welcomeBack"), translate("notif_welcomeBackBody"), "system");
           return;
         }
         // No offline/demo sign-in. This used to mint a local "Codex Demo Driver"
         // from a hardcoded phone and password, which shipped inside the APK —
         // a build made without the Supabase env would have let anyone in with
         // empty fields. Fail loudly instead.
-        throw new Error("Sign-in is unavailable: the app is not configured. Please reinstall.");
+        throw new Error(translate("err_signInUnavailable"));
       },
       signUp: async (phone, password, fullName) => {
         await delay(500);
-        if (password.trim().length < 6) throw new Error("Password must be at least 6 characters.");
-        if (fullName.trim().length < 2) throw new Error("Name must be at least 2 characters.");
+        if (password.trim().length < 6) throw new Error(translate("err_passwordMin"));
+        if (fullName.trim().length < 2) throw new Error(translate("err_nameMin"));
         if (isSupabaseConfigured) {
           assertPhone(phone);
           const user = await SupabaseService.signUp(phone, password, fullName);
           set({ user });
           await SupabaseService.ensureDefaultThreads(user.id);
-          useNotificationStore.getState().push("Account created!", "Welcome to Buzz Buzz!", "system");
+          useNotificationStore.getState().push(translate("notif_accountCreated"), translate("notif_accountCreatedBody"), "system");
           return;
         }
         // Same reasoning as signIn: no local-only accounts. An account that
         // exists on one phone and nowhere else is worse than a clear failure.
-        throw new Error("Sign-up is unavailable: the app is not configured. Please reinstall.");
+        throw new Error(translate("err_signUpUnavailable"));
       },
       signOut: async () => {
         // Clear local state first so logout is instant and reliable even if the
@@ -147,6 +148,6 @@ function delay(ms: number) {
 function assertPhone(phone: string) {
   const digits = phone.replace(/\D/g, "");
   if (digits.length < 10) {
-    throw new Error("Enter a valid phone number (at least 10 digits).");
+    throw new Error(translate("err_phoneInvalid"));
   }
 }

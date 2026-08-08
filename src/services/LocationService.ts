@@ -2,6 +2,7 @@ import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
 import { MANILA_CENTER } from "../config/constants";
 import type { LocationPoint } from "../types";
+import { translate } from "../i18n";
 
 export const LocationService = {
   async currentPosition(): Promise<LocationPoint> {
@@ -39,7 +40,7 @@ export const LocationService = {
     if (Capacitor.isNativePlatform()) {
       const permission = await Geolocation.requestPermissions();
       if (permission.location === "denied") {
-        throw new Error("Location permission denied. Enable GPS in device settings.");
+        throw new Error(translate("err_locationDenied"));
       }
       const watchId = await Geolocation.watchPosition(
         {
@@ -58,7 +59,7 @@ export const LocationService = {
     }
 
     if (!("geolocation" in navigator)) {
-      throw new Error("Geolocation is not available on this device.");
+      throw new Error(translate("err_geolocationUnavailable"));
     }
 
     const watchId = navigator.geolocation.watchPosition(

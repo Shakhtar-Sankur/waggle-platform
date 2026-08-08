@@ -84,7 +84,7 @@ export function HomeScreen() {
             <h3><MapPin size={19} /> {t("home_journey")}</h3>
             <p>{homeAddress || t("home_setAddress")}</p>
           </div>
-          <Button variant="ghost" size="icon" aria-label="Journey settings"><Settings size={18} /></Button>
+          <Button variant="ghost" size="icon" aria-label={t("a11y_journeySettings")}><Settings size={18} /></Button>
         </div>
         <div className="stat-grid">
           <Stat icon={<MapPin size={22} />} value={totalDistanceKm.toFixed(1)} label={t("stat_kmToday")} />

@@ -1,3 +1,4 @@
+import { translate } from "../i18n";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
 interface ErrorBoundaryProps {
@@ -55,7 +56,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
         }}
       >
         <div style={{ fontSize: "44px" }}>🛠️</div>
-        <h1 style={{ fontSize: "20px", margin: 0 }}>Something went wrong</h1>
+        <h1 style={{ fontSize: "20px", margin: 0 }}>{translate("err_somethingWrong")}</h1>
         <p style={{ maxWidth: "320px", opacity: 0.8, margin: 0, lineHeight: 1.5 }}>
           The app hit an unexpected problem. Your saved data is safe. Tap below to reload.
         </p>

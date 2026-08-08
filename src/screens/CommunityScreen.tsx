@@ -189,7 +189,7 @@ export function CommunityScreen() {
             placeholder={t("fb_search")}
           />
         </div>
-        <button className="fb-round" aria-label="Messenger" onClick={() => navigate("/messages")}>
+        <button className="fb-round" aria-label={t("a11y_messenger")} onClick={() => navigate("/messages")}>
           <MessageCircle size={20} />
         </button>
       </div>
@@ -244,7 +244,7 @@ export function CommunityScreen() {
             {photo ? (
               <div className="fb-composer-photo">
                 <img src={photo} alt="Selected attachment" />
-                <button type="button" aria-label="Remove photo" onClick={() => setPhoto(undefined)}>
+                <button type="button" aria-label={t("a11y_removePhoto")} onClick={() => setPhoto(undefined)}>
                   <X size={16} />
                 </button>
               </div>
@@ -369,7 +369,7 @@ export function CommunityScreen() {
                         onChange={(event) => setCommentDraft(event.target.value)}
                         placeholder={t("fb_writeComment")}
                       />
-                      <button type="submit" aria-label="Send comment" disabled={!commentDraft.trim()}>
+                      <button type="submit" aria-label={t("a11y_sendComment")} disabled={!commentDraft.trim()}>
                         <Send size={17} />
                       </button>
                     </form>
@@ -476,7 +476,7 @@ export function CommunityScreen() {
                 );
               })
             ) : (
-              <p className="fb-comment-empty">No suggestions right now. More drivers will appear as they join.</p>
+              <p className="fb-comment-empty">{t("fb_noSuggestions")}</p>
             )}
           </section>
 
@@ -492,7 +492,7 @@ export function CommunityScreen() {
                     <span className="fb-avatar lg">{initials(worker.name)}</span>
                     <div>
                       <strong>{worker.name}</strong>
-                      <p>{worker.isOnline ? "Online now" : "Offline"}</p>
+                      <p>{worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}</p>
                     </div>
                   </button>
                   <Button size="sm" variant="outline" onClick={() => void messageDriver(worker.id)}>
@@ -598,7 +598,7 @@ export function CommunityScreen() {
               );
             })
           ) : (
-            <p className="fb-comment-empty">No one to tag yet.</p>
+            <p className="fb-comment-empty">{t("fb_noOneToTag")}</p>
           )}
           <Button className="tag-done" onClick={() => setTagOpen(false)}>
             {t("common_done")}{tagged.length ? ` (${tagged.length})` : ""}
@@ -699,15 +699,17 @@ function WorkerProfileModal({
   onAccept: (id: string) => void;
   onMessage: () => void;
 }) {
+  // Above the early return: hooks must run on every render.
+  const t = useT();
   if (!worker) return null;
   const app = getWorkApp(worker.app);
   return (
-    <Modal open={!!worker} onClose={onClose} title="Profile">
+    <Modal open={!!worker} onClose={onClose} title={t("nav_profile")}>
       <div className="worker-profile">
         <div className="worker-profile-head">
           <span className="avatar huge">{initials(worker.name)}<span className={worker.isOnline ? "" : "offline"} /></span>
           <h3>{worker.name}</h3>
-          <p>{app?.logo} {app?.name} • {worker.isOnline ? "Online now" : "Offline"}</p>
+          <p>{app?.logo} {app?.name} • {worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}</p>
         </div>
         <div className="worker-profile-stats">
           <ProfileStat icon={<Star size={18} />} value={worker.rating.toFixed(1)} label="rating" />
