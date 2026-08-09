@@ -1,4 +1,4 @@
-import { ArrowLeft, ImagePlus, MessageCircle, MoreVertical, Search, Send, Trash2, UsersRound } from "lucide-react";
+import { ArrowLeft, ImagePlus, LogOut, MessageCircle, MoreVertical, Search, Send, Trash2, UsersRound } from "lucide-react";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -31,6 +31,7 @@ export function MessagesScreen() {
   const selectThread = useChatStore((state) => state.selectThread);
   const sendMessage = useChatStore((state) => state.sendMessage);
   const deleteMessage = useChatStore((state) => state.deleteMessage);
+  const leaveThread = useChatStore((state) => state.leaveThread);
   const createGroup = useChatStore((state) => state.createGroup);
   const loadCloudChats = useChatStore((state) => state.loadCloudChats);
   const chatsLoaded = useChatStore((state) => state.chatsLoaded);
@@ -42,6 +43,8 @@ export function MessagesScreen() {
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<PickedPhoto | undefined>();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   // Keep chats fresh (RLS makes chat too complex for live-broadcast, so we
@@ -227,8 +230,47 @@ export function MessagesScreen() {
                 );
               })()}
             </div>
-            <button className="wa-back" aria-label={t("a11y_options")}><MoreVertical size={20} /></button>
+            {/* Only shown for groups. A one-to-one chat has nothing to offer
+                here, and a menu that opens onto nothing is worse than no menu —
+                which is what this button was until now: no handler at all. */}
+            {openThread.isGroup ? (
+              <button
+                type="button"
+                className="wa-back"
+                aria-label={t("a11y_options")}
+                aria-expanded={menuOpen}
+                onClick={() => setMenuOpen((open) => !open)}
+              >
+                <MoreVertical size={20} />
+              </button>
+            ) : (
+              <span className="wa-header-spacer" />
+            )}
           </header>
+
+          {/* Group actions. One entry, because one action exists — leaving.
+              Anything else here would be a button that does nothing, which is
+              what we are removing, not adding more of. */}
+          {menuOpen ? (
+            <>
+              <button
+                type="button"
+                className="wa-menu-scrim"
+                aria-label={t("a11y_close")}
+                onClick={() => setMenuOpen(false)}
+              />
+              <div className="wa-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="wa-menu-item danger"
+                  onClick={() => { setMenuOpen(false); setConfirmLeave(true); }}
+                >
+                  <LogOut size={16} /> {t("wa_leaveGroup")}
+                </button>
+              </div>
+            </>
+          ) : null}
 
           <div className="wa-messages" ref={messagesRef}>
             {openMessages.length ? (
@@ -238,17 +280,23 @@ export function MessagesScreen() {
                 const showSender =
                   openThread.isGroup && !isMe && openMessages[index - 1]?.senderId !== message.senderId;
                 return (
-                  <div className={`wa-bubble ${isMe ? "me" : ""}`} key={message.id}>
-                    {/* Only your own messages can be removed (enforced by RLS too). */}
+                  /* The delete control is a SIBLING of the bubble, not a child.
+                     It used to be absolutely positioned inside it, so on touch —
+                     where it is always visible, there being no hover — it sat on
+                     top of the driver's own words. */
+                  <div className={`wa-row ${isMe ? "me" : ""}`} key={message.id}>
+                    {/* Only your own messages can be removed (RLS enforces it too). */}
                     {isMe ? (
                       <button
+                        type="button"
                         className="wa-del"
                         aria-label={t("wa_deleteMessage")}
                         onClick={() => setConfirmDelete(message.id)}
                       >
-                        <Trash2 size={13} />
+                        <Trash2 size={15} />
                       </button>
                     ) : null}
+                    <div className={`wa-bubble ${isMe ? "me" : ""}`}>
                     {showSender ? <span className="wa-sender">{sender}</span> : null}
                     {message.attachmentUrl ? (
                       /* Thumbnail in the bubble; the full file is only fetched
@@ -271,6 +319,7 @@ export function MessagesScreen() {
                         </span>
                       ) : null}
                     </small>
+                    </div>
                   </div>
                 );
               })
@@ -322,6 +371,29 @@ export function MessagesScreen() {
                     }}
                   >
                     {t("fb_delete")}
+                  </button>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          {confirmLeave && openThread ? (
+            <div className="wa-confirm-scrim" onClick={() => setConfirmLeave(false)}>
+              <div className="wa-confirm" onClick={(event) => event.stopPropagation()}>
+                <strong>{t("wa_leaveGroup")}</strong>
+                <p>{t("wa_leaveGroupSure", { name: openThread.title })}</p>
+                <div className="wa-confirm-actions">
+                  <button onClick={() => setConfirmLeave(false)}>{t("sv_cancel")}</button>
+                  <button
+                    className="wa-confirm-del"
+                    onClick={() => {
+                      const id = openThread.id;
+                      setConfirmLeave(false);
+                      setOpenId(null);
+                      void leaveThread(id);
+                    }}
+                  >
+                    {t("wa_leaveGroup")}
                   </button>
                 </div>
               </div>

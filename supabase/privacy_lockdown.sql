@@ -29,8 +29,34 @@
 --    profiles.phone (it is written on signup and read from the auth session),
 --    so removing it breaks nothing.
 -- ============================================================================
-revoke select (phone) on public.profiles from anon;
-revoke select (phone) on public.profiles from authenticated;
+-- A column-level REVOKE against a table-level GRANT does NOTHING. Postgres does
+-- not subtract a column from a whole-table privilege, so the two statements this
+-- replaces left phone readable by every signed-in account — which the
+-- verification query at the bottom of this file reported honestly, and which
+-- nobody read. The only way to restrict a column is to drop the table grant and
+-- re-grant the columns you do want.
+--
+-- Verified against the client before writing this: the app never SELECTs
+-- profiles.phone. It writes it on signup and reads it back from the auth
+-- session, so nothing here breaks.
+
+revoke select on public.profiles from anon;
+revoke select on public.profiles from authenticated;
+
+-- Everything except phone. New columns must be added here too, or PostgREST
+-- will not return them.
+grant select (id, full_name, avatar_url, last_seen, created_at, updated_at)
+  on public.profiles to authenticated;
+
+-- Writes still include phone: signup upserts it, and RLS already limits a driver
+-- to their own row.
+grant insert (id, full_name, phone, avatar_url, created_at, updated_at)
+  on public.profiles to authenticated;
+grant update (full_name, phone, avatar_url, last_seen, updated_at)
+  on public.profiles to authenticated;
+
+-- anon keeps nothing. Reading community data requires a session.
+revoke all on public.profiles from anon;
 
 -- ============================================================================
 -- 2. Require a logged-in session to read community data.
@@ -82,10 +108,30 @@ select tablename,
    and tablename in ('profiles','worker_locations','feed_posts','post_likes','post_comments')
  order by tablename;
 
--- Should return NO row for 'phone' (anon/authenticated can no longer select it).
-select grantee, privilege_type, column_name
-  from information_schema.column_privileges
- where table_schema = 'public'
-   and table_name = 'profiles'
-   and column_name = 'phone'
-   and grantee in ('anon','authenticated');
+-- Phone must not be SELECTable by anyone but the postgres role.
+--
+-- This used to be a plain SELECT whose comment said "should return no rows". It
+-- returned eight, every time, and printing them changed nothing — a check that
+-- only prints is a check that gets scrolled past. It now raises, so the script
+-- cannot report success while driver phone numbers are still readable.
+do $$
+declare
+  leaked int;
+  who text;
+begin
+  select count(*), coalesce(string_agg(distinct grantee, ', '), '')
+    into leaked, who
+    from information_schema.column_privileges
+   where table_schema = 'public'
+     and table_name = 'profiles'
+     and column_name = 'phone'
+     and privilege_type = 'SELECT'
+     and grantee in ('anon', 'authenticated');
+
+  if leaked > 0 then
+    raise exception
+      'PRIVACY CHECK FAILED: % can still SELECT profiles.phone. Every signed-in account could harvest driver phone numbers.', who;
+  end if;
+
+  raise notice 'Privacy check passed: profiles.phone is not readable by anon or authenticated.';
+end $$;

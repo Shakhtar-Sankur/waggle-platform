@@ -44,3 +44,19 @@ select tablename, policyname, cmd
 
 select indexname from pg_indexes
  where schemaname = 'public' and indexname = 'idx_group_members_user';
+
+-- ============================================================================
+-- Leaving a group conversation.
+--
+-- chat_thread_members had policies for reading and joining but none for
+-- leaving, so a driver could be added to a group and never get out. The chat
+-- header's overflow button had nothing it could offer because of it.
+--
+-- Self only: the predicate is the caller's own row, so this cannot be used to
+-- remove somebody else from a conversation.
+-- ============================================================================
+drop policy if exists chat_members_leave_own on public.chat_thread_members;
+create policy chat_members_leave_own
+  on public.chat_thread_members for delete
+  to authenticated
+  using (user_id = auth.uid());

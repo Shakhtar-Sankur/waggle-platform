@@ -22,6 +22,7 @@ interface ChatState {
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: () => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
+  leaveThread: (threadId: string) => Promise<void>;
 }
 
 export const useChatStore = create<ChatState>()(
@@ -197,6 +198,28 @@ export const useChatStore = create<ChatState>()(
           ],
           selectedThreadId: id,
         }));
+      },
+      leaveThread: async (threadId) => {
+        const user = useAuthStore.getState().user;
+        const previous = get().threads;
+        // Optimistic: drop it from the list, restore if the server refuses.
+        set((state) => ({
+          threads: state.threads.filter((t) => t.id !== threadId),
+          messages: state.messages.filter((m) => m.threadId !== threadId),
+          selectedThreadId:
+            state.selectedThreadId === threadId
+              ? state.threads.find((t) => t.id !== threadId)?.id ?? ""
+              : state.selectedThreadId,
+        }));
+        if (!user || !SupabaseService.enabled) return;
+        try {
+          await SupabaseService.leaveThread(threadId, user.id);
+        } catch {
+          set({ threads: previous });
+          useNotificationStore
+            .getState()
+            .push(translate("wa_leaveFailed"), translate("wa_leaveFailedBody"), "chat");
+        }
       },
       openDirectThread: async (otherUserId) => {
         const user = useAuthStore.getState().user;

@@ -51,6 +51,20 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
  *  call for a different driver can never be handed the previous one's threads. */
 const defaultThreadsInFlight = new Map<string, Promise<ChatThread[]>>();
 
+/**
+ * The device's IANA time zone, e.g. "Asia/Kolkata". Sent with each location
+ * update so the server resets a driver's daily counters at their own midnight
+ * rather than Manila's. Returns undefined on the rare device that cannot say.
+ */
+function localTimeZone(): string | undefined {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+
 export const SupabaseService = {
   enabled: isSupabaseConfigured,
 
@@ -549,7 +563,7 @@ export const SupabaseService = {
       // privacy_lockdown.sql runs, and sending it beforehand would break the
       // upsert. Sharing-off is expressed by REMOVING the row (above), so this
       // build behaves correctly whether or not that migration has run yet.
-      await supabase.from("worker_locations").upsert({
+      const row = {
         user_id: user.id,
         lat: point.lat,
         lng: point.lng,
@@ -558,7 +572,16 @@ export const SupabaseService = {
         today_distance_km: distanceKm,
         today_earnings: earnings,
         updated_at: new Date(point.timestamp).toISOString(),
-      });
+      };
+
+      // `timezone` arrives with daily_reset.sql, so the driver's counters reset
+      // at their own midnight instead of Manila's. Before that migration the
+      // column does not exist and sending it 400s the whole upsert — which
+      // would silently stop GPS tracking, the one feature that must not break.
+      const { error } = await supabase
+        .from("worker_locations")
+        .upsert({ ...row, timezone: localTimeZone() });
+      if (error) await supabase.from("worker_locations").upsert(row);
     }
     await supabase.from("route_points").insert({
       user_id: user.id,
@@ -688,6 +711,23 @@ export const SupabaseService = {
     } finally {
       defaultThreadsInFlight.delete(userId);
     }
+  },
+
+  /**
+   * Leave a group conversation.
+   *
+   * Deletes only the caller's own membership row — the RLS policy
+   * chat_members_leave_own restricts it to auth.uid(), so this cannot remove
+   * anyone else. The thread and its messages stay for whoever remains.
+   */
+  async leaveThread(threadId: string, userId: string): Promise<void> {
+    assertSupabase();
+    const { error } = await supabase!
+      .from("chat_thread_members")
+      .delete()
+      .eq("thread_id", threadId)
+      .eq("user_id", userId);
+    if (error) throw error;
   },
 
   async sendMessage(message: ChatMessage): Promise<void> {

@@ -270,6 +270,10 @@ const en = {
   err_somethingWrong: "Something went wrong",
 
   // In-app notifications and toasts.
+  wa_leaveGroup: "Leave group",
+  wa_leaveGroupSure: "You will stop receiving messages from {name}. Others stay in the group.",
+  wa_leaveFailed: "Could not leave",
+  wa_leaveFailedBody: "You are still in the group. Check your connection and try again.",
   notif_queueFullTitle: "Could not save that offline",
   notif_queueFullBody: "Too much is already waiting to send. Reconnect and try again.",
   post_pending: "Waiting to send",
@@ -373,6 +377,7 @@ const fil: Dict = {
   settings_sub: "I-configure ang mga kagustuhan at privacy ng app", profile_deleteAccountSub: "Permanenteng aalisin nito ang iyong profile, mga ruta, kasaysayan ng chat, at settings. Hindi na ito maibabalik.", profile_deleteConfirm: "Naiintindihan ko na permanenteng buburahin ang aking account at personal na datos.", profile_deleting: "Binubura…", profile_deleteMyAccount: "Burahin ang Aking Account", fb_onlineNow: "Online ngayon", fb_offline: "Offline",
   notif_welcomeTitle: "Maligayang pagdating sa Buzz Buzz", notif_welcomeBody: "Handa na ang iyong driver workspace.",
   notif_queueFullTitle: "Hindi ma-save offline", notif_queueFullBody: "Masyadong marami nang naghihintay ipadala. Kumonekta muli at subukan ulit.", post_pending: "Naghihintay ipadala",
+  wa_leaveGroup: "Umalis sa grupo", wa_leaveGroupSure: "Hindi ka na makakatanggap ng mensahe mula sa {name}. Mananatili ang iba sa grupo.", wa_leaveFailed: "Hindi makaalis", wa_leaveFailedBody: "Nasa grupo ka pa rin. Tingnan ang koneksyon at subukan ulit.",
 };
 
 const es: Dict = {
@@ -408,6 +413,7 @@ const es: Dict = {
   settings_sub: "Configura tus preferencias y tu privacidad en la app", profile_deleteAccountSub: "Esto elimina de forma permanente tu perfil, rutas, historial de chat y ajustes. No se puede deshacer.", profile_deleteConfirm: "Entiendo que mi cuenta y mis datos personales se eliminarán de forma permanente.", profile_deleting: "Eliminando…", profile_deleteMyAccount: "Eliminar mi cuenta", fb_onlineNow: "En línea ahora", fb_offline: "Sin conexión",
   notif_welcomeTitle: "Bienvenido a Buzz Buzz", notif_welcomeBody: "Tu espacio de trabajo de conductor está listo.",
   notif_queueFullTitle: "No se pudo guardar sin conexión", notif_queueFullBody: "Ya hay demasiado esperando para enviarse. Reconéctate e inténtalo de nuevo.", post_pending: "Esperando para enviar",
+  wa_leaveGroup: "Salir del grupo", wa_leaveGroupSure: "Dejarás de recibir mensajes de {name}. Los demás siguen en el grupo.", wa_leaveFailed: "No se pudo salir", wa_leaveFailedBody: "Sigues en el grupo. Revisa tu conexión e inténtalo de nuevo.",
 };
 
 const hi: Dict = {
@@ -443,6 +449,7 @@ const hi: Dict = {
   settings_sub: "ऐप की पसंद और गोपनीयता सेटिंग्स कॉन्फ़िगर करें", profile_deleteAccountSub: "यह आपकी प्रोफ़ाइल, रूट, चैट इतिहास और सेटिंग्स को स्थायी रूप से हटा देगा। इसे वापस नहीं लाया जा सकता।", profile_deleteConfirm: "मैं समझता हूँ कि मेरा अकाउंट और निजी डेटा स्थायी रूप से हटा दिया जाएगा।", profile_deleting: "हटाया जा रहा है…", profile_deleteMyAccount: "मेरा अकाउंट हटाएँ", fb_onlineNow: "अभी ऑनलाइन", fb_offline: "ऑफ़लाइन",
   notif_welcomeTitle: "Buzz Buzz में आपका स्वागत है", notif_welcomeBody: "आपका ड्राइवर वर्कस्पेस तैयार है।",
   notif_queueFullTitle: "ऑफ़लाइन सहेजा नहीं जा सका", notif_queueFullBody: "पहले से बहुत कुछ भेजे जाने की प्रतीक्षा में है। दोबारा कनेक्ट करके कोशिश करें।", post_pending: "भेजने की प्रतीक्षा में",
+  wa_leaveGroup: "ग्रुप छोड़ें", wa_leaveGroupSure: "आपको {name} से संदेश मिलना बंद हो जाएगा। बाकी लोग ग्रुप में बने रहेंगे।", wa_leaveFailed: "छोड़ नहीं सके", wa_leaveFailedBody: "आप अब भी ग्रुप में हैं। कनेक्शन जाँचकर दोबारा कोशिश करें।",
 };
 
 const bn: Dict = {
@@ -478,6 +485,7 @@ const bn: Dict = {
   settings_sub: "অ্যাপের পছন্দ ও গোপনীয়তা সেটিংস কনফিগার করুন", profile_deleteAccountSub: "এটি আপনার প্রোফাইল, রুট, চ্যাট ইতিহাস ও সেটিংস স্থায়ীভাবে মুছে দেবে। এটি আর ফেরানো যাবে না।", profile_deleteConfirm: "আমি বুঝেছি যে আমার অ্যাকাউন্ট ও ব্যক্তিগত তথ্য স্থায়ীভাবে মুছে যাবে।", profile_deleting: "মোছা হচ্ছে…", profile_deleteMyAccount: "আমার অ্যাকাউন্ট মুছুন", fb_onlineNow: "এখন অনলাইন", fb_offline: "অফলাইন",
   notif_welcomeTitle: "Buzz Buzz-এ স্বাগতম", notif_welcomeBody: "আপনার ড্রাইভার ওয়ার্কস্পেস প্রস্তুত।",
   notif_queueFullTitle: "অফলাইনে সংরক্ষণ করা যায়নি", notif_queueFullBody: "পাঠানোর অপেক্ষায় ইতিমধ্যে অনেক কিছু আছে। আবার সংযোগ করে চেষ্টা করুন।", post_pending: "পাঠানোর অপেক্ষায়",
+  wa_leaveGroup: "গ্রুপ ছাড়ুন", wa_leaveGroupSure: "আপনি আর {name} থেকে বার্তা পাবেন না। বাকিরা গ্রুপে থাকবেন।", wa_leaveFailed: "ছাড়া গেল না", wa_leaveFailedBody: "আপনি এখনো গ্রুপে আছেন। সংযোগ দেখে আবার চেষ্টা করুন।",
 };
 
 const id: Dict = {
@@ -513,6 +521,7 @@ const id: Dict = {
   settings_sub: "Atur preferensi dan privasi aplikasimu", profile_deleteAccountSub: "Ini menghapus permanen profil, rute, riwayat obrolan, dan pengaturanmu. Tidak bisa dibatalkan.", profile_deleteConfirm: "Saya paham akun dan data pribadi saya akan dihapus permanen.", profile_deleting: "Menghapus…", profile_deleteMyAccount: "Hapus Akun Saya", fb_onlineNow: "Sedang online", fb_offline: "Offline",
   notif_welcomeTitle: "Selamat datang di Buzz Buzz", notif_welcomeBody: "Ruang kerja pengemudimu sudah siap.",
   notif_queueFullTitle: "Tidak bisa disimpan offline", notif_queueFullBody: "Sudah terlalu banyak yang menunggu dikirim. Sambungkan lagi lalu coba.", post_pending: "Menunggu dikirim",
+  wa_leaveGroup: "Keluar dari grup", wa_leaveGroupSure: "Kamu tidak akan menerima pesan dari {name} lagi. Yang lain tetap di grup.", wa_leaveFailed: "Tidak bisa keluar", wa_leaveFailedBody: "Kamu masih di grup. Periksa koneksimu lalu coba lagi.",
 };
 
 const ms: Dict = {
@@ -548,6 +557,7 @@ const ms: Dict = {
   settings_sub: "Konfigurasikan keutamaan dan privasi apl anda", profile_deleteAccountSub: "Ini memadamkan profil, laluan, sejarah sembang dan tetapan anda secara kekal. Ia tidak boleh dibatalkan.", profile_deleteConfirm: "Saya faham akaun dan data peribadi saya akan dipadam secara kekal.", profile_deleting: "Memadam…", profile_deleteMyAccount: "Padam Akaun Saya", fb_onlineNow: "Dalam talian sekarang", fb_offline: "Luar talian",
   notif_welcomeTitle: "Selamat datang ke Buzz Buzz", notif_welcomeBody: "Ruang kerja pemandu anda sudah sedia.",
   notif_queueFullTitle: "Tidak dapat disimpan di luar talian", notif_queueFullBody: "Terlalu banyak sedang menunggu dihantar. Sambung semula dan cuba lagi.", post_pending: "Menunggu untuk dihantar",
+  wa_leaveGroup: "Tinggalkan kumpulan", wa_leaveGroupSure: "Anda tidak akan menerima mesej daripada {name} lagi. Yang lain kekal dalam kumpulan.", wa_leaveFailed: "Tidak dapat keluar", wa_leaveFailedBody: "Anda masih dalam kumpulan. Semak sambungan dan cuba lagi.",
 };
 
 const th: Dict = {
@@ -583,6 +593,7 @@ const th: Dict = {
   settings_sub: "ตั้งค่าการใช้งานและความเป็นส่วนตัวของแอป", profile_deleteAccountSub: "การลบนี้จะเอาโปรไฟล์ เส้นทาง ประวัติแชท และการตั้งค่าของคุณออกอย่างถาวร และย้อนกลับไม่ได้", profile_deleteConfirm: "ฉันเข้าใจว่าบัญชีและข้อมูลส่วนตัวของฉันจะถูกลบอย่างถาวร", profile_deleting: "กำลังลบ…", profile_deleteMyAccount: "ลบบัญชีของฉัน", fb_onlineNow: "ออนไลน์อยู่", fb_offline: "ออฟไลน์",
   notif_welcomeTitle: "ยินดีต้อนรับสู่ Buzz Buzz", notif_welcomeBody: "พื้นที่ทำงานสำหรับคนขับของคุณพร้อมแล้ว",
   notif_queueFullTitle: "บันทึกแบบออฟไลน์ไม่ได้", notif_queueFullBody: "มีรายการรอส่งมากเกินไปแล้ว เชื่อมต่อใหม่แล้วลองอีกครั้ง", post_pending: "รอส่ง",
+  wa_leaveGroup: "ออกจากกลุ่ม", wa_leaveGroupSure: "คุณจะไม่ได้รับข้อความจาก {name} อีก คนอื่นยังอยู่ในกลุ่ม", wa_leaveFailed: "ออกไม่สำเร็จ", wa_leaveFailedBody: "คุณยังอยู่ในกลุ่ม ตรวจสอบการเชื่อมต่อแล้วลองอีกครั้ง",
 };
 
 const vi: Dict = {
@@ -618,6 +629,7 @@ const vi: Dict = {
   settings_sub: "Thiết lập tùy chọn và quyền riêng tư của ứng dụng", profile_deleteAccountSub: "Thao tác này xóa vĩnh viễn hồ sơ, lộ trình, lịch sử trò chuyện và cài đặt của bạn. Không thể hoàn tác.", profile_deleteConfirm: "Tôi hiểu rằng tài khoản và dữ liệu cá nhân của tôi sẽ bị xóa vĩnh viễn.", profile_deleting: "Đang xóa…", profile_deleteMyAccount: "Xóa tài khoản của tôi", fb_onlineNow: "Đang trực tuyến", fb_offline: "Ngoại tuyến",
   notif_welcomeTitle: "Chào mừng đến với Buzz Buzz", notif_welcomeBody: "Không gian làm việc của tài xế đã sẵn sàng.",
   notif_queueFullTitle: "Không thể lưu khi ngoại tuyến", notif_queueFullBody: "Đã có quá nhiều mục chờ gửi. Hãy kết nối lại rồi thử lại.", post_pending: "Đang chờ gửi",
+  wa_leaveGroup: "Rời nhóm", wa_leaveGroupSure: "Bạn sẽ không nhận tin nhắn từ {name} nữa. Những người khác vẫn ở lại nhóm.", wa_leaveFailed: "Không rời được", wa_leaveFailedBody: "Bạn vẫn ở trong nhóm. Kiểm tra kết nối rồi thử lại.",
 };
 
 const pt: Dict = {
@@ -653,6 +665,7 @@ const pt: Dict = {
   settings_sub: "Configure suas preferências e sua privacidade no app", profile_deleteAccountSub: "Isso remove permanentemente seu perfil, rotas, histórico de conversas e configurações. Não dá para desfazer.", profile_deleteConfirm: "Entendo que minha conta e meus dados pessoais serão excluídos permanentemente.", profile_deleting: "Excluindo…", profile_deleteMyAccount: "Excluir minha conta", fb_onlineNow: "Online agora", fb_offline: "Offline",
   notif_welcomeTitle: "Boas-vindas ao Buzz Buzz", notif_welcomeBody: "Seu espaço de trabalho de motorista está pronto.",
   notif_queueFullTitle: "Não foi possível salvar offline", notif_queueFullBody: "Já há coisas demais esperando para enviar. Reconecte e tente de novo.", post_pending: "Aguardando envio",
+  wa_leaveGroup: "Sair do grupo", wa_leaveGroupSure: "Você deixará de receber mensagens de {name}. Os outros continuam no grupo.", wa_leaveFailed: "Não foi possível sair", wa_leaveFailedBody: "Você ainda está no grupo. Verifique sua conexão e tente de novo.",
 };
 
 const fr: Dict = {
@@ -688,6 +701,7 @@ const fr: Dict = {
   settings_sub: "Configurez vos préférences et votre confidentialité", profile_deleteAccountSub: "Cela supprime définitivement votre profil, vos trajets, votre historique de discussion et vos réglages. C'est irréversible.", profile_deleteConfirm: "Je comprends que mon compte et mes données personnelles seront définitivement supprimés.", profile_deleting: "Suppression…", profile_deleteMyAccount: "Supprimer mon compte", fb_onlineNow: "En ligne", fb_offline: "Hors ligne",
   notif_welcomeTitle: "Bienvenue sur Buzz Buzz", notif_welcomeBody: "Votre espace chauffeur est prêt.",
   notif_queueFullTitle: "Impossible d'enregistrer hors ligne", notif_queueFullBody: "Trop d'éléments attendent déjà d'être envoyés. Reconnectez-vous et réessayez.", post_pending: "En attente d'envoi",
+  wa_leaveGroup: "Quitter le groupe", wa_leaveGroupSure: "Vous ne recevrez plus les messages de {name}. Les autres y restent.", wa_leaveFailed: "Impossible de quitter", wa_leaveFailedBody: "Vous êtes toujours dans le groupe. Vérifiez votre connexion et réessayez.",
 };
 
 const de: Dict = {
@@ -723,6 +737,7 @@ const de: Dict = {
   settings_sub: "Lege deine App-Einstellungen und deinen Datenschutz fest", profile_deleteAccountSub: "Das entfernt dein Profil, deine Strecken, deinen Chatverlauf und deine Einstellungen dauerhaft. Es lässt sich nicht rückgängig machen.", profile_deleteConfirm: "Mir ist klar, dass mein Konto und meine persönlichen Daten dauerhaft gelöscht werden.", profile_deleting: "Wird gelöscht…", profile_deleteMyAccount: "Mein Konto löschen", fb_onlineNow: "Gerade online", fb_offline: "Offline",
   notif_welcomeTitle: "Willkommen bei Buzz Buzz", notif_welcomeBody: "Dein Fahrer-Arbeitsbereich ist bereit.",
   notif_queueFullTitle: "Offline nicht speicherbar", notif_queueFullBody: "Es wartet schon zu viel auf den Versand. Verbinde dich neu und versuch es erneut.", post_pending: "Wartet auf Versand",
+  wa_leaveGroup: "Gruppe verlassen", wa_leaveGroupSure: "Du bekommst keine Nachrichten mehr aus {name}. Die anderen bleiben drin.", wa_leaveFailed: "Verlassen fehlgeschlagen", wa_leaveFailedBody: "Du bist noch in der Gruppe. Prüfe deine Verbindung und versuch es erneut.",
 };
 
 const zh: Dict = {
@@ -758,6 +773,7 @@ const zh: Dict = {
   settings_sub: "配置应用偏好和隐私设置", profile_deleteAccountSub: "这会永久删除你的资料、路线、聊天记录和设置，且无法撤销。", profile_deleteConfirm: "我明白我的账号和个人数据将被永久删除。", profile_deleting: "正在删除…", profile_deleteMyAccount: "删除我的账号", fb_onlineNow: "当前在线", fb_offline: "离线",
   notif_welcomeTitle: "欢迎来到 Buzz Buzz", notif_welcomeBody: "你的司机工作台已就绪。",
   notif_queueFullTitle: "无法离线保存", notif_queueFullBody: "已有太多内容等待发送。请重新联网后再试。", post_pending: "等待发送",
+  wa_leaveGroup: "退出群组", wa_leaveGroupSure: "你将不再收到来自 {name} 的消息。其他人仍留在群里。", wa_leaveFailed: "无法退出", wa_leaveFailedBody: "你仍在群里。请检查网络后重试。",
 };
 
 const ja: Dict = {
@@ -793,6 +809,7 @@ const ja: Dict = {
   settings_sub: "アプリの設定とプライバシーを構成します", profile_deleteAccountSub: "プロフィール・走行履歴・チャット履歴・設定を完全に削除します。元に戻せません。", profile_deleteConfirm: "アカウントと個人データが完全に削除されることを理解しました。", profile_deleting: "削除中…", profile_deleteMyAccount: "アカウントを削除する", fb_onlineNow: "オンライン", fb_offline: "オフライン",
   notif_welcomeTitle: "Buzz Buzz へようこそ", notif_welcomeBody: "ドライバー用の画面の準備ができました。",
   notif_queueFullTitle: "オフラインでは保存できません", notif_queueFullBody: "送信待ちが多すぎます。接続し直してからお試しください。", post_pending: "送信待ち",
+  wa_leaveGroup: "グループから退出", wa_leaveGroupSure: "{name} のメッセージは届かなくなります。他のメンバーはそのままです。", wa_leaveFailed: "退出できません", wa_leaveFailedBody: "まだグループにいます。接続を確認してからお試しください。",
 };
 
 const ko: Dict = {
@@ -828,6 +845,7 @@ const ko: Dict = {
   settings_sub: "앱 환경설정과 개인정보 설정을 구성하세요", profile_deleteAccountSub: "프로필, 경로, 대화 기록, 설정이 영구적으로 삭제됩니다. 되돌릴 수 없습니다.", profile_deleteConfirm: "내 계정과 개인 데이터가 영구적으로 삭제된다는 것을 이해합니다.", profile_deleting: "삭제 중…", profile_deleteMyAccount: "내 계정 삭제", fb_onlineNow: "지금 접속 중", fb_offline: "오프라인",
   notif_welcomeTitle: "Buzz Buzz에 오신 것을 환영합니다", notif_welcomeBody: "기사용 작업 공간이 준비되었습니다.",
   notif_queueFullTitle: "오프라인으로 저장할 수 없습니다", notif_queueFullBody: "보낼 항목이 이미 너무 많습니다. 다시 연결한 뒤 시도하세요.", post_pending: "전송 대기 중",
+  wa_leaveGroup: "그룹 나가기", wa_leaveGroupSure: "{name}의 메시지를 더 이상 받지 않습니다. 다른 사람은 그대로 남습니다.", wa_leaveFailed: "나갈 수 없습니다", wa_leaveFailedBody: "아직 그룹에 있습니다. 연결을 확인한 뒤 다시 시도하세요.",
 };
 
 const ar: Dict = {
@@ -863,6 +881,7 @@ const ar: Dict = {
   settings_sub: "اضبط تفضيلات التطبيق والخصوصية", profile_deleteAccountSub: "سيؤدي هذا إلى حذف ملفك ومساراتك وسجل محادثاتك وإعداداتك نهائيًا، ولا يمكن التراجع.", profile_deleteConfirm: "أفهم أنه سيتم حذف حسابي وبياناتي الشخصية نهائيًا.", profile_deleting: "جارٍ الحذف…", profile_deleteMyAccount: "حذف حسابي", fb_onlineNow: "متصل الآن", fb_offline: "غير متصل",
   notif_welcomeTitle: "مرحبًا بك في Buzz Buzz", notif_welcomeBody: "مساحة عمل السائق جاهزة.",
   notif_queueFullTitle: "تعذّر الحفظ دون اتصال", notif_queueFullBody: "هناك الكثير في انتظار الإرسال بالفعل. أعد الاتصال ثم حاول مجددًا.", post_pending: "في انتظار الإرسال",
+  wa_leaveGroup: "مغادرة المجموعة", wa_leaveGroupSure: "لن تصلك رسائل {name} بعد الآن. ويبقى الآخرون في المجموعة.", wa_leaveFailed: "تعذّرت المغادرة", wa_leaveFailedBody: "ما زلت في المجموعة. تحقّق من اتصالك ثم حاول مجددًا.",
 };
 
 const dictionaries: Record<Lang, Dict> = {

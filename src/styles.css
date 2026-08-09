@@ -1622,29 +1622,108 @@ select:focus {
 .wa-bubble {
   position: relative;
 }
-.wa-del {
+/* Chat header overflow menu. Shown only for groups, because "leave" is the one
+   action that exists — the button used to have no handler at all. */
+.wa-menu-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.wa-menu {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  z-index: 41;
+  top: 56px;
+  inset-inline-end: 10px;
+  min-width: 180px;
+  padding: 6px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 32px rgba(11, 20, 26, 0.24);
+}
+
+.wa-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #111b21;
+  font-size: 14.5px;
+  text-align: start;
+  cursor: pointer;
+}
+
+.wa-menu-item:hover,
+.wa-menu-item:focus-visible {
+  background: rgba(11, 20, 26, 0.06);
+}
+
+.wa-menu-item.danger {
+  color: #c0392b;
+}
+
+/* Keeps the header title centred on one-to-one chats, where there is no
+   overflow button to balance the back arrow. */
+.wa-header-spacer {
+  display: inline-block;
+  width: 40px;
+}
+
+/* A message and, for your own messages, its delete control beside it.
+   The control lives in the gutter next to the bubble rather than on top of it,
+   so it can never sit over the text — which is what it did on touch, where
+   there is no hover to hide behind. */
+.wa-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+}
+
+.wa-row.me {
+  /* Own messages hug the end; the delete control trails just outside them. */
+  justify-content: flex-end;
+}
+
+.wa-del {
+  flex: none;
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  /* 34px of touchable area for a 15px glyph — the old 22px box was below the
+     size a thumb can reliably hit. */
+  width: 34px;
+  height: 34px;
+  border: 0;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.18);
-  color: inherit;
+  background: transparent;
+  color: var(--muted-foreground);
   opacity: 0;
   cursor: pointer;
-  transition: opacity 0.15s ease;
+  transition: opacity 0.15s ease, background 0.15s ease;
 }
-.wa-bubble:hover .wa-del,
-.wa-bubble:focus-within .wa-del {
-  opacity: 0.85;
+
+.wa-row:hover .wa-del,
+.wa-row:focus-within .wa-del {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.06);
 }
-/* Touch devices have no hover — keep it always reachable there. */
+
+.wa-del:active {
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* No hover on touch, so it stays visible — but faint, and now in the gutter
+   where it has nothing to overlap. */
 @media (hover: none) {
   .wa-del {
-    opacity: 0.55;
+    opacity: 0.4;
   }
 }
 
@@ -2563,16 +2642,22 @@ html {
   font-size: 14px;
 }
 .wa-bubble {
+  /* Of the row, which is itself the full width of the thread. Left as a
+     percentage so a long message still wraps well before the delete control. */
   max-width: 82%;
-  align-self: flex-start;
   background: #fff;
   border-radius: 8px;
   padding: 6px 9px 4px;
   box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
 }
 .wa-bubble.me {
-  align-self: flex-end;
   background: #ffe9c9;
+}
+/* Side-to-side placement belongs to .wa-row now. The bubble used to set
+   align-self itself, which was correct when it was a direct child of the
+   message column and does nothing useful inside a horizontal row. */
+.wa-row {
+  align-self: stretch;
 }
 .wa-sender {
   display: block;

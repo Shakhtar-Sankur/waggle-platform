@@ -812,6 +812,22 @@ select tablename, policyname, cmd
 select indexname from pg_indexes
  where schemaname = 'public' and indexname = 'idx_group_members_user';
 
+-- ============================================================================
+-- Leaving a group conversation.
+--
+-- chat_thread_members had policies for reading and joining but none for
+-- leaving, so a driver could be added to a group and never get out. The chat
+-- header's overflow button had nothing it could offer because of it.
+--
+-- Self only: the predicate is the caller's own row, so this cannot be used to
+-- remove somebody else from a conversation.
+-- ============================================================================
+drop policy if exists chat_members_leave_own on public.chat_thread_members;
+create policy chat_members_leave_own
+  on public.chat_thread_members for delete
+  to authenticated
+  using (user_id = auth.uid());
+
 
 
 -- ==========================================================================
@@ -850,8 +866,34 @@ select indexname from pg_indexes
 --    profiles.phone (it is written on signup and read from the auth session),
 --    so removing it breaks nothing.
 -- ============================================================================
-revoke select (phone) on public.profiles from anon;
-revoke select (phone) on public.profiles from authenticated;
+-- A column-level REVOKE against a table-level GRANT does NOTHING. Postgres does
+-- not subtract a column from a whole-table privilege, so the two statements this
+-- replaces left phone readable by every signed-in account — which the
+-- verification query at the bottom of this file reported honestly, and which
+-- nobody read. The only way to restrict a column is to drop the table grant and
+-- re-grant the columns you do want.
+--
+-- Verified against the client before writing this: the app never SELECTs
+-- profiles.phone. It writes it on signup and reads it back from the auth
+-- session, so nothing here breaks.
+
+revoke select on public.profiles from anon;
+revoke select on public.profiles from authenticated;
+
+-- Everything except phone. New columns must be added here too, or PostgREST
+-- will not return them.
+grant select (id, full_name, avatar_url, last_seen, created_at, updated_at)
+  on public.profiles to authenticated;
+
+-- Writes still include phone: signup upserts it, and RLS already limits a driver
+-- to their own row.
+grant insert (id, full_name, phone, avatar_url, created_at, updated_at)
+  on public.profiles to authenticated;
+grant update (full_name, phone, avatar_url, last_seen, updated_at)
+  on public.profiles to authenticated;
+
+-- anon keeps nothing. Reading community data requires a session.
+revoke all on public.profiles from anon;
 
 -- ============================================================================
 -- 2. Require a logged-in session to read community data.
@@ -903,13 +945,33 @@ select tablename,
    and tablename in ('profiles','worker_locations','feed_posts','post_likes','post_comments')
  order by tablename;
 
--- Should return NO row for 'phone' (anon/authenticated can no longer select it).
-select grantee, privilege_type, column_name
-  from information_schema.column_privileges
- where table_schema = 'public'
-   and table_name = 'profiles'
-   and column_name = 'phone'
-   and grantee in ('anon','authenticated');
+-- Phone must not be SELECTable by anyone but the postgres role.
+--
+-- This used to be a plain SELECT whose comment said "should return no rows". It
+-- returned eight, every time, and printing them changed nothing — a check that
+-- only prints is a check that gets scrolled past. It now raises, so the script
+-- cannot report success while driver phone numbers are still readable.
+do $$
+declare
+  leaked int;
+  who text;
+begin
+  select count(*), coalesce(string_agg(distinct grantee, ', '), '')
+    into leaked, who
+    from information_schema.column_privileges
+   where table_schema = 'public'
+     and table_name = 'profiles'
+     and column_name = 'phone'
+     and privilege_type = 'SELECT'
+     and grantee in ('anon', 'authenticated');
+
+  if leaked > 0 then
+    raise exception
+      'PRIVACY CHECK FAILED: % can still SELECT profiles.phone. Every signed-in account could harvest driver phone numbers.', who;
+  end if;
+
+  raise notice 'Privacy check passed: profiles.phone is not readable by anon or authenticated.';
+end $$;
 
 
 
@@ -1205,7 +1267,7 @@ alter table public.chat_messages add column if not exists attachment_thumb_url t
 -- PART 16 — HARDENING
 -- ============================================================================
 --
--- New. The fifteen sections above grew feature by feature, and none of them
+-- New. The sixteen sections above grew feature by feature, and none of them
 -- went back to cover the things that only hurt once an app has real users:
 -- queries without an index, text fields with no ceiling, and counters that can
 -- go negative. None of this changes behaviour; it changes what happens at scale.
@@ -1347,46 +1409,114 @@ analyze public.worker_locations;
 -- PART 17 — SCHEDULED DAILY RESET  (optional, and last on purpose)
 -- ============================================================================
 --
--- pg_cron is not available on every Supabase plan or region. Unwrapped, a
--- failure here would abort the script and take the storage bucket and all the
--- hardening above with it — so it runs last, and it swallows its own error.
+-- pg_cron is not on every Supabase plan or region. Unwrapped, a failure here
+-- would abort the script and take the storage bucket and all the hardening
+-- above with it — so it runs last, and it swallows its own error.
 --
--- If it is skipped the app is still correct: loadWorkers already zeroes a
--- driver's distance and earnings when their row was last written on an earlier
--- day, so nobody sees yesterday's numbers either way. The cron job just makes
--- it true in the database as well as on screen.
---
--- Note for later: the schedule is 16:00 UTC, i.e. midnight in Manila. Now that
--- drivers are signing up across 49 countries, "midnight" is not one moment —
--- the client-side reset is what keeps this honest outside the Philippines.
+-- source: daily_reset.sql
 -- ============================================================================
 
+
+-- Server-side reset of every driver's daily counters, at THEIR midnight.
+--
+-- The previous version fired once a day at 16:00 UTC, because that is midnight
+-- in Manila. That was right when every driver was in the Philippines. It is
+-- wrong now: a driver in São Paulo had their day cleared at 1pm, and one in
+-- Mumbai at 9:30pm — mid-shift, with earnings on screen.
+--
+-- "Midnight" is not one moment across 49 countries, so the job now runs every
+-- hour and resets only the drivers whose own day has actually turned over.
+--
+-- Run once in the SQL editor. Safe to re-run.
+
+-- ---------------------------------------------------------------- timezone
+-- The client sends an IANA name (Asia/Kolkata, America/Sao_Paulo) when it has
+-- one. Rows written before this column existed simply do not have it yet.
+alter table public.worker_locations add column if not exists timezone text;
+
+-- ------------------------------------------------------------- local date
+-- What calendar day was it, for this driver, at this instant?
+--
+-- Prefers the reported IANA zone. Falls back to longitude — the earth turns 15
+-- degrees an hour — which is roughly right everywhere and exactly right nowhere,
+-- but is far better than assuming Manila. An unparseable zone falls back too,
+-- rather than taking the whole job down.
+create or replace function public.driver_local_date(
+  p_at timestamptz,
+  p_timezone text,
+  p_lng double precision
+)
+returns date
+language plpgsql
+immutable
+as $$
+begin
+  if p_timezone is not null and p_timezone <> '' then
+    begin
+      return (p_at at time zone p_timezone)::date;
+    exception when others then
+      -- unknown zone name; fall through to the longitude estimate
+      null;
+    end;
+  end if;
+
+  return (
+    p_at at time zone make_interval(
+      hours => greatest(-12, least(14, round(coalesce(p_lng, 0) / 15.0)::int))
+    )
+  )::date;
+end $$;
+
+-- ------------------------------------------------------------------ reset
+create or replace function public.reset_stale_daily_stats()
+returns integer
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  touched integer;
+begin
+  update public.worker_locations
+     set today_distance_km = 0,
+         today_earnings = 0
+   where (coalesce(today_distance_km, 0) <> 0 or coalesce(today_earnings, 0) <> 0)
+     -- The driver's local day has moved on since their last update.
+     and public.driver_local_date(now(), timezone, lng)
+       > public.driver_local_date(updated_at, timezone, lng);
+
+  get diagnostics touched = row_count;
+  return touched;
+end $$;
+
+revoke all on function public.reset_stale_daily_stats() from public, anon, authenticated;
+
+-- -------------------------------------------------------------- scheduling
+-- Hourly, because every hour is midnight somewhere. Wrapped: pg_cron is not on
+-- every plan, and this must never take the rest of a migration down with it.
 do $$
 begin
   create extension if not exists pg_cron;
 
   begin
     perform cron.unschedule('reset-daily-driver-stats');
-  exception when others then null;  -- no previous job
+  exception when others then null;
   end;
 
   perform cron.schedule(
     'reset-daily-driver-stats',
-    '0 16 * * *',
-    $job$
-      update public.worker_locations
-         set today_distance_km = 0,
-             today_earnings = 0
-       where coalesce(today_distance_km, 0) <> 0
-          or coalesce(today_earnings, 0) <> 0;
-    $job$
+    '5 * * * *',                       -- five past each hour
+    $job$ select public.reset_stale_daily_stats(); $job$
   );
 
-  raise notice 'Daily reset scheduled.';
+  raise notice 'Daily reset scheduled hourly; each driver resets at their own midnight.';
 exception when others then
-  raise notice 'pg_cron unavailable (%), skipping the scheduled reset. The client-side daily reset still applies.', sqlerrm;
+  raise notice 'pg_cron unavailable (%). Skipping the schedule — the client-side reset still applies.', sqlerrm;
 end $$;
 
--- Confirm, in the SQL editor:
+-- Check it:
 --   select jobname, schedule, active from cron.job
 --    where jobname = 'reset-daily-driver-stats';
+--
+-- Try it by hand (returns how many drivers were reset):
+--   select public.reset_stale_daily_stats();
