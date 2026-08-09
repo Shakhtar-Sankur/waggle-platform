@@ -53,6 +53,24 @@ create table if not exists private.push_config (
   enabled boolean not null default true
 );
 
+-- This row holds a shared secret, so lock it down three ways rather than relying
+-- on any one of them:
+--
+--   1. It lives in `private`, a schema PostgREST does not expose, so the API
+--      cannot reach it at all.
+--   2. No grants to anon or authenticated, so even if the schema were exposed
+--      later the roles have nothing.
+--   3. RLS on with no policies, which denies every non-owner by default.
+--
+-- None of this affects the push trigger below: it is SECURITY DEFINER and runs
+-- as the table owner, and the edge function uses the service role. Both bypass
+-- RLS. Supabase's SQL editor warns about a table created without RLS — this is
+-- the answer to that warning, in the file, rather than a checkbox someone has to
+-- remember to tick.
+alter table private.push_config enable row level security;
+revoke all on schema private from anon, authenticated;
+revoke all on private.push_config from anon, authenticated;
+
 -- pg_net lets Postgres make outbound HTTP calls (used to invoke the edge function).
 create extension if not exists pg_net;
 
