@@ -2,6 +2,8 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { seededChallenges, seededGroups, seededPosts, seededWorkers } from "../data/seed";
 import { SupabaseService } from "../services/SupabaseService";
+import { Outbox, blobToDataUrl } from "../services/Outbox";
+import type { PickedPhoto } from "../services/MediaService";
 import type {
   Challenge,
   ChallengeMetric,
@@ -27,7 +29,7 @@ interface CommunityState {
    *  unknown (offline / tables missing) and must NOT be shown as if real. */
   groupsFromCloud: boolean;
   loadCloudCommunity: () => Promise<void>;
-  addPost: (body: string, imageUrl?: string) => void;
+  addPost: (body: string, photo?: PickedPhoto) => void;
   toggleLike: (postId: string) => void;
   deletePost: (postId: string) => Promise<void>;
   loadComments: (postId: string) => Promise<void>;
@@ -85,7 +87,7 @@ export const useCommunityStore = create<CommunityState>()(
           console.warn("Could not load groups:", error);
         }
       },
-      addPost: (body, imageUrl) => {
+      addPost: (body, photo) => {
         const user = useAuthStore.getState().user;
         const tempId = uid("post");
         const optimistic: FeedPost = {
@@ -94,26 +96,51 @@ export const useCommunityStore = create<CommunityState>()(
           author: user?.fullName ?? "Driver",
           initials: initials(user?.fullName ?? "Driver"),
           body,
-          imageUrl,
+          // Show the local file immediately; it is replaced by the stored URL
+          // once the upload lands.
+          imageUrl: photo?.preview,
+          imageThumbUrl: photo?.preview,
           likes: 0,
           likedByMe: false,
           commentCount: 0,
           createdAt: Date.now(),
         };
         set((state) => ({ posts: [optimistic, ...state.posts] }));
-        if (user && SupabaseService.enabled)
-          void SupabaseService.addPost(user.id, body, imageUrl)
-            .then((real) => {
-              // Swap the temp post for the saved one so its real id is usable
-              // for likes/comments immediately.
-              if (real)
-                set((state) => ({
-                  posts: state.posts.map((p) => (p.id === tempId ? real : p)),
-                }));
-            })
-            .catch((error) => {
-              console.warn("Could not publish post to cloud:", error);
+        if (!user || !SupabaseService.enabled) return;
+
+        void (async () => {
+          try {
+            const image = photo
+              ? await SupabaseService.uploadPhoto(user.id, photo)
+              : undefined;
+            const real = await SupabaseService.addPost(user.id, body, image);
+            // Swap the temp post for the saved one so its real id is usable for
+            // likes and comments immediately.
+            if (real)
+              set((state) => ({
+                posts: state.posts.map((p) => (p.id === tempId ? real : p)),
+              }));
+          } catch {
+            // No signal, or the upload failed. Queue it rather than lose it —
+            // the post stays visible and goes out when the connection returns.
+            const queued = Outbox.add({
+              kind: "post",
+              userId: user.id,
+              body,
+              photo: photo
+                ? {
+                    full: await blobToDataUrl(photo.full),
+                    thumb: await blobToDataUrl(photo.thumb),
+                  }
+                : undefined,
             });
+            set((state) => ({
+              posts: state.posts.map((p) =>
+                p.id === tempId ? { ...p, pending: queued } : p,
+              ),
+            }));
+          }
+        })();
       },
       toggleLike: (postId) => {
         const user = useAuthStore.getState().user;

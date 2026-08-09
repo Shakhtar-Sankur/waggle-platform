@@ -3,11 +3,13 @@ import { persist } from "zustand/middleware";
 import { seededWorkers } from "../data/seed";
 import { ChatService } from "../services/ChatService";
 import { SupabaseService } from "../services/SupabaseService";
+import { Outbox, blobToDataUrl } from "../services/Outbox";
+import type { PickedPhoto } from "../services/MediaService";
+import { translate } from "../i18n";
 import type { ChatMessage, ChatThread } from "../types";
 import { uid } from "../utils/format";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
-import { translate } from "../i18n";
 
 interface ChatState {
   threads: ChatThread[];
@@ -16,7 +18,7 @@ interface ChatState {
   chatsLoaded: boolean;
   loadCloudChats: (userId: string) => Promise<void>;
   selectThread: (id: string) => void;
-  sendMessage: (body: string, attachmentUrl?: string) => Promise<void>;
+  sendMessage: (body: string, photo?: PickedPhoto) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: () => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
@@ -94,12 +96,22 @@ export const useChatStore = create<ChatState>()(
           console.warn("Could not delete message:", error);
         }
       },
-      sendMessage: async (body, attachmentUrl) => {
+      sendMessage: async (body, photo) => {
         const threadId = get().selectedThreadId;
         const user = useAuthStore.getState().user;
         if (!user) return;
         const senderId = SupabaseService.enabled ? user.id : "me";
-        const outgoing = ChatService.makeMessage(threadId, senderId, body, attachmentUrl);
+        // Upload first so the stored message carries URLs, not image bytes.
+        // A failure here falls through to the outbox below with the photo intact.
+        let image: { url: string; thumbUrl: string } | undefined;
+        if (photo && SupabaseService.enabled) {
+          try {
+            image = await SupabaseService.uploadPhoto(user.id, photo);
+          } catch {
+            image = undefined;
+          }
+        }
+        const outgoing = ChatService.makeMessage(threadId, senderId, body, image?.url, image?.thumbUrl);
         set((state) => ({
           messages: [...state.messages, outgoing],
           threads: bumpThread(state.threads, threadId),
@@ -108,15 +120,27 @@ export const useChatStore = create<ChatState>()(
         if (SupabaseService.enabled) {
           try {
             await SupabaseService.sendMessage(outgoing);
-          } catch (error) {
-            set((state) => ({
-              messages: state.messages.filter((message) => message.id !== outgoing.id),
-            }));
-            useNotificationStore.getState().push(
-              "Message not sent",
-              error instanceof Error ? error.message : "Could not deliver your message.",
-              "chat",
-            );
+          } catch {
+            // Deleting the driver's message was the old behaviour and it is the
+            // wrong one: they typed it, and a tunnel is not a reason to throw it
+            // away. Queue it, leave it on screen marked pending, and send it when
+            // the signal returns.
+            const queued = Outbox.add({
+              kind: "message",
+              userId: user.id,
+              threadId,
+              messageId: outgoing.id,
+              body,
+              photo: photo
+                ? { full: await blobToDataUrl(photo.full), thumb: await blobToDataUrl(photo.thumb) }
+                : undefined,
+            });
+            if (!queued)
+              useNotificationStore.getState().push(
+                translate("notif_queueFullTitle"),
+                translate("notif_queueFullBody"),
+                "chat",
+              );
           }
           return;
         }

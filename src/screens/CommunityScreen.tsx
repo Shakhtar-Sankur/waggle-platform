@@ -31,7 +31,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Wordmark } from "../components/Wordmark";
-import { MediaService } from "../services/MediaService";
+import { MediaService, type PickedPhoto } from "../services/MediaService";
 import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
@@ -78,13 +78,15 @@ export function CommunityScreen() {
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState("");
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
-  const [photo, setPhoto] = useState<string | undefined>();
+  const [photo, setPhoto] = useState<PickedPhoto | undefined>();
   const [pickingPhoto, setPickingPhoto] = useState(false);
   const [tagged, setTagged] = useState<Worker[]>([]);
   const [tagOpen, setTagOpen] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [shareFb, setShareFb] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  // Full-size image is fetched only when a photo is tapped.
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
   const firstName = user?.fullName.split(" ")[0] ?? "Driver";
 
@@ -117,13 +119,13 @@ export function CommunityScreen() {
       }),
     [connections, query, user?.id, workers],
   );
-  const reels = useMemo(() => posts.filter((p) => p.imageUrl), [posts]);
+  const reels = useMemo(() => posts.filter((p) => p.imageUrl ?? p.imageThumbUrl), [posts]);
 
   const pickPhoto = async () => {
     setPickingPhoto(true);
     try {
-      const url = await MediaService.pickImage();
-      if (url) setPhoto(url);
+      const picked = await MediaService.pickImage();
+      if (picked) setPhoto(picked);
     } finally {
       setPickingPhoto(false);
     }
@@ -155,6 +157,7 @@ export function CommunityScreen() {
     // into a group directly — the user taps "Post" in Facebook themselves).
     if (shareFb && withTags) shareToFacebook(withTags);
     setPostBody("");
+    // The store holds the blobs now; the composer can let its preview go.
     setPhoto(undefined);
     setTagged([]);
   };
@@ -243,8 +246,8 @@ export function CommunityScreen() {
             </div>
             {photo ? (
               <div className="fb-composer-photo">
-                <img src={photo} alt="Selected attachment" />
-                <button type="button" aria-label={t("a11y_removePhoto")} onClick={() => setPhoto(undefined)}>
+                <img src={photo.preview} alt="Selected attachment" />
+                <button type="button" aria-label={t("a11y_removePhoto")} onClick={() => { MediaService.releasePreview(photo?.preview); setPhoto(undefined); }}>
                   <X size={16} />
                 </button>
               </div>
@@ -303,7 +306,10 @@ export function CommunityScreen() {
                   <span className="fb-avatar">{post.initials}</span>
                   <div className="fb-post-meta">
                     <strong>{post.author}</strong>
-                    <p>{timeAgo(post.createdAt)} · <Globe size={12} /></p>
+                    <p>
+                      {timeAgo(post.createdAt)} · <Globe size={12} />
+                      {post.pending ? <span className="pending-chip">{t("post_pending")}</span> : null}
+                    </p>
                   </div>
                   {/* Your own post can be genuinely deleted; someone else's can
                       only be hidden from your own feed. */}
@@ -323,7 +329,17 @@ export function CommunityScreen() {
                 </div>
                 {post.body ? <p className="fb-post-body">{post.body}</p> : null}
                 {post.imageUrl ? (
-                  <img className="fb-post-image" src={post.imageUrl} alt="Shared attachment" loading="lazy" />
+                  <img
+                    className="fb-post-image"
+                    /* The feed shows the ~20 KB thumbnail. Legacy posts have no
+                       thumbnail — their image is inline, so it costs nothing extra
+                       to keep showing it. */
+                    src={post.imageThumbUrl ?? post.imageUrl}
+                    alt="Shared attachment"
+                    loading="lazy"
+                    decoding="async"
+                    onClick={() => post.imageUrl && setViewerUrl(post.imageUrl)}
+                  />
                 ) : null}
                 {post.likes || post.commentCount ? (
                   <div className="fb-post-stats">
@@ -618,6 +634,22 @@ export function CommunityScreen() {
           if (id) void messageDriver(id);
         }}
       />
+
+      {/* Full-size photo. The feed only ever loaded the thumbnail; this is the
+          one place the large file is fetched, and only because someone asked. */}
+      {viewerUrl ? (
+        <div
+          className="photo-viewer"
+          role="dialog"
+          aria-modal="true"
+          onClick={() => setViewerUrl(null)}
+        >
+          <button type="button" className="photo-viewer-close" aria-label={t("a11y_close")}>
+            <X size={22} />
+          </button>
+          <img src={viewerUrl} alt="" />
+        </div>
+      ) : null}
     </main>
   );
 }

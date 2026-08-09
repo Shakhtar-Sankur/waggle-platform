@@ -11,13 +11,20 @@ export const ChatService = {
     return seededMessages;
   },
 
-  makeMessage(threadId: string, senderId: string, body: string, attachmentUrl?: string): ChatMessage {
+  makeMessage(
+    threadId: string,
+    senderId: string,
+    body: string,
+    attachmentUrl?: string,
+    attachmentThumbUrl?: string,
+  ): ChatMessage {
     return {
       id: uid("msg"),
       threadId,
       senderId,
       body,
       attachmentUrl,
+      attachmentThumbUrl,
       createdAt: Date.now(),
       // Every new message starts as 'sent' (single ✓). It becomes 'delivered'
       // when the recipient's app fetches it and 'read' when they open the chat.

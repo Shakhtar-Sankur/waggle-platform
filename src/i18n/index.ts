@@ -270,6 +270,9 @@ const en = {
   err_somethingWrong: "Something went wrong",
 
   // In-app notifications and toasts.
+  notif_queueFullTitle: "Could not save that offline",
+  notif_queueFullBody: "Too much is already waiting to send. Reconnect and try again.",
+  post_pending: "Waiting to send",
   notif_welcomeTitle: "Welcome to Buzz Buzz",
   notif_welcomeBody: "Your driver workspace is ready.",
   notif_welcomeBack: "Welcome back!",
@@ -369,6 +372,7 @@ const fil: Dict = {
   a11y_back: "Bumalik", a11y_options: "Mga opsyon", a11y_attachPhoto: "Maglakip ng larawan", a11y_send: "Ipadala", a11y_sendComment: "Ipadala ang komento", a11y_removePhoto: "Alisin ang larawan", a11y_messenger: "Messenger", a11y_notifications: "Mga abiso", a11y_settings: "Mga setting", a11y_logOut: "Mag-log out", a11y_close: "Isara", a11y_dismiss: "I-dismiss", a11y_centerOnMe: "Itutok sa akin", a11y_zoomIn: "Mag-zoom in", a11y_zoomOut: "Mag-zoom out", a11y_changeMapLayer: "Palitan ang layer ng mapa", a11y_journeySettings: "Mga setting ng biyahe", a11y_profile: "Profile",
   settings_sub: "I-configure ang mga kagustuhan at privacy ng app", profile_deleteAccountSub: "Permanenteng aalisin nito ang iyong profile, mga ruta, kasaysayan ng chat, at settings. Hindi na ito maibabalik.", profile_deleteConfirm: "Naiintindihan ko na permanenteng buburahin ang aking account at personal na datos.", profile_deleting: "Binubura…", profile_deleteMyAccount: "Burahin ang Aking Account", fb_onlineNow: "Online ngayon", fb_offline: "Offline",
   notif_welcomeTitle: "Maligayang pagdating sa Buzz Buzz", notif_welcomeBody: "Handa na ang iyong driver workspace.",
+  notif_queueFullTitle: "Hindi ma-save offline", notif_queueFullBody: "Masyadong marami nang naghihintay ipadala. Kumonekta muli at subukan ulit.", post_pending: "Naghihintay ipadala",
 };
 
 const es: Dict = {
@@ -403,6 +407,7 @@ const es: Dict = {
   a11y_back: "Atrás", a11y_options: "Opciones", a11y_attachPhoto: "Adjuntar foto", a11y_send: "Enviar", a11y_sendComment: "Enviar comentario", a11y_removePhoto: "Quitar foto", a11y_messenger: "Mensajería", a11y_notifications: "Notificaciones", a11y_settings: "Ajustes", a11y_logOut: "Cerrar sesión", a11y_close: "Cerrar", a11y_dismiss: "Descartar", a11y_centerOnMe: "Centrar en mí", a11y_zoomIn: "Acercar", a11y_zoomOut: "Alejar", a11y_changeMapLayer: "Cambiar capa del mapa", a11y_journeySettings: "Ajustes del viaje", a11y_profile: "Perfil",
   settings_sub: "Configura tus preferencias y tu privacidad en la app", profile_deleteAccountSub: "Esto elimina de forma permanente tu perfil, rutas, historial de chat y ajustes. No se puede deshacer.", profile_deleteConfirm: "Entiendo que mi cuenta y mis datos personales se eliminarán de forma permanente.", profile_deleting: "Eliminando…", profile_deleteMyAccount: "Eliminar mi cuenta", fb_onlineNow: "En línea ahora", fb_offline: "Sin conexión",
   notif_welcomeTitle: "Bienvenido a Buzz Buzz", notif_welcomeBody: "Tu espacio de trabajo de conductor está listo.",
+  notif_queueFullTitle: "No se pudo guardar sin conexión", notif_queueFullBody: "Ya hay demasiado esperando para enviarse. Reconéctate e inténtalo de nuevo.", post_pending: "Esperando para enviar",
 };
 
 const hi: Dict = {
@@ -437,6 +442,7 @@ const hi: Dict = {
   a11y_back: "वापस", a11y_options: "विकल्प", a11y_attachPhoto: "फ़ोटो जोड़ें", a11y_send: "भेजें", a11y_sendComment: "कमेंट भेजें", a11y_removePhoto: "फ़ोटो हटाएँ", a11y_messenger: "मैसेंजर", a11y_notifications: "सूचनाएँ", a11y_settings: "सेटिंग्स", a11y_logOut: "लॉग आउट", a11y_close: "बंद करें", a11y_dismiss: "हटाएँ", a11y_centerOnMe: "मुझ पर केंद्रित करें", a11y_zoomIn: "ज़ूम इन", a11y_zoomOut: "ज़ूम आउट", a11y_changeMapLayer: "मैप लेयर बदलें", a11y_journeySettings: "यात्रा सेटिंग्स", a11y_profile: "प्रोफ़ाइल",
   settings_sub: "ऐप की पसंद और गोपनीयता सेटिंग्स कॉन्फ़िगर करें", profile_deleteAccountSub: "यह आपकी प्रोफ़ाइल, रूट, चैट इतिहास और सेटिंग्स को स्थायी रूप से हटा देगा। इसे वापस नहीं लाया जा सकता।", profile_deleteConfirm: "मैं समझता हूँ कि मेरा अकाउंट और निजी डेटा स्थायी रूप से हटा दिया जाएगा।", profile_deleting: "हटाया जा रहा है…", profile_deleteMyAccount: "मेरा अकाउंट हटाएँ", fb_onlineNow: "अभी ऑनलाइन", fb_offline: "ऑफ़लाइन",
   notif_welcomeTitle: "Buzz Buzz में आपका स्वागत है", notif_welcomeBody: "आपका ड्राइवर वर्कस्पेस तैयार है।",
+  notif_queueFullTitle: "ऑफ़लाइन सहेजा नहीं जा सका", notif_queueFullBody: "पहले से बहुत कुछ भेजे जाने की प्रतीक्षा में है। दोबारा कनेक्ट करके कोशिश करें।", post_pending: "भेजने की प्रतीक्षा में",
 };
 
 const bn: Dict = {
@@ -471,6 +477,7 @@ const bn: Dict = {
   a11y_back: "পেছনে", a11y_options: "অপশন", a11y_attachPhoto: "ছবি যুক্ত করুন", a11y_send: "পাঠান", a11y_sendComment: "মন্তব্য পাঠান", a11y_removePhoto: "ছবি সরান", a11y_messenger: "মেসেঞ্জার", a11y_notifications: "বিজ্ঞপ্তি", a11y_settings: "সেটিংস", a11y_logOut: "লগ আউট", a11y_close: "বন্ধ", a11y_dismiss: "সরান", a11y_centerOnMe: "আমাকে কেন্দ্রে রাখুন", a11y_zoomIn: "জুম ইন", a11y_zoomOut: "জুম আউট", a11y_changeMapLayer: "ম্যাপ লেয়ার বদলান", a11y_journeySettings: "যাত্রার সেটিংস", a11y_profile: "প্রোফাইল",
   settings_sub: "অ্যাপের পছন্দ ও গোপনীয়তা সেটিংস কনফিগার করুন", profile_deleteAccountSub: "এটি আপনার প্রোফাইল, রুট, চ্যাট ইতিহাস ও সেটিংস স্থায়ীভাবে মুছে দেবে। এটি আর ফেরানো যাবে না।", profile_deleteConfirm: "আমি বুঝেছি যে আমার অ্যাকাউন্ট ও ব্যক্তিগত তথ্য স্থায়ীভাবে মুছে যাবে।", profile_deleting: "মোছা হচ্ছে…", profile_deleteMyAccount: "আমার অ্যাকাউন্ট মুছুন", fb_onlineNow: "এখন অনলাইন", fb_offline: "অফলাইন",
   notif_welcomeTitle: "Buzz Buzz-এ স্বাগতম", notif_welcomeBody: "আপনার ড্রাইভার ওয়ার্কস্পেস প্রস্তুত।",
+  notif_queueFullTitle: "অফলাইনে সংরক্ষণ করা যায়নি", notif_queueFullBody: "পাঠানোর অপেক্ষায় ইতিমধ্যে অনেক কিছু আছে। আবার সংযোগ করে চেষ্টা করুন।", post_pending: "পাঠানোর অপেক্ষায়",
 };
 
 const id: Dict = {
@@ -505,6 +512,7 @@ const id: Dict = {
   a11y_back: "Kembali", a11y_options: "Opsi", a11y_attachPhoto: "Lampirkan foto", a11y_send: "Kirim", a11y_sendComment: "Kirim komentar", a11y_removePhoto: "Hapus foto", a11y_messenger: "Pesan", a11y_notifications: "Notifikasi", a11y_settings: "Pengaturan", a11y_logOut: "Keluar", a11y_close: "Tutup", a11y_dismiss: "Tutup notifikasi", a11y_centerOnMe: "Pusatkan ke saya", a11y_zoomIn: "Perbesar", a11y_zoomOut: "Perkecil", a11y_changeMapLayer: "Ganti lapisan peta", a11y_journeySettings: "Pengaturan perjalanan", a11y_profile: "Profil",
   settings_sub: "Atur preferensi dan privasi aplikasimu", profile_deleteAccountSub: "Ini menghapus permanen profil, rute, riwayat obrolan, dan pengaturanmu. Tidak bisa dibatalkan.", profile_deleteConfirm: "Saya paham akun dan data pribadi saya akan dihapus permanen.", profile_deleting: "Menghapus…", profile_deleteMyAccount: "Hapus Akun Saya", fb_onlineNow: "Sedang online", fb_offline: "Offline",
   notif_welcomeTitle: "Selamat datang di Buzz Buzz", notif_welcomeBody: "Ruang kerja pengemudimu sudah siap.",
+  notif_queueFullTitle: "Tidak bisa disimpan offline", notif_queueFullBody: "Sudah terlalu banyak yang menunggu dikirim. Sambungkan lagi lalu coba.", post_pending: "Menunggu dikirim",
 };
 
 const ms: Dict = {
@@ -539,6 +547,7 @@ const ms: Dict = {
   a11y_back: "Kembali", a11y_options: "Pilihan", a11y_attachPhoto: "Lampirkan foto", a11y_send: "Hantar", a11y_sendComment: "Hantar komen", a11y_removePhoto: "Buang foto", a11y_messenger: "Mesej", a11y_notifications: "Pemberitahuan", a11y_settings: "Tetapan", a11y_logOut: "Log keluar", a11y_close: "Tutup", a11y_dismiss: "Ketepikan", a11y_centerOnMe: "Pusat pada saya", a11y_zoomIn: "Zum masuk", a11y_zoomOut: "Zum keluar", a11y_changeMapLayer: "Tukar lapisan peta", a11y_journeySettings: "Tetapan perjalanan", a11y_profile: "Profil",
   settings_sub: "Konfigurasikan keutamaan dan privasi apl anda", profile_deleteAccountSub: "Ini memadamkan profil, laluan, sejarah sembang dan tetapan anda secara kekal. Ia tidak boleh dibatalkan.", profile_deleteConfirm: "Saya faham akaun dan data peribadi saya akan dipadam secara kekal.", profile_deleting: "Memadam…", profile_deleteMyAccount: "Padam Akaun Saya", fb_onlineNow: "Dalam talian sekarang", fb_offline: "Luar talian",
   notif_welcomeTitle: "Selamat datang ke Buzz Buzz", notif_welcomeBody: "Ruang kerja pemandu anda sudah sedia.",
+  notif_queueFullTitle: "Tidak dapat disimpan di luar talian", notif_queueFullBody: "Terlalu banyak sedang menunggu dihantar. Sambung semula dan cuba lagi.", post_pending: "Menunggu untuk dihantar",
 };
 
 const th: Dict = {
@@ -573,6 +582,7 @@ const th: Dict = {
   a11y_back: "ย้อนกลับ", a11y_options: "ตัวเลือก", a11y_attachPhoto: "แนบรูป", a11y_send: "ส่ง", a11y_sendComment: "ส่งความคิดเห็น", a11y_removePhoto: "ลบรูป", a11y_messenger: "ข้อความ", a11y_notifications: "การแจ้งเตือน", a11y_settings: "การตั้งค่า", a11y_logOut: "ออกจากระบบ", a11y_close: "ปิด", a11y_dismiss: "ปิดการแจ้งเตือน", a11y_centerOnMe: "จัดกึ่งกลางที่ฉัน", a11y_zoomIn: "ซูมเข้า", a11y_zoomOut: "ซูมออก", a11y_changeMapLayer: "เปลี่ยนชั้นแผนที่", a11y_journeySettings: "ตั้งค่าการเดินทาง", a11y_profile: "โปรไฟล์",
   settings_sub: "ตั้งค่าการใช้งานและความเป็นส่วนตัวของแอป", profile_deleteAccountSub: "การลบนี้จะเอาโปรไฟล์ เส้นทาง ประวัติแชท และการตั้งค่าของคุณออกอย่างถาวร และย้อนกลับไม่ได้", profile_deleteConfirm: "ฉันเข้าใจว่าบัญชีและข้อมูลส่วนตัวของฉันจะถูกลบอย่างถาวร", profile_deleting: "กำลังลบ…", profile_deleteMyAccount: "ลบบัญชีของฉัน", fb_onlineNow: "ออนไลน์อยู่", fb_offline: "ออฟไลน์",
   notif_welcomeTitle: "ยินดีต้อนรับสู่ Buzz Buzz", notif_welcomeBody: "พื้นที่ทำงานสำหรับคนขับของคุณพร้อมแล้ว",
+  notif_queueFullTitle: "บันทึกแบบออฟไลน์ไม่ได้", notif_queueFullBody: "มีรายการรอส่งมากเกินไปแล้ว เชื่อมต่อใหม่แล้วลองอีกครั้ง", post_pending: "รอส่ง",
 };
 
 const vi: Dict = {
@@ -607,6 +617,7 @@ const vi: Dict = {
   a11y_back: "Quay lại", a11y_options: "Tùy chọn", a11y_attachPhoto: "Đính kèm ảnh", a11y_send: "Gửi", a11y_sendComment: "Gửi bình luận", a11y_removePhoto: "Xóa ảnh", a11y_messenger: "Tin nhắn", a11y_notifications: "Thông báo", a11y_settings: "Cài đặt", a11y_logOut: "Đăng xuất", a11y_close: "Đóng", a11y_dismiss: "Bỏ qua", a11y_centerOnMe: "Căn giữa vào tôi", a11y_zoomIn: "Phóng to", a11y_zoomOut: "Thu nhỏ", a11y_changeMapLayer: "Đổi lớp bản đồ", a11y_journeySettings: "Cài đặt hành trình", a11y_profile: "Hồ sơ",
   settings_sub: "Thiết lập tùy chọn và quyền riêng tư của ứng dụng", profile_deleteAccountSub: "Thao tác này xóa vĩnh viễn hồ sơ, lộ trình, lịch sử trò chuyện và cài đặt của bạn. Không thể hoàn tác.", profile_deleteConfirm: "Tôi hiểu rằng tài khoản và dữ liệu cá nhân của tôi sẽ bị xóa vĩnh viễn.", profile_deleting: "Đang xóa…", profile_deleteMyAccount: "Xóa tài khoản của tôi", fb_onlineNow: "Đang trực tuyến", fb_offline: "Ngoại tuyến",
   notif_welcomeTitle: "Chào mừng đến với Buzz Buzz", notif_welcomeBody: "Không gian làm việc của tài xế đã sẵn sàng.",
+  notif_queueFullTitle: "Không thể lưu khi ngoại tuyến", notif_queueFullBody: "Đã có quá nhiều mục chờ gửi. Hãy kết nối lại rồi thử lại.", post_pending: "Đang chờ gửi",
 };
 
 const pt: Dict = {
@@ -641,6 +652,7 @@ const pt: Dict = {
   a11y_back: "Voltar", a11y_options: "Opções", a11y_attachPhoto: "Anexar foto", a11y_send: "Enviar", a11y_sendComment: "Enviar comentário", a11y_removePhoto: "Remover foto", a11y_messenger: "Mensagens", a11y_notifications: "Notificações", a11y_settings: "Configurações", a11y_logOut: "Sair", a11y_close: "Fechar", a11y_dismiss: "Dispensar", a11y_centerOnMe: "Centralizar em mim", a11y_zoomIn: "Aproximar", a11y_zoomOut: "Afastar", a11y_changeMapLayer: "Mudar camada do mapa", a11y_journeySettings: "Configurações da jornada", a11y_profile: "Perfil",
   settings_sub: "Configure suas preferências e sua privacidade no app", profile_deleteAccountSub: "Isso remove permanentemente seu perfil, rotas, histórico de conversas e configurações. Não dá para desfazer.", profile_deleteConfirm: "Entendo que minha conta e meus dados pessoais serão excluídos permanentemente.", profile_deleting: "Excluindo…", profile_deleteMyAccount: "Excluir minha conta", fb_onlineNow: "Online agora", fb_offline: "Offline",
   notif_welcomeTitle: "Boas-vindas ao Buzz Buzz", notif_welcomeBody: "Seu espaço de trabalho de motorista está pronto.",
+  notif_queueFullTitle: "Não foi possível salvar offline", notif_queueFullBody: "Já há coisas demais esperando para enviar. Reconecte e tente de novo.", post_pending: "Aguardando envio",
 };
 
 const fr: Dict = {
@@ -675,6 +687,7 @@ const fr: Dict = {
   a11y_back: "Retour", a11y_options: "Options", a11y_attachPhoto: "Joindre une photo", a11y_send: "Envoyer", a11y_sendComment: "Envoyer le commentaire", a11y_removePhoto: "Retirer la photo", a11y_messenger: "Messagerie", a11y_notifications: "Notifications", a11y_settings: "Réglages", a11y_logOut: "Se déconnecter", a11y_close: "Fermer", a11y_dismiss: "Ignorer", a11y_centerOnMe: "Me centrer", a11y_zoomIn: "Zoom avant", a11y_zoomOut: "Zoom arrière", a11y_changeMapLayer: "Changer de fond de carte", a11y_journeySettings: "Réglages du trajet", a11y_profile: "Profil",
   settings_sub: "Configurez vos préférences et votre confidentialité", profile_deleteAccountSub: "Cela supprime définitivement votre profil, vos trajets, votre historique de discussion et vos réglages. C'est irréversible.", profile_deleteConfirm: "Je comprends que mon compte et mes données personnelles seront définitivement supprimés.", profile_deleting: "Suppression…", profile_deleteMyAccount: "Supprimer mon compte", fb_onlineNow: "En ligne", fb_offline: "Hors ligne",
   notif_welcomeTitle: "Bienvenue sur Buzz Buzz", notif_welcomeBody: "Votre espace chauffeur est prêt.",
+  notif_queueFullTitle: "Impossible d'enregistrer hors ligne", notif_queueFullBody: "Trop d'éléments attendent déjà d'être envoyés. Reconnectez-vous et réessayez.", post_pending: "En attente d'envoi",
 };
 
 const de: Dict = {
@@ -709,6 +722,7 @@ const de: Dict = {
   a11y_back: "Zurück", a11y_options: "Optionen", a11y_attachPhoto: "Foto anhängen", a11y_send: "Senden", a11y_sendComment: "Kommentar senden", a11y_removePhoto: "Foto entfernen", a11y_messenger: "Nachrichten", a11y_notifications: "Benachrichtigungen", a11y_settings: "Einstellungen", a11y_logOut: "Abmelden", a11y_close: "Schließen", a11y_dismiss: "Ausblenden", a11y_centerOnMe: "Auf mich zentrieren", a11y_zoomIn: "Vergrößern", a11y_zoomOut: "Verkleinern", a11y_changeMapLayer: "Kartenebene wechseln", a11y_journeySettings: "Fahrteinstellungen", a11y_profile: "Profil",
   settings_sub: "Lege deine App-Einstellungen und deinen Datenschutz fest", profile_deleteAccountSub: "Das entfernt dein Profil, deine Strecken, deinen Chatverlauf und deine Einstellungen dauerhaft. Es lässt sich nicht rückgängig machen.", profile_deleteConfirm: "Mir ist klar, dass mein Konto und meine persönlichen Daten dauerhaft gelöscht werden.", profile_deleting: "Wird gelöscht…", profile_deleteMyAccount: "Mein Konto löschen", fb_onlineNow: "Gerade online", fb_offline: "Offline",
   notif_welcomeTitle: "Willkommen bei Buzz Buzz", notif_welcomeBody: "Dein Fahrer-Arbeitsbereich ist bereit.",
+  notif_queueFullTitle: "Offline nicht speicherbar", notif_queueFullBody: "Es wartet schon zu viel auf den Versand. Verbinde dich neu und versuch es erneut.", post_pending: "Wartet auf Versand",
 };
 
 const zh: Dict = {
@@ -743,6 +757,7 @@ const zh: Dict = {
   a11y_back: "返回", a11y_options: "更多选项", a11y_attachPhoto: "添加照片", a11y_send: "发送", a11y_sendComment: "发送评论", a11y_removePhoto: "移除照片", a11y_messenger: "消息", a11y_notifications: "通知", a11y_settings: "设置", a11y_logOut: "退出登录", a11y_close: "关闭", a11y_dismiss: "忽略", a11y_centerOnMe: "定位到我", a11y_zoomIn: "放大", a11y_zoomOut: "缩小", a11y_changeMapLayer: "切换地图图层", a11y_journeySettings: "行程设置", a11y_profile: "个人资料",
   settings_sub: "配置应用偏好和隐私设置", profile_deleteAccountSub: "这会永久删除你的资料、路线、聊天记录和设置，且无法撤销。", profile_deleteConfirm: "我明白我的账号和个人数据将被永久删除。", profile_deleting: "正在删除…", profile_deleteMyAccount: "删除我的账号", fb_onlineNow: "当前在线", fb_offline: "离线",
   notif_welcomeTitle: "欢迎来到 Buzz Buzz", notif_welcomeBody: "你的司机工作台已就绪。",
+  notif_queueFullTitle: "无法离线保存", notif_queueFullBody: "已有太多内容等待发送。请重新联网后再试。", post_pending: "等待发送",
 };
 
 const ja: Dict = {
@@ -777,6 +792,7 @@ const ja: Dict = {
   a11y_back: "戻る", a11y_options: "その他の操作", a11y_attachPhoto: "写真を添付", a11y_send: "送信", a11y_sendComment: "コメントを送信", a11y_removePhoto: "写真を削除", a11y_messenger: "メッセージ", a11y_notifications: "通知", a11y_settings: "設定", a11y_logOut: "ログアウト", a11y_close: "閉じる", a11y_dismiss: "閉じる", a11y_centerOnMe: "現在地を中央に", a11y_zoomIn: "拡大", a11y_zoomOut: "縮小", a11y_changeMapLayer: "地図の表示を切り替え", a11y_journeySettings: "走行の設定", a11y_profile: "プロフィール",
   settings_sub: "アプリの設定とプライバシーを構成します", profile_deleteAccountSub: "プロフィール・走行履歴・チャット履歴・設定を完全に削除します。元に戻せません。", profile_deleteConfirm: "アカウントと個人データが完全に削除されることを理解しました。", profile_deleting: "削除中…", profile_deleteMyAccount: "アカウントを削除する", fb_onlineNow: "オンライン", fb_offline: "オフライン",
   notif_welcomeTitle: "Buzz Buzz へようこそ", notif_welcomeBody: "ドライバー用の画面の準備ができました。",
+  notif_queueFullTitle: "オフラインでは保存できません", notif_queueFullBody: "送信待ちが多すぎます。接続し直してからお試しください。", post_pending: "送信待ち",
 };
 
 const ko: Dict = {
@@ -811,6 +827,7 @@ const ko: Dict = {
   a11y_back: "뒤로", a11y_options: "옵션", a11y_attachPhoto: "사진 첨부", a11y_send: "보내기", a11y_sendComment: "댓글 보내기", a11y_removePhoto: "사진 삭제", a11y_messenger: "메시지", a11y_notifications: "알림", a11y_settings: "설정", a11y_logOut: "로그아웃", a11y_close: "닫기", a11y_dismiss: "닫기", a11y_centerOnMe: "내 위치로 이동", a11y_zoomIn: "확대", a11y_zoomOut: "축소", a11y_changeMapLayer: "지도 레이어 변경", a11y_journeySettings: "운행 설정", a11y_profile: "프로필",
   settings_sub: "앱 환경설정과 개인정보 설정을 구성하세요", profile_deleteAccountSub: "프로필, 경로, 대화 기록, 설정이 영구적으로 삭제됩니다. 되돌릴 수 없습니다.", profile_deleteConfirm: "내 계정과 개인 데이터가 영구적으로 삭제된다는 것을 이해합니다.", profile_deleting: "삭제 중…", profile_deleteMyAccount: "내 계정 삭제", fb_onlineNow: "지금 접속 중", fb_offline: "오프라인",
   notif_welcomeTitle: "Buzz Buzz에 오신 것을 환영합니다", notif_welcomeBody: "기사용 작업 공간이 준비되었습니다.",
+  notif_queueFullTitle: "오프라인으로 저장할 수 없습니다", notif_queueFullBody: "보낼 항목이 이미 너무 많습니다. 다시 연결한 뒤 시도하세요.", post_pending: "전송 대기 중",
 };
 
 const ar: Dict = {
@@ -845,6 +862,7 @@ const ar: Dict = {
   a11y_back: "رجوع", a11y_options: "خيارات", a11y_attachPhoto: "إرفاق صورة", a11y_send: "إرسال", a11y_sendComment: "إرسال التعليق", a11y_removePhoto: "إزالة الصورة", a11y_messenger: "الرسائل", a11y_notifications: "الإشعارات", a11y_settings: "الإعدادات", a11y_logOut: "تسجيل الخروج", a11y_close: "إغلاق", a11y_dismiss: "تجاهل", a11y_centerOnMe: "توسيط على موقعي", a11y_zoomIn: "تكبير", a11y_zoomOut: "تصغير", a11y_changeMapLayer: "تغيير طبقة الخريطة", a11y_journeySettings: "إعدادات الرحلة", a11y_profile: "الملف الشخصي",
   settings_sub: "اضبط تفضيلات التطبيق والخصوصية", profile_deleteAccountSub: "سيؤدي هذا إلى حذف ملفك ومساراتك وسجل محادثاتك وإعداداتك نهائيًا، ولا يمكن التراجع.", profile_deleteConfirm: "أفهم أنه سيتم حذف حسابي وبياناتي الشخصية نهائيًا.", profile_deleting: "جارٍ الحذف…", profile_deleteMyAccount: "حذف حسابي", fb_onlineNow: "متصل الآن", fb_offline: "غير متصل",
   notif_welcomeTitle: "مرحبًا بك في Buzz Buzz", notif_welcomeBody: "مساحة عمل السائق جاهزة.",
+  notif_queueFullTitle: "تعذّر الحفظ دون اتصال", notif_queueFullBody: "هناك الكثير في انتظار الإرسال بالفعل. أعد الاتصال ثم حاول مجددًا.", post_pending: "في انتظار الإرسال",
 };
 
 const dictionaries: Record<Lang, Dict> = {

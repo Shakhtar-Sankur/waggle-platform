@@ -112,6 +112,7 @@ export interface ChatMessage {
   createdAt: number;
   status: MessageStatus;
   attachmentUrl?: string;
+  attachmentThumbUrl?: string;
 }
 
 export interface ChatThread {
@@ -131,6 +132,10 @@ export interface FeedPost {
   initials: string;
   body: string;
   imageUrl?: string;
+  /** Small copy shown in the feed. Absent on legacy inline-image posts. */
+  imageThumbUrl?: string;
+  /** Queued in the outbox: written locally, not yet accepted by the server. */
+  pending?: boolean;
   likes: number;
   likedByMe: boolean;
   commentCount: number;

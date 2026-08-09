@@ -16,6 +16,15 @@ import type {
   Worker,
 } from "../types";
 import { initials } from "../utils/format";
+import type { PickedPhoto } from "./MediaService";
+
+/** Object-storage bucket holding community and chat photos. */
+export const PHOTO_BUCKET = "post-photos";
+
+export interface UploadedPhoto {
+  url: string;
+  thumbUrl: string;
+}
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -177,13 +186,32 @@ export const SupabaseService = {
 
   async loadPosts(userId?: string): Promise<FeedPost[]> {
     if (!supabase) return [];
-    const { data, error } = await supabase
+
+    // image_thumb_url arrives with photo_storage.sql. Until that migration is
+    // run the column does not exist and selecting it fails the whole query with
+    // a 400 — which would black out the feed on a database that was working
+    // fine a moment ago. Ask for it, and fall back to the old shape if the
+    // database has not caught up yet.
+    const WITH_THUMB =
+      "id, user_id, body, image_url, image_thumb_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
+    const WITHOUT_THUMB =
+      "id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
+
+    // The two selects produce different generated row types; the mapping below
+    // reads fields defensively, so bind loosely rather than fight the inference.
+    let { data, error }: { data: any[] | null; error: unknown } = await supabase
       .from("feed_posts")
-      .select(
-        "id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)",
-      )
+      .select(WITH_THUMB)
       .order("created_at", { ascending: false })
       .limit(100);
+
+    if (error) {
+      ({ data, error } = await supabase
+        .from("feed_posts")
+        .select(WITHOUT_THUMB)
+        .order("created_at", { ascending: false })
+        .limit(100));
+    }
     if (error) throw error;
 
     // Which of these posts has the current user liked?
@@ -207,6 +235,7 @@ export const SupabaseService = {
         initials: initials(author),
         body: post.body,
         imageUrl: post.image_url ?? undefined,
+      imageThumbUrl: post.image_thumb_url ?? undefined,
         likes: Number(likeCount),
         likedByMe: likedIds.has(post.id),
         commentCount: Number(commentCount),
@@ -215,13 +244,67 @@ export const SupabaseService = {
     });
   },
 
-  async addPost(userId: string, body: string, imageUrl?: string): Promise<FeedPost | null> {
+  /**
+   * Put a picked photo in object storage and hand back its two URLs.
+   *
+   * The path is `{userId}/{uuid}.jpg`, because the storage policy keys ownership
+   * off the first path segment — a driver can only write inside their own
+   * folder. `upsert: false` so a repeated name can never overwrite.
+   */
+  async uploadPhoto(userId: string, photo: PickedPhoto): Promise<UploadedPhoto> {
+    assertSupabase();
+    const id = crypto.randomUUID();
+    const bucket = supabase!.storage.from(PHOTO_BUCKET);
+
+    const put = async (blob: Blob, suffix: string) => {
+      const path = `${userId}/${id}${suffix}.jpg`;
+      const { error } = await bucket.upload(path, blob, {
+        contentType: "image/jpeg",
+        cacheControl: "31536000", // immutable: the name contains a uuid
+        upsert: false,
+      });
+      if (error) throw error;
+      return bucket.getPublicUrl(path).data.publicUrl;
+    };
+
+    // Thumbnail first: it is what the feed shows, so if the full upload fails on
+    // a bad connection the post is still usable rather than blank.
+    const thumbUrl = await put(photo.thumb, "_thumb");
+    const url = await put(photo.full, "");
+    return { url, thumbUrl };
+  },
+
+  async addPost(
+    userId: string,
+    body: string,
+    image?: { url: string; thumbUrl: string },
+  ): Promise<FeedPost | null> {
     if (!supabase) return null;
-    const { data, error } = await supabase
+    const SELECT_WITH =
+      "id, user_id, body, image_url, image_thumb_url, created_at, profiles!feed_posts_user_id_fkey(full_name)";
+    const SELECT_WITHOUT =
+      "id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name)";
+
+    let { data, error }: { data: any; error: unknown } = await supabase
       .from("feed_posts")
-      .insert({ user_id: userId, body, image_url: imageUrl ?? null })
-      .select("id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name)")
+      .insert({
+        user_id: userId,
+        body,
+        image_url: image?.url ?? null,
+        image_thumb_url: image?.thumbUrl ?? null,
+      })
+      .select(SELECT_WITH)
       .single();
+
+    // Same reason as loadPosts: before photo_storage.sql the thumb column is not
+    // there, and posting should not start failing because of a pending migration.
+    if (error) {
+      ({ data, error } = await supabase
+        .from("feed_posts")
+        .insert({ user_id: userId, body, image_url: image?.url ?? null })
+        .select(SELECT_WITHOUT)
+        .single());
+    }
     if (error) throw error;
     const author = (data as any).profiles?.full_name ?? "You";
     return {
@@ -231,6 +314,7 @@ export const SupabaseService = {
       initials: initials(author),
       body: data.body,
       imageUrl: data.image_url ?? undefined,
+      imageThumbUrl: data.image_thumb_url ?? undefined,
       likes: 0,
       likedByMe: false,
       commentCount: 0,
@@ -548,6 +632,7 @@ export const SupabaseService = {
       senderId: message.sender_id,
       body: message.body,
       attachmentUrl: message.attachment_url ?? undefined,
+      attachmentThumbUrl: message.attachment_thumb_url ?? undefined,
       createdAt: new Date(message.created_at).getTime(),
       status: message.status ?? "sent",
     }));
@@ -613,6 +698,9 @@ export const SupabaseService = {
       sender_id: message.senderId,
       body: message.body,
       attachment_url: message.attachmentUrl ?? null,
+      ...(message.attachmentThumbUrl
+        ? { attachment_thumb_url: message.attachmentThumbUrl }
+        : {}),
       status: message.status,
       created_at: new Date(message.createdAt).toISOString(),
     });

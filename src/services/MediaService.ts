@@ -1,8 +1,62 @@
 import { Capacitor } from "@capacitor/core";
 import { Camera, CameraResultType, CameraSource } from "@capacitor/camera";
 
-// Web / iPhone-Safari picker: a file input (which offers Photo Library + Take
-// Photo on mobile), downscaled to keep the image small.
+/**
+ * A picked photo, ready to upload.
+ *
+ * Two sizes, because the feed and the viewer want different things: the feed
+ * shows dozens of images and only needs ~20 KB each, while the full size is
+ * fetched once, on tap. Previously both were the same 479 KB base64 string
+ * inlined into the row.
+ *
+ * `preview` is a local object URL so the composer can show the photo instantly,
+ * before any upload happens. Revoke it when you are done with it.
+ */
+export interface PickedPhoto {
+  full: Blob;
+  thumb: Blob;
+  preview: string;
+}
+
+const FULL_WIDTH = 1280;
+const THUMB_WIDTH = 400;
+const FULL_QUALITY = 0.72;
+const THUMB_QUALITY = 0.6;
+
+function drawScaled(img: HTMLImageElement, maxWidth: number): HTMLCanvasElement {
+  const scale = Math.min(1, maxWidth / img.width);
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(img.width * scale));
+  canvas.height = Math.max(1, Math.round(img.height * scale));
+  canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+function toBlob(canvas: HTMLCanvasElement, quality: number): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Could not encode the image."))),
+      "image/jpeg",
+      quality,
+    );
+  });
+}
+
+/** Decode any image source into the two sizes we store. */
+async function encodeBoth(src: string): Promise<PickedPhoto> {
+  const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const el = new Image();
+    el.onload = () => resolve(el);
+    el.onerror = () => reject(new Error("Could not read that image."));
+    el.src = src;
+  });
+  const full = await toBlob(drawScaled(img, FULL_WIDTH), FULL_QUALITY);
+  const thumb = await toBlob(drawScaled(img, THUMB_WIDTH), THUMB_QUALITY);
+  return { full, thumb, preview: URL.createObjectURL(full) };
+}
+
+// Web / iPhone-Safari picker: a file input, which on mobile offers both the
+// photo library and the camera.
 function pickWebImage(): Promise<string | undefined> {
   return new Promise((resolve) => {
     const input = document.createElement("input");
@@ -22,29 +76,12 @@ function pickWebImage(): Promise<string | undefined> {
       const file = input.files?.[0];
       if (!file) return done(undefined);
       const reader = new FileReader();
-      reader.onload = () => {
-        const img = new Image();
-        img.onload = () => {
-          const maxWidth = 1280;
-          const scale = Math.min(1, maxWidth / img.width);
-          const canvas = document.createElement("canvas");
-          canvas.width = Math.round(img.width * scale);
-          canvas.height = Math.round(img.height * scale);
-          canvas.getContext("2d")?.drawImage(img, 0, 0, canvas.width, canvas.height);
-          try {
-            done(canvas.toDataURL("image/jpeg", 0.72));
-          } catch {
-            done(typeof reader.result === "string" ? reader.result : undefined);
-          }
-        };
-        img.onerror = () => done(typeof reader.result === "string" ? reader.result : undefined);
-        img.src = reader.result as string;
-      };
+      reader.onload = () => done(typeof reader.result === "string" ? reader.result : undefined);
       reader.onerror = () => done(undefined);
       reader.readAsDataURL(file);
     };
 
-    // Resolve if the picker is cancelled (no file chosen).
+    // Resolve if the picker was cancelled, so the caller is never left hanging.
     window.addEventListener(
       "focus",
       () => window.setTimeout(() => { if (!input.files?.length) done(undefined); }, 1000),
@@ -56,27 +93,52 @@ function pickWebImage(): Promise<string | undefined> {
 }
 
 export const MediaService = {
-  // Opens the camera/gallery (asking permission) and returns a compressed
-  // data-URL image, or undefined if cancelled.
-  async pickImage(): Promise<string | undefined> {
+  /**
+   * Open the camera or gallery and return the photo at two sizes, or undefined
+   * if the driver cancelled or denied permission.
+   */
+  async pickImage(): Promise<PickedPhoto | undefined> {
+    let source: string | undefined;
+
     if (Capacitor.isNativePlatform()) {
       try {
         const photo = await Camera.getPhoto({
           resultType: CameraResultType.DataUrl,
-          source: CameraSource.Prompt, // lets the user choose Camera or Photos
-          quality: 60,
-          width: 1280,
+          source: CameraSource.Prompt,
+          quality: 80, // re-encoded below; keep detail until then
+          width: FULL_WIDTH,
           allowEditing: false,
         });
-        return photo.dataUrl;
+        source = photo.dataUrl;
       } catch {
         return undefined; // cancelled or permission denied
       }
+    } else {
+      source = await pickWebImage();
     }
-    return pickWebImage();
+
+    if (!source) return undefined;
+    try {
+      return await encodeBoth(source);
+    } catch {
+      return undefined;
+    }
   },
 
-  async pickChatImage(): Promise<string | undefined> {
+  async pickChatImage(): Promise<PickedPhoto | undefined> {
     return this.pickImage();
+  },
+
+  /** Free a preview object URL. Safe to call with a remote URL or undefined. */
+  releasePreview(preview?: string) {
+    if (preview?.startsWith("blob:")) URL.revokeObjectURL(preview);
+  },
+
+  /**
+   * Older posts stored the whole image inline as a data: URL. They still render
+   * — this is how the UI tells one from the other.
+   */
+  isLegacyInlineImage(url?: string) {
+    return !!url?.startsWith("data:");
   },
 };

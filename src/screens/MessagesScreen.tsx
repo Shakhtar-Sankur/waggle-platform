@@ -3,7 +3,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { useT } from "../i18n";
-import { MediaService } from "../services/MediaService";
+import { MediaService, type PickedPhoto } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
@@ -41,7 +41,7 @@ export function MessagesScreen() {
   );
   const [query, setQuery] = useState("");
   const [draft, setDraft] = useState("");
-  const [attachment, setAttachment] = useState<string | undefined>();
+  const [attachment, setAttachment] = useState<PickedPhoto | undefined>();
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   // Keep chats fresh (RLS makes chat too complex for live-broadcast, so we
@@ -250,8 +250,17 @@ export function MessagesScreen() {
                       </button>
                     ) : null}
                     {showSender ? <span className="wa-sender">{sender}</span> : null}
-                    {message.attachmentUrl?.startsWith("data:") ? (
-                      <img className="wa-image" src={message.attachmentUrl} alt="Attachment" />
+                    {message.attachmentUrl ? (
+                      /* Thumbnail in the bubble; the full file is only fetched
+                         if the driver taps it. Older messages have no thumbnail
+                         because the image is inline in the row. */
+                      <img
+                        className="wa-image"
+                        src={message.attachmentThumbUrl ?? message.attachmentUrl}
+                        alt="Attachment"
+                        loading="lazy"
+                        decoding="async"
+                      />
                     ) : null}
                     {message.body ? <p>{message.body}</p> : null}
                     <small>
@@ -277,6 +286,7 @@ export function MessagesScreen() {
               aria-label={t("a11y_attachPhoto")}
               onClick={async () => {
                 if (attachment) {
+                  MediaService.releasePreview(attachment.preview);
                   setAttachment(undefined);
                   return;
                 }
