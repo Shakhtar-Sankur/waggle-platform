@@ -21,9 +21,9 @@
 --   Authentication -> Providers -> Email -> turn OFF "Confirm email"
 --     (otherwise nobody can sign in after signing up)
 --
--- Assembled from the sixteen verified migration files rather than rewritten,
+-- Assembled from the fifteen verified migration files rather than rewritten,
 -- because a confident rewrite of row-level security is how data gets exposed.
--- Part 17 at the end is new: the indexes, limits and integrity checks the
+-- Part 16 at the end is new: the indexes, limits and integrity checks the
 -- incremental files never went back to add.
 -- ============================================================================
 
@@ -1202,10 +1202,10 @@ alter table public.chat_messages add column if not exists attachment_thumb_url t
 
 
 -- ============================================================================
--- PART 17 — HARDENING
+-- PART 16 — HARDENING
 -- ============================================================================
 --
--- New. The sixteen sections above grew feature by feature, and none of them
+-- New. The fifteen sections above grew feature by feature, and none of them
 -- went back to cover the things that only hurt once an app has real users:
 -- queries without an index, text fields with no ceiling, and counters that can
 -- go negative. None of this changes behaviour; it changes what happens at scale.
@@ -1344,7 +1344,7 @@ analyze public.worker_locations;
 
 
 -- ============================================================================
--- PART 18 — SCHEDULED DAILY RESET  (optional, and last on purpose)
+-- PART 17 — SCHEDULED DAILY RESET  (optional, and last on purpose)
 -- ============================================================================
 --
 -- pg_cron is not available on every Supabase plan or region. Unwrapped, a
