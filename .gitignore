@@ -24,3 +24,6 @@ agents/
 
 # editor/tooling config
 .claude/
+
+# Test-project credentials for Populace runs. Never committed.
+.env.test
