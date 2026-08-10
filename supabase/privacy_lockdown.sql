@@ -48,12 +48,18 @@ revoke select on public.profiles from authenticated;
 grant select (id, full_name, avatar_url, last_seen, created_at, updated_at)
   on public.profiles to authenticated;
 
--- Writes still include phone: signup upserts it, and RLS already limits a driver
--- to their own row.
-grant insert (id, full_name, phone, avatar_url, created_at, updated_at)
-  on public.profiles to authenticated;
-grant update (full_name, phone, avatar_url, last_seen, updated_at)
-  on public.profiles to authenticated;
+-- Writes are granted at TABLE level, not per column.
+--
+-- Column-level insert/update grants here broke signup outright: the profile
+-- upsert came back "permission denied for table profiles", no profile row was
+-- created, and every later post and group-join then failed on a foreign key.
+-- Populace found it by simulating six signups; the app had never been run
+-- against this project.
+--
+-- Restricting SELECT is the whole point of this section, and that is done
+-- above. Restricting writes buys nothing: RLS already confines a driver to
+-- their own row, and the app must write phone on signup.
+grant insert, update, delete on public.profiles to authenticated;
 
 -- anon keeps nothing. Reading community data requires a session.
 revoke all on public.profiles from anon;
