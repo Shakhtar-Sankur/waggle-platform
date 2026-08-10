@@ -171,29 +171,40 @@ alter table public.notifications enable row level security;
 -- key ships inside the APK and can be extracted from it in about a minute, so
 -- anonymous in practice means anybody who downloads the app. These tables hold
 -- phone numbers and live GPS, so read access requires a session.
+drop policy if exists "profiles readable" on public.profiles;
 create policy "profiles readable" on public.profiles
   for select using (auth.role() = 'authenticated');
+drop policy if exists "profiles own write" on public.profiles;
 create policy "profiles own write" on public.profiles for all using (auth.uid() = id) with check (auth.uid() = id);
 
+drop policy if exists "settings own" on public.driver_settings;
 create policy "settings own" on public.driver_settings for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Honours the driver's "Share stats with community" switch. A driver can always
 -- see their own row.
+drop policy if exists "locations readable" on public.worker_locations;
 create policy "locations readable" on public.worker_locations
   for select using (
     auth.role() = 'authenticated'
     and (share_stats or user_id = auth.uid())
   );
+drop policy if exists "locations own write" on public.worker_locations;
 create policy "locations own write" on public.worker_locations for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "route own" on public.route_points;
 create policy "route own" on public.route_points for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
+drop policy if exists "jobs readable" on public.jobs;
 create policy "jobs readable" on public.jobs for select using (assigned_to is null or assigned_to = auth.uid());
+drop policy if exists "jobs update assignee" on public.jobs;
 create policy "jobs update assignee" on public.jobs for update using (assigned_to is null or assigned_to = auth.uid()) with check (assigned_to is null or assigned_to = auth.uid());
 
+drop policy if exists "posts readable" on public.feed_posts;
 create policy "posts readable" on public.feed_posts
   for select using (auth.role() = 'authenticated');
+drop policy if exists "posts own insert" on public.feed_posts;
 create policy "posts own insert" on public.feed_posts for insert with check (auth.uid() = user_id);
+drop policy if exists "posts own update" on public.feed_posts;
 create policy "posts own update" on public.feed_posts for update using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Membership check via SECURITY DEFINER so RLS policies never query
@@ -211,27 +222,35 @@ as $$
   );
 $$;
 
+drop policy if exists "threads member read" on public.chat_threads;
 create policy "threads member read" on public.chat_threads for select using (
   public.is_thread_member(id, auth.uid()) or created_by = auth.uid()
 );
+drop policy if exists "threads own insert" on public.chat_threads;
 create policy "threads own insert" on public.chat_threads for insert with check (auth.uid() = created_by);
+drop policy if exists "threads member update" on public.chat_threads;
 create policy "threads member update" on public.chat_threads for update
   using (public.is_thread_member(id, auth.uid()) or created_by = auth.uid())
   with check (public.is_thread_member(id, auth.uid()) or created_by = auth.uid());
 
+drop policy if exists "members readable by members" on public.chat_thread_members;
 create policy "members readable by members" on public.chat_thread_members for select using (
   public.is_thread_member(thread_id, auth.uid())
 );
+drop policy if exists "members own insert" on public.chat_thread_members;
 create policy "members own insert" on public.chat_thread_members for insert with check (auth.uid() = user_id);
 
+drop policy if exists "messages member read" on public.chat_messages;
 create policy "messages member read" on public.chat_messages for select using (
   public.is_thread_member(chat_messages.thread_id, auth.uid())
 );
+drop policy if exists "messages member insert" on public.chat_messages;
 create policy "messages member insert" on public.chat_messages for insert with check (
   auth.uid() = sender_id and
   public.is_thread_member(chat_messages.thread_id, auth.uid())
 );
 
+drop policy if exists "notifications own" on public.notifications;
 create policy "notifications own" on public.notifications for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create table if not exists public.device_tokens (
@@ -243,6 +262,7 @@ create table if not exists public.device_tokens (
 );
 
 alter table public.device_tokens enable row level security;
+drop policy if exists "tokens own" on public.device_tokens;
 create policy "tokens own" on public.device_tokens for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create or replace function public.delete_own_account()
@@ -638,6 +658,7 @@ begin
       and tablename = 'profiles'
       and policyname = 'profiles_update_own_presence'
   ) then
+    drop policy if exists profiles_update_own_presence on public.profiles;
     create policy profiles_update_own_presence
       on public.profiles
       for update
@@ -917,18 +938,22 @@ revoke all on public.profiles from anon;
 -- 2. Require a logged-in session to read community data.
 -- ============================================================================
 drop policy if exists "profiles readable" on public.profiles;
+drop policy if exists profiles_read_authenticated on public.profiles;
 create policy profiles_read_authenticated on public.profiles
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "posts readable" on public.feed_posts;
+drop policy if exists feed_posts_read_authenticated on public.feed_posts;
 create policy feed_posts_read_authenticated on public.feed_posts
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "likes readable" on public.post_likes;
+drop policy if exists post_likes_read_authenticated on public.post_likes;
 create policy post_likes_read_authenticated on public.post_likes
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "comments readable" on public.post_comments;
+drop policy if exists post_comments_read_authenticated on public.post_comments;
 create policy post_comments_read_authenticated on public.post_comments
   for select using (auth.role() = 'authenticated');
 
@@ -943,6 +968,7 @@ alter table public.worker_locations
   add column if not exists share_stats boolean not null default true;
 
 drop policy if exists "locations readable" on public.worker_locations;
+drop policy if exists worker_locations_read_authenticated on public.worker_locations;
 create policy worker_locations_read_authenticated on public.worker_locations
   for select using (
     auth.role() = 'authenticated'

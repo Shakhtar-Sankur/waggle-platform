@@ -18,6 +18,7 @@ begin
       and tablename = 'profiles'
       and policyname = 'profiles_update_own_presence'
   ) then
+    drop policy if exists profiles_update_own_presence on public.profiles;
     create policy profiles_update_own_presence
       on public.profiles
       for update

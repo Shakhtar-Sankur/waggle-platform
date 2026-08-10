@@ -62,18 +62,22 @@ revoke all on public.profiles from anon;
 -- 2. Require a logged-in session to read community data.
 -- ============================================================================
 drop policy if exists "profiles readable" on public.profiles;
+drop policy if exists profiles_read_authenticated on public.profiles;
 create policy profiles_read_authenticated on public.profiles
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "posts readable" on public.feed_posts;
+drop policy if exists feed_posts_read_authenticated on public.feed_posts;
 create policy feed_posts_read_authenticated on public.feed_posts
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "likes readable" on public.post_likes;
+drop policy if exists post_likes_read_authenticated on public.post_likes;
 create policy post_likes_read_authenticated on public.post_likes
   for select using (auth.role() = 'authenticated');
 
 drop policy if exists "comments readable" on public.post_comments;
+drop policy if exists post_comments_read_authenticated on public.post_comments;
 create policy post_comments_read_authenticated on public.post_comments
   for select using (auth.role() = 'authenticated');
 
@@ -88,6 +92,7 @@ alter table public.worker_locations
   add column if not exists share_stats boolean not null default true;
 
 drop policy if exists "locations readable" on public.worker_locations;
+drop policy if exists worker_locations_read_authenticated on public.worker_locations;
 create policy worker_locations_read_authenticated on public.worker_locations
   for select using (
     auth.role() = 'authenticated'
