@@ -109,24 +109,58 @@ export const SupabaseService = {
     await supabase.auth.signOut();
   },
 
+  /**
+   * Make sure this driver has a profile row.
+   *
+   * Deliberately NOT an upsert. `INSERT ... ON CONFLICT DO UPDATE` needs SELECT
+   * on the columns it touches, and this touches `phone` — the one column
+   * privacy_lockdown makes unreadable. Upserting therefore failed outright with
+   * "permission denied for table profiles", no profile row was created, and
+   * every later post and group-join died on the foreign key back to it.
+   *
+   * So: insert on first sight (phone included, written exactly once), and on a
+   * duplicate fall back to an update that never mentions phone. The number is
+   * already in the auth session, which is where the app reads it from anyway.
+   */
   async ensureProfile(user: User, phone?: string, fullName?: string) {
     if (!supabase) return;
-    await supabase.from("profiles").upsert({
+    const name = fullName ?? user.user_metadata?.full_name ?? "Driver";
+
+    const { error } = await supabase.from("profiles").insert({
       id: user.id,
-      full_name: fullName ?? user.user_metadata?.full_name ?? "Driver",
+      full_name: name,
       phone: phone ?? user.user_metadata?.phone ?? "",
       updated_at: new Date().toISOString(),
     });
+    if (!error) return;
+
+    // 23505 = the row is already there, which is the normal path on sign-in.
+    if (error.code !== "23505") throw error;
+    await supabase
+      .from("profiles")
+      .update({ full_name: name, updated_at: new Date().toISOString() })
+      .eq("id", user.id);
   },
 
+  /**
+   * Edit an existing profile. A plain UPDATE, for the same reason ensureProfile
+   * is a plain INSERT: an upsert here touches `phone` and phone is not
+   * SELECTable, so it fails with "permission denied for table profiles".
+   *
+   * Phone is not written. It is the login identifier — the sign-in email is
+   * derived from it — so changing it here would only desynchronise the profile
+   * from the account the driver actually signs in with.
+   */
   async updateProfile(user: UserSession, updates: Partial<UserSession>) {
     if (!supabase) return;
-    await supabase.from("profiles").upsert({
-      id: user.id,
-      full_name: updates.fullName ?? user.fullName,
-      phone: updates.phone ?? user.phone,
-      updated_at: new Date().toISOString(),
-    });
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: updates.fullName ?? user.fullName,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", user.id);
+    if (error) throw error;
   },
 
   async loadSettings(userId: string): Promise<Partial<ProfileSettings> | null> {
@@ -362,10 +396,16 @@ export const SupabaseService = {
   async setLike(postId: string, userId: string, liked: boolean) {
     assertSupabase();
     if (liked) {
+      // INSERT, not upsert. post_likes has insert and delete policies and no
+      // UPDATE policy — correctly, since a like is a junction row with nothing
+      // to update — so an upsert becomes ON CONFLICT DO UPDATE and is refused
+      // by RLS. That happens whenever the feed's likedByMe is stale, which the
+      // 2.5s poll makes ordinary, and the like would silently bounce back.
       const { error } = await supabase!
         .from("post_likes")
-        .upsert({ post_id: postId, user_id: userId });
-      if (error) throw error;
+        .insert({ post_id: postId, user_id: userId });
+      // 23505 just means it was already liked, which is the state we wanted.
+      if (error && error.code !== "23505") throw error;
     } else {
       const { error } = await supabase!
         .from("post_likes")

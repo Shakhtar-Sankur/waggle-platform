@@ -433,6 +433,15 @@ create trigger trg_chat_message_push
   after insert on public.chat_messages
   for each row execute function public.notify_new_chat_message();
 
+-- ---------------------------------------------------------------------------
+-- chat_messages.id is a text primary key with no default, so every client has
+-- to invent one. The app does; anything that forgets gets "null value in column
+-- id violates not-null constraint" and cannot send a message at all. A default
+-- makes the database stop depending on every caller remembering.
+-- ---------------------------------------------------------------------------
+alter table public.chat_messages
+  alter column id set default gen_random_uuid()::text;
+
 
 
 -- ==========================================================================
