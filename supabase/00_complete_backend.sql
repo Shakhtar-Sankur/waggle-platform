@@ -1705,13 +1705,17 @@ begin
      where c.status = 'accepted'
        and (c.requester_id = new.user_id or c.addressee_id = new.user_id)
   loop
-    insert into public.notifications (user_id, title, description, kind)
+    -- id has no default on this table and is text, not uuid — the other
+    -- notification triggers supply it the same way. Omitting it fails the
+    -- insert, which fails the trigger, which blocks the post itself.
+    insert into public.notifications (id, user_id, title, description, kind, read, created_at)
     values (
+      gen_random_uuid()::text,
       friend_id,
       case when is_reel then 'New reel 🎬' else 'New post 📣' end,
       coalesce(author_name, 'A driver') ||
         case when is_reel then ' shared a reel.' else ': ' || left(coalesce(new.body, ''), 60) end,
-      'system'
+      'system', false, now()
     );
   end loop;
   return new;
