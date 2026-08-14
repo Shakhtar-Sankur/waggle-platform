@@ -1,4 +1,5 @@
 import { Search } from "lucide-react";
+import { WorkAppMark } from "./WorkAppMark";
 import { useMemo, useState } from "react";
 import { useT } from "../i18n";
 import { detectCountry } from "../i18n/region";
@@ -53,7 +54,7 @@ export function WorkAppPicker({ open, onClose }: WorkAppPickerProps) {
               key={app.id}
               onClick={() => selectApp(app.id)}
             >
-              <span>{app.logo}</span>
+              <WorkAppMark app={app} size={30} />
               <strong>{app.name}</strong>
             </button>
           ))}

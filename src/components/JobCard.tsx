@@ -1,4 +1,5 @@
 import { Clock, MapPin } from "lucide-react";
+import { WorkAppMark } from "./WorkAppMark";
 import { useJobStore } from "../stores/useJobStore";
 import type { Job } from "../types";
 import { currency, km } from "../utils/format";
@@ -17,7 +18,7 @@ export function JobCard({ job }: { job: Job }) {
     <article className={`job-card ${job.status !== "open" ? "muted" : ""}`}>
       <div className="job-card-top">
         <div>
-          <span className="pill">{app?.logo} {app?.name}</span>
+          <span className="pill"><WorkAppMark app={app} variant="inline" /> {app?.name}</span>
           <h4>{job.title}</h4>
         </div>
         <strong>{currency(job.payout)}</strong>

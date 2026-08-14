@@ -155,6 +155,7 @@ const en = {
   fb_noReels: "No reels yet",
   fb_noReelsSub: "Short videos you share show up here as reels.",
   fb_createReel: "Create a reel",
+  fb_trending: "Trending",
   fb_createReelSub: "Share a short video from your shift",
   fb_reelPickVideo: "Choose a video",
   fb_reelLimits: "Up to 60 seconds, 30 MB",

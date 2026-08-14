@@ -5012,3 +5012,114 @@ body::before {
 .fb-reel video { width: 100%; height: 100%; object-fit: cover; display: block; }
 .fb-reel-pick em { font-style: normal; font-size: 12px; opacity: .6; }
 .fb-reel-error { margin: 0; font-size: 13.5px; color: #e5484d; }
+
+/* ══════════════════════════════════════════════════════
+   TYPOGRAPHY PASS — messaging-app voice, not document voice
+   ══════════════════════════════════════════════════════
+   The type read like a Word document: one weight doing all the
+   work, uniform sizes, and grey body text at the same visual
+   weight as the things that matter.
+
+   Chat apps read differently for three concrete reasons, all
+   applied here:
+     1. HIERARCHY BY WEIGHT, not size. A name is 600 next to a
+        preview at 400 — same size, obvious difference.
+     2. TIGHT LEADING on short strings. 1.47 line-height is right
+        for paragraphs and airy for a two-word row.
+     3. QUIET METADATA. Timestamps and counts sit at 12px and
+        ~60% opacity so they stop competing with content.
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  --ink-quiet: color-mix(in srgb, currentColor 58%, transparent);
+}
+
+/* Names, titles, the things you scan for. */
+.wa-chat-top strong,
+.wa-convo-title strong,
+.fb-post-author,
+.fb-reel-create strong,
+.wa-member-name,
+.wa-group-friend-name {
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  line-height: 1.25;
+}
+
+/* Message previews and body copy: lighter, roomier, never bold. */
+.wa-chat-meta p,
+.fb-post-body {
+  font-weight: 400;
+  line-height: 1.38;
+  letter-spacing: -0.005em;
+}
+
+/* Metadata recedes: timestamps, counts, member lines. */
+.wa-chat-top small,
+.wa-convo-title small,
+.fb-post-time,
+.fb-reel-create em,
+.fb-reel-pick em,
+.micro-copy {
+  font-size: 12.2px;
+  font-weight: 450;
+  letter-spacing: 0;
+  color: var(--ink-quiet);
+}
+
+/* Chat bubbles: the one place where text should feel spoken.
+   Slightly larger, tighter, and never stretched to the full width —
+   a bubble that reaches both edges reads as a paragraph. */
+.wa-bubble {
+  font-size: 15.2px;
+  line-height: 1.34;
+  letter-spacing: -0.006em;
+  max-width: 78%;
+}
+
+/* Numbers that are the point of the screen — km, earnings, goals —
+   are set tighter and heavier so they read as data, not prose.
+   Tabular figures stop them jittering as they tick up. */
+.stat-grid strong,
+.stat-value,
+.pf-figure {
+  font-weight: 640;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section headings stop shouting: smaller, wider-tracked, quieter —
+   the pattern every messaging app uses for "Groups", "Friends". */
+.fb-section-head h4,
+.wa-section-title {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: none;
+  color: var(--ink-quiet);
+}
+
+/* A reel doing unusually well, relative to the current feed. */
+.fb-reel { position: relative; }
+.fb-reel-trending {
+  position: absolute; top: 8px; left: 8px; z-index: 2;
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 99px;
+  font-size: 11px; font-weight: 650; letter-spacing: .02em;
+  color: #fff; background: linear-gradient(135deg, #ff6b35, #f7431f);
+  box-shadow: 0 2px 8px rgba(247, 67, 31, .45);
+}
+
+/* Platform marks: initials in the brand colour, replacing emoji. */
+.wam {
+  display: inline-grid; place-items: center; flex: none;
+  border-radius: 8px; color: #fff;
+  font-weight: 700; letter-spacing: -0.02em; line-height: 1;
+  font-variant-numeric: tabular-nums;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,.14);
+}
+.wam-inline { font-weight: 700; letter-spacing: -0.02em; }
+
+/* Line icons at a lighter stroke read as considered rather than chunky.
+   lucide sets stroke-width as an attribute; the CSS property wins. */
+svg.lucide { stroke-width: 1.75; }

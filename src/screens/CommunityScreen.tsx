@@ -26,6 +26,7 @@ import {
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
+import { ChallengeIcon } from "../components/ChallengeIcon";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -39,6 +40,7 @@ import { useChatStore } from "../stores/useChatStore";
 import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import type { ConnectionState, Worker } from "../types";
 import { currency, initials, km, timeAgo } from "../utils/format";
+import { isTrending, rankReels } from "../utils/reelRank";
 import { getWorkApp } from "../utils/workApps";
 
 type FbTab = "home" | "reels" | "friends" | "groups";
@@ -146,7 +148,10 @@ export function CommunityScreen() {
   );
   // A reel is a video. Photo posts belong in the feed, not here — showing them
   // as reels is what made the tab misleading in the first place.
-  const reels = useMemo(() => posts.filter((p) => p.videoUrl), [posts]);
+  //
+  // Ordered by engagement decayed by age, so a good clip from this morning can
+  // outrank an older one that has simply accumulated likes. See utils/reelRank.
+  const reels = useMemo(() => rankReels(posts, user?.id), [posts, user?.id]);
 
   const pickPhoto = async () => {
     setPickingPhoto(true);
@@ -478,6 +483,9 @@ export function CommunityScreen() {
                     }}
                   />
                   <span className="fb-reel-play"><Play size={20} fill="currentColor" /></span>
+                  {isTrending(reel, posts) ? (
+                    <span className="fb-reel-trending">{t("fb_trending")}</span>
+                  ) : null}
                   <div className="fb-reel-overlay">
                     <strong>{reel.author}</strong>
                     <span className="fb-reel-likes"><Heart size={13} fill="currentColor" /> {reel.likes}</span>
@@ -640,7 +648,7 @@ export function CommunityScreen() {
             {groups.map((group) => (
               <article className="fb-group" key={group.id}>
                 <div className="fb-group-cover" style={{ background: `linear-gradient(135deg, ${group.color}, #050505)` }}>
-                  <span className="fb-group-icon">{group.icon}</span>
+                  <span className="fb-group-icon"><ChallengeIcon icon={group.icon} size={22} /></span>
                 </div>
                 <div className="fb-group-info">
                   <strong>{group.name}</strong>

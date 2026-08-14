@@ -19,6 +19,7 @@ import {
   X,
 } from "lucide-react";
 import L from "leaflet";
+import { ChallengeIcon } from "../components/ChallengeIcon";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
@@ -531,7 +532,7 @@ export function RoutesScreen() {
           {featured ? (
             <article className="svc-hero">
               <div className="svc-hero-media">
-                <span className="svc-hero-emoji">{featured.icon}</span>
+                <span className="svc-hero-emoji"><ChallengeIcon icon={featured.icon} size={26} /></span>
               </div>
               <div className="svc-hero-body">
                 <span className="svc-badge"><Award size={26} /></span>
@@ -565,7 +566,7 @@ export function RoutesScreen() {
               return (
                 <article className="svc-card" key={challenge.id}>
                   <div className="svc-card-media">
-                    <span className="svc-card-emoji">{challenge.icon}</span>
+                    <span className="svc-card-emoji"><ChallengeIcon icon={challenge.icon} size={22} /></span>
                   </div>
                   <div className="svc-card-body">
                     <strong>

@@ -1,4 +1,5 @@
 import { Pencil, Settings, Trash2, Wrench } from "lucide-react";
+import { WorkAppMark } from "../components/WorkAppMark";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -78,7 +79,7 @@ export function ProfileScreen() {
               className={profile.activeApp === app.id ? "selected" : ""}
               onClick={() => setActiveApp(app.id)}
             >
-              <span>{app.logo}</span>
+              <WorkAppMark app={app} size={30} />
               <small>{app.name}</small>
               {profile.activeApp === app.id ? <em /> : null}
             </button>

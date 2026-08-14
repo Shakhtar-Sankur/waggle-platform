@@ -1,4 +1,5 @@
 import { Home, Map, MessageCircle, UserRound, UsersRound } from "lucide-react";
+import { WorkAppMark } from "./WorkAppMark";
 import type { ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { useT } from "../i18n";
@@ -24,7 +25,7 @@ export function BottomNav() {
           icon={
             <span className="nav-live-icon">
               <Map size={21} />
-              {app ? <small>{app.logo}</small> : null}
+              {app ? <WorkAppMark app={app} size={16} /> : null}
             </span>
           }
         />

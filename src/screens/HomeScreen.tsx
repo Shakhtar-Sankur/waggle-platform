@@ -1,4 +1,5 @@
 import { Clock3, MapPin, Settings, Target, TrendingUp, Wallet } from "lucide-react";
+import { WorkAppMark } from "../components/WorkAppMark";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
 import { WorkAppPicker } from "../components/WorkAppPicker";
@@ -8,11 +9,13 @@ import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useLocationStore } from "../stores/useLocationStore";
 import { useConsentStore } from "../stores/useConsentStore";
+import { useNavigate } from "react-router-dom";
 import { useProfileStore } from "../stores/useProfileStore";
 import { currency, currencyPrecise, duration, initials } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
 
 export function HomeScreen() {
+  const navigate = useNavigate();
   const t = useT();
   const user = useAuthStore((state) => state.user);
   const [showPicker, setShowPicker] = useState(false);
@@ -78,7 +81,7 @@ export function HomeScreen() {
       <button className="working-app-card glass-card" onClick={() => setShowPicker(true)}>
         <span>{t("home_workingApp")}</span>
         {app ? (
-          <strong><em>{app.logo}</em> {app.name} <small>{t("common_change")}</small></strong>
+          <strong><WorkAppMark app={app} size={22} /> {app.name} <small>{t("common_change")}</small></strong>
         ) : (
           <strong>{t("home_selectApp")} →</strong>
         )}
@@ -90,7 +93,17 @@ export function HomeScreen() {
             <h3><MapPin size={19} /> {t("home_journey")}</h3>
             <p>{homeAddress || t("home_setAddress")}</p>
           </div>
-          <Button variant="ghost" size="icon" aria-label={t("a11y_journeySettings")}><Settings size={18} /></Button>
+          {/* This button rendered and did nothing — no handler at all. Profile
+              already opens its settings sheet from ?settings=true, so reuse that
+              rather than inventing a second way in. */}
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t("a11y_journeySettings")}
+            onClick={() => navigate("/profile?settings=true")}
+          >
+            <Settings size={18} />
+          </Button>
         </div>
         <div className="stat-grid">
           <Stat icon={<MapPin size={22} />} value={totalDistanceKm.toFixed(1)} label={t("stat_kmToday")} />
