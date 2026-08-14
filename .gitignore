@@ -27,3 +27,9 @@ agents/
 
 # Test-project credentials for Populace runs. Never committed.
 .env.test
+
+# The published build. *.apk above keeps every Gradle output out of the repo,
+# which is right — but the one under docs/ is the download the website offers,
+# so it is deliberately tracked. Negations must come after the pattern they
+# undo, which is why this sits at the end of the file.
+!docs/*.apk

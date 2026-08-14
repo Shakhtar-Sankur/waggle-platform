@@ -1,0 +1,504 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buzz Buzz — every kilometre counts</title>
+<meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in sixteen languages, with the currency set from where you are. A Gigzen product.">
+<meta name="author" content="Gigzen Private Limited">
+<meta name="theme-color" content="#FF4D17">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='11' fill='%23FF4D17'/><rect x='14' y='15' width='20' height='26' rx='10' fill='white'/><rect x='12' y='23' width='24' height='3' rx='1.5' fill='%23FF4D17'/><rect x='12' y='29' width='24' height='3' rx='1.5' fill='%23FF4D17'/><rect x='12' y='36' width='24' height='3' rx='1.5' fill='%23FF4D17'/></svg>">
+
+<style>
+/* ══════════════════════════════════════════════════════════════════════════
+   BUZZ BUZZ — its own design language
+   ══════════════════════════════════════════════════════════════════════════
+   Three Gigzen properties, three characters, on purpose. They should be
+   recognisable as siblings through the mark alone, never because they share
+   a stylesheet:
+
+     gigzen.com   light paper, 28px radii, wide air        — corporate, calm
+     populace     near-black, 6px radii, mono, dense       — instrumentation
+     this page    warm cream, 18px radii, big pictures     — consumer product
+
+   This one is a phone app sold to people who work outdoors, so the page is
+   warm, picture-led and physically large: the product is a thing you hold,
+   and the page should show it rather than describe it.
+
+   Committed to one light look. No prefers-color-scheme, no toggle. A dark
+   variant with no control to reach it is dead code that silently rots — the
+   company site had exactly that problem and it measured 20 broken states.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+*,*::before,*::after { box-sizing: border-box; }
+
+:root {
+  /* Warm ground. Not white: the app is orange and a cream page lets the
+     product's own colour sit on something rather than glare off paper. */
+  --paper:   #FFF9F5;
+  --paper-2: #FFFFFF;
+  --sand:    #FFEFE4;
+  --ink:     #1A1210;
+  --body:    #574B45;
+  /* Measured on the cream ground: #857069 came out at 4.40:1, just under the
+     4.5 needed for normal text. Close enough to look fine and still fail. */
+  --muted:   #7A6259;
+  --rule:    #F0DED2;
+
+  /* The brand orange, and the darkened one that is safe as small text.
+     #FF4D17 measures 3.4:1 on this cream — fine for a 96px number or a
+     button fill, not for a 14px label. Every text use takes --flame-ink,
+     which measures 6.0:1. This distinction is the single most common way a
+     bright brand colour ends up illegible. */
+  --flame:      #FF4D17;
+  --flame-ink:  #B23200;
+  --flame-deep: #9E2A00;
+  /* The button fill, and NOT --flame: white on #FF4D17 measures 3.32:1, which
+     would make the most important control on the page the least readable
+     thing on it. #C63B00 is 5.1:1 against white and still unmistakably the
+     brand orange. The bright tone stays for marks, rules and glows, where
+     nothing has to be read off it. */
+  --flame-btn:  #C63B00;
+
+  /* Gigzen blue — the parent mark, identical to the other two properties. */
+  --gz-1: #6FB4F5;
+  --gz-2: #2E7FE0;
+  --gz-3: #0038B8;
+
+  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
+  --wrap: 1120px;
+  --r: 18px;
+}
+
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
+body {
+  margin: 0; background: var(--paper); color: var(--body);
+  font-family: var(--sans); font-size: 17px; line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3 { margin: 0; color: var(--ink); line-height: 1.1; letter-spacing: -.028em; font-weight: 700; }
+h1 { font-size: clamp(40px, 7vw, 76px); }
+h2 { font-size: clamp(29px, 4.4vw, 46px); }
+h3 { font-size: clamp(19px, 2.2vw, 23px); letter-spacing: -.018em; }
+p  { margin: 0; }
+a  { color: var(--flame-ink); }
+
+.wrap { width: 100%; max-width: var(--wrap); margin-inline: auto; padding-inline: 22px; }
+section { padding-block: clamp(72px, 10vw, 132px); position: relative; }
+
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  font-family: var(--mono); font-size: 12px; font-weight: 600;
+  letter-spacing: .14em; text-transform: uppercase; color: var(--flame-ink);
+}
+.eyebrow::before {
+  content: ""; width: 22px; height: 3px; border-radius: 2px;
+  background: var(--flame); flex: none;
+}
+.lede { font-size: clamp(18px, 2.1vw, 21px); line-height: 1.55; color: var(--body); }
+
+/* ── the Gigzen lockup ─────────────────────────────────────────────────── */
+.gz-mark { height: 20px; width: auto; display: block; }
+.gword {
+  background: linear-gradient(100deg, var(--gz-1) 0%, var(--gz-2) 50%, var(--gz-3) 100%);
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 700; letter-spacing: -.01em;
+}
+@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
+  .gword { background: none; -webkit-text-fill-color: currentColor; color: var(--gz-3); }
+}
+
+/* ── nav ───────────────────────────────────────────────────────────────── */
+nav {
+  position: sticky; top: 0; z-index: 50;
+  background: color-mix(in srgb, var(--paper) 92%, transparent);
+  backdrop-filter: saturate(180%) blur(18px);
+  -webkit-backdrop-filter: saturate(180%) blur(18px);
+  border-bottom: 1px solid transparent; transition: border-color .3s;
+}
+nav.stuck { border-bottom-color: var(--rule); }
+nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; gap: 16px; }
+.brand { display: flex; align-items: center; gap: 9px; font-weight: 700; color: var(--ink); text-decoration: none; letter-spacing: -.02em; }
+.bee { width: 26px; height: 26px; flex: none; }
+.navlinks { display: flex; align-items: center; gap: 26px; }
+.navlinks a { color: var(--body); text-decoration: none; font-size: 15px; font-weight: 550; }
+.navlinks a:hover { color: var(--flame-ink); }
+@media (max-width: 760px) { .navlinks { display: none; } }
+
+/* ── buttons ───────────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex; align-items: center; gap: 10px; justify-content: center;
+  padding: 15px 28px; border-radius: 999px; font-size: 16px; font-weight: 650;
+  text-decoration: none; border: 1.5px solid transparent; cursor: pointer;
+  transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, background .22s ease;
+}
+.btn-primary { background: var(--flame-btn); color: #fff; box-shadow: 0 10px 26px -12px rgba(198,59,0,.6); }
+.btn-primary:hover { transform: translateY(-2px); background: #A93200; }
+.btn-ghost { border-color: color-mix(in srgb, var(--ink) 22%, transparent); color: var(--ink); }
+.btn-ghost:hover { border-color: var(--flame); color: var(--flame-ink); }
+@media (prefers-reduced-motion: reduce) { .btn:hover { transform: none; } }
+
+/* ── hero ──────────────────────────────────────────────────────────────── */
+.hero { position: relative; overflow: hidden; padding-block: clamp(56px, 8vw, 104px) clamp(40px, 6vw, 76px); }
+.hero::before {
+  content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(48% 44% at 88% 6%,  color-mix(in srgb, var(--flame) 22%, transparent) 0%, transparent 70%),
+    radial-gradient(42% 40% at 4% 88%,  color-mix(in srgb, #FFB067 34%, transparent) 0%, transparent 72%),
+    radial-gradient(40% 36% at 70% 96%, color-mix(in srgb, var(--gz-1) 20%, transparent) 0%, transparent 74%);
+}
+.hero .wrap { position: relative; z-index: 1; display: grid; gap: clamp(36px, 5vw, 68px);
+              grid-template-columns: 1.08fr .92fr; align-items: center; }
+@media (max-width: 900px) { .hero .wrap { grid-template-columns: 1fr; } }
+.hero h1 { margin-top: 20px; }
+.hero h1 em { font-style: normal; color: var(--flame-ink); }
+.hero .lede { margin-top: 22px; max-width: 46ch; }
+.cta-row { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 34px; }
+.hero-note { margin-top: 18px; font-size: 13.5px; color: var(--muted); }
+
+/* ── phones ────────────────────────────────────────────────────────────── */
+.phone {
+  width: 100%; max-width: 310px; margin-inline: auto; aspect-ratio: 9 / 19.5;
+  border-radius: 34px; background: #16110F; padding: 8px;
+  box-shadow: 0 40px 80px -40px rgba(60,20,0,.55), 0 0 0 1px rgba(0,0,0,.06);
+}
+.phone img { width: 100%; height: 100%; object-fit: cover; object-position: top center;
+             border-radius: 27px; display: block; background: var(--sand); }
+
+/* ── feature rows ──────────────────────────────────────────────────────── */
+.feature { display: grid; grid-template-columns: 1fr 1fr; gap: clamp(32px, 6vw, 84px); align-items: center; }
+.feature + .feature { margin-top: clamp(72px, 9vw, 128px); }
+.feature:nth-child(even) .feature-media { order: -1; }
+@media (max-width: 860px) {
+  .feature { grid-template-columns: 1fr; }
+  .feature:nth-child(even) .feature-media { order: 0; }
+}
+.feature h2 { margin-top: 16px; }
+.feature p { margin-top: 18px; max-width: 48ch; }
+
+/* ── the one bold block ────────────────────────────────────────────────── */
+/* White on #9E2A00 measures 7.4:1. The brand #FF4D17 could not carry white
+   text at any size that matters — it is 3.35:1 — so the band is the deep
+   tone and the bright one stays for fills and marks. */
+.band { background: linear-gradient(160deg, #B83400 0%, #9E2A00 58%, #7E1F00 100%); color: #FFEFE7; }
+.band h2, .band h3 { color: #fff; }
+.band .eyebrow { color: #FFD9C8; }
+.band .eyebrow::before { background: #fff; }
+.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 30px; margin-top: 46px; }
+.stat .v { display: block; font-size: clamp(40px, 5.4vw, 62px); font-weight: 750; letter-spacing: -.04em;
+           color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
+.stat .k { display: block; margin-top: 10px; font-size: 14.5px; color: #FFD9C8; }
+
+/* ── cards ─────────────────────────────────────────────────────────────── */
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 20px; margin-top: 44px; }
+.card {
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: var(--r);
+  padding: 28px; transition: transform .25s cubic-bezier(.22,.61,.36,1), box-shadow .25s ease, border-color .25s ease;
+}
+.card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--flame) 40%, var(--rule));
+              box-shadow: 0 20px 44px -30px rgba(120,40,0,.5); }
+.card h3 { margin-bottom: 10px; }
+.card p { font-size: 15.5px; }
+@media (prefers-reduced-motion: reduce) { .card:hover { transform: none; } }
+
+/* ── download ──────────────────────────────────────────────────────────── */
+.dl { background: var(--sand); }
+.dl-box {
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 22px;
+  padding: clamp(26px, 4vw, 40px); margin-top: 40px;
+}
+.dl-meta { display: flex; flex-wrap: wrap; gap: 10px 28px; margin-top: 22px;
+           font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.dl-meta b { color: var(--ink); font-weight: 600; }
+.hash { word-break: break-all; font-family: var(--mono); font-size: 12px; color: var(--muted);
+        margin-top: 18px; padding-top: 18px; border-top: 1px dashed var(--rule); }
+.steps { margin: 26px 0 0; padding: 0; list-style: none; counter-reset: step; }
+.steps li { counter-increment: step; position: relative; padding-inline-start: 42px; margin-top: 16px; font-size: 15.5px; }
+.steps li::before {
+  content: counter(step); position: absolute; inset-inline-start: 0; top: 1px;
+  width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center;
+  background: var(--flame); color: #fff; font-size: 13px; font-weight: 700; font-family: var(--mono);
+}
+.notice {
+  margin-top: 26px; padding: 18px 20px; border-radius: 14px;
+  background: color-mix(in srgb, var(--flame) 8%, transparent);
+  border: 1px solid color-mix(in srgb, var(--flame) 26%, transparent);
+  font-size: 15px; color: var(--ink);
+}
+
+/* ── footer ────────────────────────────────────────────────────────────── */
+footer { border-top: 1px solid var(--rule); padding-block: 56px; background: var(--paper); }
+footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space-between; }
+.fine { font-size: 14px; color: var(--muted); }
+.fine a { color: var(--muted); }
+
+/* ── reveal ────────────────────────────────────────────────────────────── */
+.js .rv { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.22,.61,.36,1), transform .8s cubic-bezier(.22,.61,.36,1); }
+.js .rv.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .js .rv { opacity: 1; transform: none; transition: none; } }
+</style>
+</head>
+<body>
+
+<!-- The Gigzen mark's gradient, declared once and referenced by every
+     instance. A duplicated id would leave only the first one resolving. -->
+<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none">
+  <defs>
+    <linearGradient id="gzBlue" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6FB4F5"/>
+      <stop offset=".55" stop-color="#2E7FE0"/>
+      <stop offset="1" stop-color="#0038B8"/>
+    </linearGradient>
+  </defs>
+</svg>
+
+<nav id="nav">
+  <div class="wrap">
+    <a class="brand" href="#top">
+      <!-- The bee, matching the app icon: stripes cut OUT of the body with a
+           mask, so one artwork reads correctly orange-on-light and white-on-orange. -->
+      <svg class="bee" viewBox="0 0 48 48" aria-hidden="true">
+        <defs>
+          <mask id="beeMask">
+            <rect width="48" height="48" fill="black"/>
+            <rect x="14" y="15" width="20" height="26" rx="10" fill="white"/>
+            <rect x="12" y="23.2" width="24" height="2.8" rx="1.4" fill="black"/>
+            <rect x="12" y="29.4" width="24" height="2.8" rx="1.4" fill="black"/>
+            <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" fill="black"/>
+          </mask>
+        </defs>
+        <ellipse cx="13.4" cy="13.2" rx="6.4" ry="3.6" transform="rotate(-32 13.4 13.2)" fill="#FF4D17" opacity=".38"/>
+        <ellipse cx="34.6" cy="13.2" rx="6.4" ry="3.6" transform="rotate(32 34.6 13.2)" fill="#FF4D17" opacity=".38"/>
+        <rect width="48" height="48" fill="#FF4D17" mask="url(#beeMask)"/>
+      </svg>
+      Buzz&nbsp;Buzz
+    </a>
+    <div class="navlinks">
+      <a href="#what">What it does</a>
+      <a href="#earnings">Earnings</a>
+      <a href="#reach">Reach</a>
+      <a href="#download">Download</a>
+    </div>
+  </div>
+</nav>
+
+<main id="top">
+
+  <!-- ── hero ──────────────────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow rv">Android · A Gigzen product</span>
+        <h1 class="rv">Every kilometre counts.<br><em>So count them.</em></h1>
+        <p class="lede rv">An app for delivery riders. Earnings that follow the road,
+        a map with the drivers you know on it, and the people working your streets —
+        in sixteen languages, with the currency set from where you are.</p>
+        <div class="cta-row rv">
+          <a class="btn btn-primary" href="#download">Download the APK</a>
+          <a class="btn btn-ghost" href="#what">See what it does</a>
+        </div>
+        <p class="hero-note rv">Version 1.5 · Android 8.0 and later · 7.9&nbsp;MB · free, with no ads</p>
+      </div>
+      <div class="rv">
+        <div class="phone"><img src="shots/home.jpg" alt="The Buzz Buzz home screen, showing today's distance, active time and earnings, with a Start Tracking button." width="310" height="672" loading="eager"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── what it does ──────────────────────────────────────────────────── -->
+  <section id="what">
+    <div class="wrap">
+      <div class="feature">
+        <div>
+          <span class="eyebrow rv">Earnings</span>
+          <h2 class="rv">Money that follows the road</h2>
+          <p class="rv">Earnings accrue from distance genuinely travelled. Sitting in
+          traffic does not inflate the number, because a stationary phone earns nothing.
+          The day's total resets at midnight, in your own currency, and you can see how
+          it was arrived at rather than being handed a figure.</p>
+        </div>
+        <div class="feature-media rv">
+          <div class="phone"><img src="shots/home.jpg" alt="Today's journey panel showing kilometres, active time and earnings side by side." loading="lazy"></div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div>
+          <span class="eyebrow rv">The map</span>
+          <h2 class="rv">A map with people on it</h2>
+          <p class="rv">Watch the riders you know move in real time, and search any city,
+          neighbourhood or shop on earth. Sharing your position is off until you turn it
+          on, and only people you have added as friends can see it — an empty map is the
+          default, not something you have to go and configure.</p>
+        </div>
+        <div class="feature-media rv">
+          <div class="phone"><img src="shots/map.jpg" alt="The routes map showing streets and rider positions." loading="lazy"></div>
+        </div>
+      </div>
+
+      <div class="feature">
+        <div>
+          <span class="eyebrow rv">Community</span>
+          <h2 class="rv">The people working your streets</h2>
+          <p class="rv">Flooding, surges, closures, queues — told by the riders who just
+          came through them, not by a dispatcher three cities away. Posts, photos, reels
+          and group chats, with the same message controls you already expect: delete for
+          yourself, or delete for everyone.</p>
+        </div>
+        <div class="feature-media rv">
+          <div class="phone"><img src="shots/community.jpg" alt="The community feed showing posts from other riders." loading="lazy"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── the numbers ───────────────────────────────────────────────────── -->
+  <section class="band" id="reach">
+    <div class="wrap">
+      <span class="eyebrow rv">Reach</span>
+      <h2 class="rv">Built for wherever the work is</h2>
+      <p class="lede rv" style="margin-top:18px;max-width:52ch;color:#FFEFE7">
+      Language and currency come from where the rider actually is. Right-to-left
+      layouts included, not bolted on.</p>
+      <div class="stats">
+        <div class="stat rv"><span class="v">16</span><span class="k">languages, at full parity</span></div>
+        <div class="stat rv"><span class="v">27</span><span class="k">currencies</span></div>
+        <div class="stat rv"><span class="v">49</span><span class="k">countries</span></div>
+        <div class="stat rv"><span class="v">0</span><span class="k">ads, ever</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── how it holds up ───────────────────────────────────────────────── -->
+  <section id="earnings">
+    <div class="wrap">
+      <span class="eyebrow rv">Built to survive a real day</span>
+      <h2 class="rv" style="margin-top:16px;max-width:20ch">A delivery shift is not a
+      good network</h2>
+      <div class="cards">
+        <div class="card rv">
+          <h3>It keeps working offline</h3>
+          <p>Posts and messages written with no signal are queued and sent when the
+          connection returns, rather than lost with an error you notice an hour later.</p>
+        </div>
+        <div class="card rv">
+          <h3>Your location is yours</h3>
+          <p>Off by default. Visible only to friends you added. Turning it off stops the
+          sharing immediately — there is no background exception.</p>
+        </div>
+        <div class="card rv">
+          <h3>Tested by a simulated crowd</h3>
+          <p>Before release it was driven by <a href="https://shakhtar-sankur.github.io/populace/">Populace</a>,
+          our own testing tool, which runs dozens of simulated riders through the real
+          API at once. Its first run found five bugs that single-user testing had missed.</p>
+        </div>
+        <div class="card rv">
+          <h3>Account deletion actually works</h3>
+          <p>The path most apps never exercise. You can delete your account from inside
+          the app, and it removes your data rather than hiding it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── download ──────────────────────────────────────────────────────── -->
+  <section class="dl" id="download">
+    <div class="wrap">
+      <span class="eyebrow rv">Download</span>
+      <h2 class="rv" style="margin-top:16px">Try it on your phone</h2>
+      <p class="lede rv" style="margin-top:18px;max-width:54ch">Buzz Buzz is in closed
+      testing and is not on Google Play publicly yet. You can install this build
+      directly.</p>
+
+      <div class="dl-box rv">
+        <a class="btn btn-primary" href="BuzzBuzz-v1.5.apk" download>Download BuzzBuzz-v1.5.apk</a>
+        <div class="dl-meta">
+          <span>Version <b>1.5</b></span>
+          <span>Build <b>6</b></span>
+          <span>Size <b>7.9 MB</b></span>
+          <span>Requires <b>Android 8.0+</b></span>
+        </div>
+
+        <div class="notice">
+          <b>This is a direct install, not a Play Store install.</b> Android will warn you
+          before installing an app from outside the Play Store — that warning is correct and
+          you should read it. Only continue if you trust where this file came from.
+        </div>
+
+        <ol class="steps">
+          <li>Download the file above on your Android phone.</li>
+          <li>Open it. Android will ask whether to allow installs from your browser — allow it for that app only.</li>
+          <li>Install, then turn that permission back off. Buzz Buzz does not need it again.</li>
+        </ol>
+
+        <p class="hash">SHA-256 · 3c1ffa3616b26111148a84cdccb36c46a171383d1e93879d20ab845bc21496f7
+        <br>Check this matches before installing if you did not download it from this page.</p>
+      </div>
+
+      <p class="fine rv" style="margin-top:26px;max-width:60ch">Signed by Gigzen Private
+      Limited. The app asks for location only when you turn tracking on, and for the
+      camera and photos only when you attach one.</p>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <span style="display:inline-flex;align-items:center;gap:9px">
+        <svg class="gz-mark" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z" fill="url(#gzBlue)"/>
+        </svg>
+        <span class="gword">Gigzen</span>
+      </span>
+      <p class="fine" style="margin-top:12px">Buzz Buzz is a product of<br>
+      <b style="color:var(--ink)">Gigzen Private Limited</b><br>Bhubaneswar, Odisha, India</p>
+    </div>
+    <div>
+      <p class="fine">
+        <a href="https://shakhtar-sankur.github.io/gigzen/">Company</a> ·
+        <a href="https://shakhtar-sankur.github.io/populace/">Populace</a><br>
+        <a href="https://shakhtar-sankur.github.io/gigzen/privacy.html">Privacy policy</a><br><br>
+        In closed testing. Not yet publicly<br>available on Google Play.
+      </p>
+    </div>
+  </div>
+</footer>
+
+<script>
+(() => {
+  document.documentElement.classList.add("js");
+
+  /* Reveal. Anything above the fold is shown immediately and a timer shows
+     everything regardless after 1.5s — a page that depends on an observer
+     firing to become readable is a blank page when the observer does not. */
+  const items = () => [...document.querySelectorAll(".rv")];
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { e.target.classList.add("in"); io.unobserve(e.target); }
+    }), { rootMargin: "0px 0px -8% 0px", threshold: 0.05 });
+    items().forEach((el) => io.observe(el));
+    setTimeout(() => items().forEach((el) => {
+      const b = el.getBoundingClientRect();
+      if (b.top < innerHeight * 0.95) el.classList.add("in");
+    }), 0);
+    setTimeout(() => items().forEach((el) => el.classList.add("in")), 1500);
+  } else {
+    items().forEach((el) => el.classList.add("in"));
+  }
+
+  /* Nav hairline, painted only on a frame boundary. */
+  const nav = document.getElementById("nav");
+  let ticking = false;
+  const paint = () => { nav.classList.toggle("stuck", scrollY > 8); ticking = false; };
+  addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(paint); } }, { passive: true });
+  paint();
+})();
+</script>
+</body>
+</html>
