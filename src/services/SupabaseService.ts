@@ -163,6 +163,24 @@ export const SupabaseService = {
     if (error) throw error;
   },
 
+  /**
+   * Set the driver's profile photo.
+   *
+   * Reuses the post-photo bucket and its thumbnail pair — an avatar is shown at
+   * 34px in a chat row and 96px on the profile, so serving the full image
+   * everywhere would cost a driver bandwidth on every screen.
+   */
+  async setAvatar(userId: string, photo: PickedPhoto): Promise<string> {
+    assertSupabase();
+    const { thumbUrl } = await this.uploadPhoto(userId, photo);
+    const { error } = await supabase!
+      .from("profiles")
+      .update({ avatar_url: thumbUrl, updated_at: new Date().toISOString() })
+      .eq("id", userId);
+    if (error) throw error;
+    return thumbUrl;
+  },
+
   async loadSettings(userId: string): Promise<Partial<ProfileSettings> | null> {
     if (!supabase) return null;
     const { data, error } = await supabase

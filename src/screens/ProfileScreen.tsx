@@ -1,4 +1,4 @@
-import { Pencil, Settings, Trash2, Wrench } from "lucide-react";
+import { Pencil, Settings, Trash2, Wrench, Camera } from "lucide-react";
 import { WorkAppMark } from "../components/WorkAppMark";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
@@ -9,6 +9,8 @@ import { GigzenByline } from "../components/GigzenMark";
 import { COMPANY_SITE } from "../config/constants";
 import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
 import { detectCountry } from "../i18n/region";
+import { MediaService } from "../services/MediaService";
+import { SupabaseService } from "../services/SupabaseService";
 import { localAppCount, workAppsForCountry } from "../utils/workApps";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useLocationStore } from "../stores/useLocationStore";
@@ -35,6 +37,28 @@ export function ProfileScreen() {
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  // Profile photo. The avatar_url column has existed all along with nothing in
+  // the app able to set it, so every driver was an initials circle.
+  const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
+  const [avatarBusy, setAvatarBusy] = useState(false);
+
+  const changeAvatar = async () => {
+    const picked = await MediaService.pickImage();
+    if (!picked || !user) return;
+    setAvatarBusy(true);
+    // Show it immediately; the stored URL replaces the local preview once the
+    // upload lands, so a slow connection never leaves the driver staring at
+    // their old photo wondering whether the tap registered.
+    setAvatarUrl(picked.preview);
+    try {
+      const url = await SupabaseService.setAvatar(user.id, picked);
+      setAvatarUrl(url);
+    } catch {
+      setAvatarUrl(undefined);
+    } finally {
+      setAvatarBusy(false);
+    }
+  };
   const [tab, setTab] = useState<EarningsTab>("week");
   const [showAllApps, setShowAllApps] = useState(false);
   const earnings = totalDistanceKm * profile.baseRate;
@@ -66,7 +90,20 @@ export function ProfileScreen() {
   return (
     <main className="page-shell profile-page">
       <section className="profile-hero">
-        <div className="avatar huge">{initials(user?.fullName ?? "Driver")}<span /></div>
+        <button
+          type="button"
+          className="avatar huge pf-avatar-btn"
+          onClick={() => void changeAvatar()}
+          aria-label={t("pf_changePhoto")}
+          disabled={avatarBusy}
+        >
+          {avatarUrl ? (
+            <img src={avatarUrl} alt="" className="pf-avatar-img" />
+          ) : (
+            initials(user?.fullName ?? "Driver")
+          )}
+          <span className="pf-avatar-edit"><Camera size={15} /></span>
+        </button>
         <h2>{user?.fullName}</h2>
       </section>
 

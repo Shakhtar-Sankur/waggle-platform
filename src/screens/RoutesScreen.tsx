@@ -31,7 +31,7 @@ import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
-import { useCommunityStore } from "../stores/useCommunityStore";
+import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { Challenge, ChallengeMetric } from "../types";
@@ -312,6 +312,28 @@ export function RoutesScreen() {
   const routePositions = route.map((point) => [point.lat, point.lng] as [number, number]);
   const onlineWorkers = workers.filter((worker) => worker.isOnline);
 
+  // Only drivers you are connected with appear on the map. Showing every
+  // online driver's live position to everyone is a location-privacy problem,
+  // not a feature — and a connection is the app's own definition of "someone
+  // who agreed to share with me".
+  const connections = useCommunityStore((state) => state.connections);
+  const friendWorkers = useMemo(
+    () =>
+      onlineWorkers.filter(
+        (w) => connectionFor(connections, user?.id, w.id).state === "connected",
+      ),
+    [onlineWorkers, connections, user?.id],
+  );
+
+  /** Two-letter mark for a map pin, matching WorkAppMark's rule. */
+  const markOf = (appId: typeof activeApp) => {
+    const name = getWorkApp(appId)?.name ?? "";
+    const words = name.trim().split(/[\s-]+/).filter(Boolean);
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase();
+    const camel = name.match(/^([A-Za-z])[a-z]*([A-Z])/);
+    return camel ? (camel[1] + camel[2]).toUpperCase() : name.slice(0, 1).toUpperCase();
+  };
+
   // Keep the map live. Realtime broadcasts are unreliable for these RLS-heavy
   // tables, so without this a driver who joins — or a friend who starts moving —
   // only appeared after closing and reopening the app. Poll while the map is on
@@ -423,13 +445,13 @@ export function RoutesScreen() {
                 <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 4, opacity: 0.95 }} />
               </>
             ) : null}
-            {onlineWorkers.map((worker) => (
+            {friendWorkers.map((worker) => (
               <Marker
                 key={worker.id}
                 position={[worker.location.lat, worker.location.lng]}
                 icon={L.divIcon({
                   className: "driver-marker-wrap",
-                  html: `<div class="driver-marker">${getWorkApp(worker.app)?.logo ?? "🚗"}</div>`,
+                  html: `<div class="driver-marker" style="background:${getWorkApp(worker.app)?.color ?? "#555"}">${markOf(worker.app)}</div>`,
                   iconSize: [34, 34],
                   iconAnchor: [17, 17],
                 })}

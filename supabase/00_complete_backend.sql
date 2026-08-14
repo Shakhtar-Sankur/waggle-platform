@@ -1677,3 +1677,48 @@ alter table public.feed_posts
 comment on column public.feed_posts.video_url is
   'Storage URL of a reel video. Mutually exclusive with image_url in practice; '
   'the reels list prefers video when both are somehow present.';
+
+-- ============================================================================
+-- Post & reel notifications for connected drivers (added 2026-08-14)
+-- ============================================================================
+-- Tell a driver's friends when they post, and when they share a reel.
+--
+-- Only CONNECTED drivers are notified. Notifying everyone would make the app
+-- unusable the moment it has real users, and it would leak who is active to
+-- people you have never accepted.
+create or replace function public.notify_new_post()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  author_name text;
+  friend_id uuid;
+  is_reel boolean := new.video_url is not null;
+begin
+  select full_name into author_name from public.profiles where id = new.user_id;
+
+  for friend_id in
+    select case when c.requester_id = new.user_id then c.addressee_id else c.requester_id end
+      from public.connections c
+     where c.status = 'accepted'
+       and (c.requester_id = new.user_id or c.addressee_id = new.user_id)
+  loop
+    insert into public.notifications (user_id, title, description, kind)
+    values (
+      friend_id,
+      case when is_reel then 'New reel 🎬' else 'New post 📣' end,
+      coalesce(author_name, 'A driver') ||
+        case when is_reel then ' shared a reel.' else ': ' || left(coalesce(new.body, ''), 60) end,
+      'system'
+    );
+  end loop;
+  return new;
+end;
+$$;
+
+drop trigger if exists trg_notify_new_post on public.feed_posts;
+create trigger trg_notify_new_post
+  after insert on public.feed_posts
+  for each row execute function public.notify_new_post();

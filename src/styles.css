@@ -5282,3 +5282,15 @@ body { font-weight: 400; }
 .stat-grid strong, .stat-value, .pf-figure {
   font-weight: 700; letter-spacing: -0.04em;
 }
+
+/* Profile photo. The avatar was always initials because nothing could set it. */
+.pf-avatar-btn { position: relative; border: 0; padding: 0; cursor: pointer; overflow: visible; }
+.pf-avatar-btn:disabled { opacity: .6; cursor: progress; }
+.pf-avatar-img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; display: block; }
+.pf-avatar-edit {
+  position: absolute; right: -2px; bottom: -2px;
+  width: 30px; height: 30px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--accent, #ff5a1f); color: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.3);
+}
