@@ -1726,3 +1726,28 @@ drop trigger if exists trg_notify_new_post on public.feed_posts;
 create trigger trg_notify_new_post
   after insert on public.feed_posts
   for each row execute function public.notify_new_post();
+
+-- You can always see your own membership row.
+--
+-- The policy was is_thread_member(thread_id, auth.uid()) alone, which asks "are
+-- you already in this thread" by querying the very table being read. Two
+-- consequences:
+--
+--   1. Inserting yourself and asking for the row back (any client that sends
+--      Prefer: return=representation, which supabase-js does whenever .select()
+--      is chained) fails with "new row violates row-level security policy" —
+--      a misleading message, since the INSERT passed and it was the RETURNING
+--      that was refused.
+--   2. It is simply wrong. A driver should be able to read the row that says
+--      they are a member, without that read depending on itself.
+--
+-- Adding `user_id = auth.uid()` fixes both. It grants nothing new: you could
+-- already insert exactly this row, so being able to read it back reveals
+-- nothing you did not just write.
+drop policy if exists "members readable by members" on public.chat_thread_members;
+create policy "members readable by members"
+  on public.chat_thread_members for select
+  using (
+    user_id = auth.uid()
+    or public.is_thread_member(thread_id, auth.uid())
+  );
