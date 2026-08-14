@@ -7,9 +7,9 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "android:sync": "pnpm build && cap sync android",
-    "android:open": "pnpm android:sync && cap open android",
-    "android:apk": "pnpm android:sync && cd android && gradlew assembleDebug"
+    "android:sync": "corepack pnpm build && cap sync android",
+    "android:open": "corepack pnpm android:sync && cap open android",
+    "android:apk": "corepack pnpm android:sync && cd android && gradlew assembleDebug"
   },
   "dependencies": {
     "@capacitor/android": "^8.3.4",
