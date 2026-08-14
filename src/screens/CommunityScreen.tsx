@@ -26,12 +26,13 @@ import {
   X,
 } from "lucide-react";
 import type { ReactNode } from "react";
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Wordmark } from "../components/Wordmark";
 import { MediaService, type PickedPhoto } from "../services/MediaService";
+import { SupabaseService } from "../services/SupabaseService";
 import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
@@ -46,9 +47,11 @@ const FEELINGS = ["😊 feeling happy", "🚗 on the road", "☕ taking a break"
 
 export function CommunityScreen() {
   const navigate = useNavigate();
+
   const t = useT();
   const user = useAuthStore((state) => state.user);
   const posts = useCommunityStore((state) => state.posts);
+  const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
   const loaded = useCommunityStore((state) => state.loaded);
   const workers = useCommunityStore((state) => state.workers);
   const groups = useCommunityStore((state) => state.groups);
@@ -62,6 +65,20 @@ export function CommunityScreen() {
   const addComment = useCommunityStore((state) => state.addComment);
   const sendConnection = useCommunityStore((state) => state.sendConnection);
   const acceptConnection = useCommunityStore((state) => state.acceptConnection);
+
+  // Keep the feed current while it is open.
+  //
+  // MessagesScreen and RoutesScreen both refresh community data on a timer;
+  // this screen — the one whose whole purpose is the shared feed — did not,
+  // and relied entirely on the realtime subscription in App. A driver watching
+  // the feed saw nothing new until they left and came back. Verified with two
+  // drivers: a post from one stayed invisible to the other for 20s+ on an open
+  // Community screen, then appeared immediately on reload.
+  useEffect(() => {
+    if (!user || !SupabaseService.enabled) return undefined;
+    const timer = window.setInterval(() => void loadCloudCommunity(), 15000);
+    return () => window.clearInterval(timer);
+  }, [user, loadCloudCommunity]);
   const toggleGroup = useCommunityStore((state) => state.toggleGroup);
   const openDirectThread = useChatStore((state) => state.openDirectThread);
 
