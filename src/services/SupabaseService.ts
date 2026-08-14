@@ -891,9 +891,17 @@ export const SupabaseService = {
 
   async joinGroup(groupId: string, userId: string) {
     assertSupabase();
+    // ignoreDuplicates, so this compiles to ON CONFLICT DO NOTHING rather than
+    // DO UPDATE. A plain upsert takes the UPDATE path when the row already
+    // exists, and RLS on group_members has INSERT and DELETE policies but no
+    // UPDATE one — so tapping Join on a group you are already in failed with
+    // "new row violates row-level security policy (USING expression)".
+    //
+    // Rejoining should be a no-op anyway: there is nothing on the row to
+    // update, the primary key is (group_id, user_id).
     const { error } = await supabase!
       .from("group_members")
-      .upsert({ group_id: groupId, user_id: userId });
+      .upsert({ group_id: groupId, user_id: userId }, { ignoreDuplicates: true });
     if (error) throw error;
   },
 
