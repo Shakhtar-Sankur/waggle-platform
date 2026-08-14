@@ -119,6 +119,30 @@ export default function App() {
     user,
   ]);
 
+  // Poll notifications and connections while the app is open.
+  //
+  // The realtime subscriptions above are the fast path, but they are not a
+  // guarantee: verified with two drivers that a chat notification sat in the
+  // database and never reached the bell until the app was fully reloaded. For a
+  // driver app a missed message notification is not cosmetic. Refreshing on
+  // return to the foreground matters as much as the timer — that is when a
+  // driver actually looks.
+  useEffect(() => {
+    if (!user || !SupabaseService.enabled) return undefined;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") return;
+      void loadCloudNotifications(user.id);
+      void loadConnections(user.id);
+    };
+    const timer = window.setInterval(refresh, 20000);
+    document.addEventListener("visibilitychange", refresh);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [user, loadCloudNotifications, loadConnections]);
+
+
   return (
     <>
       <ConsentGate />
