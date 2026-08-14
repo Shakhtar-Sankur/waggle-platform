@@ -76,6 +76,17 @@ export interface LocationPoint {
   lng: number;
   accuracy?: number;
   timestamp: number;
+  /**
+   * True when this is the Manila default rather than a real fix — GPS denied,
+   * unavailable, or timed out.
+   *
+   * Callers that only need somewhere to point the map can ignore it. Callers
+   * that infer something ABOUT THE DRIVER from the coordinates must not: a
+   * fallback point is indistinguishable from a genuine Manila fix, and reading
+   * a country out of it told drivers all over the world they were in the
+   * Philippines.
+   */
+  fallback?: boolean;
 }
 
 export interface Worker {

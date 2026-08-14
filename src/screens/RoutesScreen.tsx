@@ -353,7 +353,15 @@ export function RoutesScreen() {
         map.setView([point.lat, point.lng], 14, { animate: true });
         // Refine the currency from the actual country the driver is in.
         // (Language stays English by default — users pick their language manually.)
-        if (useLangStore.getState().autoRegion) {
+        //
+        // Only from a REAL fix. When GPS is denied, missing, or slower than the
+        // 5s timeout, currentPosition() returns the Manila default — a normal
+        // looking point that reverse-geocodes to "PH". Acting on it converted
+        // drivers anywhere in the world to pesos at ₱10/km the first time they
+        // opened this screen, which is worse than showing no currency change at
+        // all. Centring the map on the default is still fine; inferring the
+        // driver's country from it is not.
+        if (!point.fallback && useLangStore.getState().autoRegion) {
           const country = await reverseGeocodeCountry(point.lat, point.lng);
           if (!cancelled && country) {
             useProfileStore.getState().applyCurrency(countryToCurrency(country));

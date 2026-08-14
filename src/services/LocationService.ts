@@ -91,7 +91,8 @@ function toPoint(lat: number, lng: number, accuracy?: number): LocationPoint {
 }
 
 function fallbackPoint(): LocationPoint {
-  return { ...MANILA_CENTER, accuracy: 100, timestamp: Date.now() };
+  // Flagged, because this point is a guess and some callers must know that.
+  return { ...MANILA_CENTER, accuracy: 100, timestamp: Date.now(), fallback: true };
 }
 
 function distanceKm(a: LocationPoint, b: LocationPoint) {
