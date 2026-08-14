@@ -7,6 +7,7 @@ import { APP_NAME } from "../config/constants";
 import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useLocationStore } from "../stores/useLocationStore";
+import { useConsentStore } from "../stores/useConsentStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import { currency, currencyPrecise, duration, initials } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
@@ -15,6 +16,7 @@ export function HomeScreen() {
   const t = useT();
   const user = useAuthStore((state) => state.user);
   const [showPicker, setShowPicker] = useState(false);
+  const consented = useConsentStore((state) => state.accepted);
   const [showSplash, setShowSplash] = useState(() => sessionStorage.getItem("masaya_splash") !== "shown");
   const activeApp = useProfileStore((state) => state.activeApp);
   const baseRate = useProfileStore((state) => state.baseRate);
@@ -37,9 +39,13 @@ export function HomeScreen() {
   const hour = new Date().getHours();
   const greetKey = hour < 12 ? "greet_morning" : hour < 18 ? "greet_afternoon" : "greet_evening";
 
+  // Wait for consent before prompting for a working app. Both fired on a first
+  // launch, so two modals opened at the same z-index and the driver had to
+  // dismiss both — in whichever order they happened to stack — before anything
+  // responded. Consent is a gate; nothing else opens in front of it.
   useEffect(() => {
-    if (!activeApp) setShowPicker(true);
-  }, [activeApp]);
+    if (!activeApp && consented) setShowPicker(true);
+  }, [activeApp, consented]);
 
   useEffect(() => {
     if (!showSplash) return;

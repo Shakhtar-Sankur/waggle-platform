@@ -3,15 +3,16 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
+import { useConsentStore } from "../stores/useConsentStore";
 import { Button } from "./ui/Button";
 import { Modal } from "./ui/Modal";
-
-const CONSENT_KEY = "masaya_consent_v2";
 
 export function ConsentGate() {
   const t = useT();
   const user = useAuthStore((state) => state.user);
-  const [accepted, setAccepted] = useState(() => localStorage.getItem(CONSENT_KEY) === "true");
+  // Shared, because HomeScreen must not open its own modal in front of this one.
+  const accepted = useConsentStore((state) => state.accepted);
+  const accept = useConsentStore((state) => state.accept);
   const [locationAck, setLocationAck] = useState(false);
   const [privacyAck, setPrivacyAck] = useState(false);
 
@@ -65,10 +66,7 @@ export function ConsentGate() {
 
         <Button
           disabled={!canContinue}
-          onClick={() => {
-            localStorage.setItem(CONSENT_KEY, "true");
-            setAccepted(true);
-          }}
+          onClick={accept}
         >
           {t("consent_agree")}
         </Button>
