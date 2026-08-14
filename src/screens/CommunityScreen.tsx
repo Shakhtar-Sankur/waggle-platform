@@ -96,6 +96,13 @@ export function CommunityScreen() {
   const [commentDraft, setCommentDraft] = useState("");
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
   const [photo, setPhoto] = useState<PickedPhoto | undefined>();
+
+  // Posting a reel deliberately, rather than a reel being whatever post
+  // happened to carry a photo. A reel needs an image, so the picker comes
+  // first and the caption second.
+  const [reelOpen, setReelOpen] = useState(false);
+  const [reelPhoto, setReelPhoto] = useState<PickedPhoto | undefined>();
+  const [reelCaption, setReelCaption] = useState("");
   const [pickingPhoto, setPickingPhoto] = useState(false);
   const [tagged, setTagged] = useState<Worker[]>([]);
   const [tagOpen, setTagOpen] = useState(false);
@@ -159,6 +166,19 @@ export function CommunityScreen() {
   const addFeeling = () => {
     const feeling = FEELINGS[Math.floor(Math.random() * FEELINGS.length)];
     setPostBody((prev) => (prev.trim() ? `${prev.trim()} — ${feeling}` : `${firstName} is ${feeling}`));
+  };
+
+  const pickReelPhoto = async () => {
+    const picked = await MediaService.pickImage();
+    if (picked) setReelPhoto(picked);
+  };
+
+  const shareReel = () => {
+    if (!reelPhoto) return;               // a reel without an image is just a post
+    addPost(reelCaption.trim(), reelPhoto);
+    setReelPhoto(undefined);
+    setReelCaption("");
+    setReelOpen(false);
   };
 
   const submitPost = (event: FormEvent) => {
@@ -422,6 +442,14 @@ export function CommunityScreen() {
 
       {tab === "reels" ? (
         <div className="fb-body">
+          <button className="fb-reel-create" onClick={() => setReelOpen(true)}>
+            <span className="fb-reel-create-icon"><Plus size={18} /></span>
+            <span>
+              <strong>{t("fb_createReel")}</strong>
+              <em>{t("fb_createReelSub")}</em>
+            </span>
+          </button>
+
           {reels.length ? (
             <div className="fb-reels">
               {reels.map((reel) => (
@@ -442,6 +470,44 @@ export function CommunityScreen() {
               <span>{t("fb_noReelsSub")}</span>
             </div>
           )}
+
+          <Modal
+            open={reelOpen}
+            onClose={() => setReelOpen(false)}
+            title={t("fb_createReel")}
+            description={t("fb_createReelSub")}
+          >
+            <div className="fb-reel-composer">
+              {reelPhoto ? (
+                <div className="fb-reel-preview">
+                  <img src={reelPhoto.preview} alt="" />
+                  <button
+                    type="button"
+                    aria-label={t("a11y_removePhoto")}
+                    onClick={() => { MediaService.releasePreview(reelPhoto.preview); setReelPhoto(undefined); }}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              ) : (
+                <button type="button" className="fb-reel-pick" onClick={() => void pickReelPhoto()}>
+                  <ImageIcon size={26} />
+                  <span>{t("fb_reelPickPhoto")}</span>
+                </button>
+              )}
+
+              <input
+                className="fb-reel-caption"
+                placeholder={t("fb_reelCaption")}
+                value={reelCaption}
+                onChange={(e) => setReelCaption(e.target.value)}
+              />
+
+              <Button disabled={!reelPhoto} onClick={shareReel}>
+                {t("fb_shareReel")}
+              </Button>
+            </div>
+          </Modal>
         </div>
       ) : null}
 

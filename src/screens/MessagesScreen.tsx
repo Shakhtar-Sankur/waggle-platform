@@ -55,6 +55,7 @@ export function MessagesScreen() {
   const [groupOpen, setGroupOpen] = useState(false);
   const [groupName, setGroupName] = useState("");
   const [groupPicks, setGroupPicks] = useState<string[]>([]);
+  const [membersOpen, setMembersOpen] = useState(false);
   const connections = useCommunityStore((state) => state.connections);
 
   // Only people who actually accepted a connection. You cannot add a stranger
@@ -289,13 +290,34 @@ export function MessagesScreen() {
               </span>
               {!openThread.isGroup && openOther?.isOnline ? <i className="wa-online-dot" /> : null}
             </span>
-            <div className="wa-convo-title">
+            <div
+              className={openThread.isGroup ? "wa-convo-title is-tappable" : "wa-convo-title"}
+              onClick={() => { if (openThread.isGroup) setMembersOpen(true); }}
+              role={openThread.isGroup ? "button" : undefined}
+              tabIndex={openThread.isGroup ? 0 : undefined}
+            >
               <strong>{displayTitle(openThread)}</strong>
               {/* Presence is unknown until the other driver's profile loads.
                   Render nothing rather than an empty line, which otherwise
                   leaves a blank gap under the name. */}
               {(() => {
-                const line = openThread.isGroup ? t("wa_groupChat") : presenceLabel(openOther, t);
+                // Name the first few and count the rest. A group of nine would
+                // otherwise render a line of names that the header simply clips,
+                // which tells the driver less than a number does.
+                const names = openThread.isGroup
+                  ? openThread.participantIds
+                      .map((id) => (id === user?.id ? t("wa_you") : workerById[id]?.name))
+                      .filter(Boolean)
+                  : [];
+                const SHOWN = 3;
+                const memberNames = names.length
+                  ? names.length > SHOWN
+                    ? `${names.slice(0, SHOWN).join(", ")} ${t("wa_andMore", { count: String(names.length - SHOWN) })}`
+                    : names.join(", ")
+                  : "";
+                const line = openThread.isGroup
+                  ? memberNames || t("wa_groupChat")
+                  : presenceLabel(openOther, t);
                 if (!line) return null;
                 return (
                   <small className={!openThread.isGroup && openOther?.isOnline ? "wa-online" : ""}>
@@ -334,6 +356,14 @@ export function MessagesScreen() {
                 onClick={() => setMenuOpen(false)}
               />
               <div className="wa-menu" role="menu">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="wa-menu-item"
+                  onClick={() => { setMenuOpen(false); setMembersOpen(true); }}
+                >
+                  <UsersRound size={16} /> {t("wa_viewMembers")}
+                </button>
                 <button
                   type="button"
                   role="menuitem"
@@ -449,6 +479,28 @@ export function MessagesScreen() {
                 </div>
               </div>
             </div>
+          ) : null}
+
+          {openThread?.isGroup ? (
+            <Modal
+              open={membersOpen}
+              onClose={() => setMembersOpen(false)}
+              title={displayTitle(openThread)}
+              description={t("wa_membersCount", { count: String(openThread.participantIds.length) })}
+            >
+              <ul className="wa-members">
+                {openThread.participantIds.map((id) => {
+                  const isMe = id === user?.id;
+                  const name = isMe ? t("wa_you") : workerById[id]?.name ?? t("wa_unknownMember");
+                  return (
+                    <li key={id}>
+                      <span className="wa-avatar">{initials(name)}</span>
+                      <span className="wa-member-name">{name}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </Modal>
           ) : null}
 
           {confirmLeave && openThread ? (
