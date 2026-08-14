@@ -1579,3 +1579,61 @@ end $$;
 --
 -- Try it by hand (returns how many drivers were reset):
 --   select public.reset_stale_daily_stats();
+
+-- ============================================================================
+-- Group membership (added 2026-08-14)
+-- ============================================================================
+-- Adding other drivers to a group.
+--
+-- RLS on chat_thread_members allows `auth.uid() = user_id` only: a driver may
+-- insert themselves and nobody else. That is the right default — otherwise
+-- anyone could drop anyone into any thread — but it left the app unable to
+-- build a group at all, which is why "New Driver Group" was always a room the
+-- creator sat in alone.
+--
+-- So the privilege is granted here, narrowly, in a definer function that
+-- enforces the two rules the policy cannot express:
+--   1. the caller must already be in the thread;
+--   2. every person added must be an ACCEPTED connection of the caller.
+-- Without (2) this would be a way to pull strangers into a group chat.
+create or replace function public.add_group_members(p_thread uuid, p_members uuid[])
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  m uuid;
+begin
+  if auth.uid() is null then
+    raise exception 'not authenticated';
+  end if;
+
+  if not exists (
+    select 1 from public.chat_thread_members
+     where thread_id = p_thread and user_id = auth.uid()
+  ) then
+    raise exception 'you are not a member of this thread';
+  end if;
+
+  foreach m in array coalesce(p_members, '{}'::uuid[]) loop
+    if m <> auth.uid() then
+      if not exists (
+        select 1 from public.connections c
+         where c.status = 'accepted'
+           and ((c.requester_id = auth.uid() and c.addressee_id = m)
+             or (c.requester_id = m and c.addressee_id = auth.uid()))
+      ) then
+        raise exception 'you can only add drivers you are connected with';
+      end if;
+
+      insert into public.chat_thread_members (thread_id, user_id)
+      values (p_thread, m)
+      on conflict do nothing;
+    end if;
+  end loop;
+end;
+$$;
+
+revoke all on function public.add_group_members(uuid, uuid[]) from public, anon;
+grant execute on function public.add_group_members(uuid, uuid[]) to authenticated;

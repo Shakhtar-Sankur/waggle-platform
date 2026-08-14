@@ -2,12 +2,14 @@ import { ArrowLeft, ImagePlus, LogOut, MessageCircle, MoreVertical, Search, Send
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
+import { Button } from "../components/ui/Button";
+import { Modal } from "../components/ui/Modal";
 import { useT } from "../i18n";
 import { MediaService, type PickedPhoto } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
-import { useCommunityStore } from "../stores/useCommunityStore";
+import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import type { ChatThread, Worker } from "../types";
 import { initials, timeAgo } from "../utils/format";
 
@@ -46,6 +48,21 @@ export function MessagesScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  // WhatsApp-style group creation: choose people first, name it, then create.
+  // It used to make a thread called "New Driver Group" the instant the button
+  // was pressed — a ready-made room with nobody in it.
+  const [groupOpen, setGroupOpen] = useState(false);
+  const [groupName, setGroupName] = useState("");
+  const [groupPicks, setGroupPicks] = useState<string[]>([]);
+  const connections = useCommunityStore((state) => state.connections);
+
+  // Only people who actually accepted a connection. You cannot add a stranger
+  // to a group chat.
+  const friends = useMemo(
+    () => workers.filter((w) => connectionFor(connections, user?.id, w.id).state === "connected"),
+    [workers, connections, user],
+  );
 
   // Keep chats fresh (RLS makes chat too complex for live-broadcast, so we
   // poll). Poll fast while a conversation is actually open — that is when a
@@ -154,10 +171,67 @@ export function MessagesScreen() {
         />
       </div>
 
-      <button className="wa-newgroup" onClick={createGroup}>
+      <button className="wa-newgroup" onClick={() => { setGroupPicks([]); setGroupName(""); setGroupOpen(true); }}>
         <span className="wa-avatar wa-avatar-accent"><UsersRound size={20} /></span>
         {t("wa_newGroup")}
       </button>
+
+      <Modal
+        open={groupOpen}
+        onClose={() => setGroupOpen(false)}
+        title={t("wa_newGroup")}
+        description={friends.length ? t("wa_groupPick") : t("wa_groupNoFriends")}
+      >
+        <div className="wa-group-builder">
+          {friends.length === 0 ? (
+            <p className="wa-group-empty">{t("wa_groupNoFriendsBody")}</p>
+          ) : (
+            <>
+              <ul className="wa-group-friends">
+                {friends.map((f) => {
+                  const picked = groupPicks.includes(f.id);
+                  return (
+                    <li key={f.id}>
+                      <button
+                        type="button"
+                        className={picked ? "wa-group-friend is-picked" : "wa-group-friend"}
+                        onClick={() =>
+                          setGroupPicks((prev) =>
+                            prev.includes(f.id) ? prev.filter((x) => x !== f.id) : [...prev, f.id],
+                          )
+                        }
+                      >
+                        <span className="wa-avatar">{initials(f.name)}</span>
+                        <span className="wa-group-friend-name">{f.name}</span>
+                        <span className="wa-group-check">{picked ? "✓" : ""}</span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <input
+                className="wa-group-name"
+                placeholder={t("wa_groupName")}
+                value={groupName}
+                onChange={(e) => setGroupName(e.target.value)}
+              />
+
+              <Button
+                disabled={groupPicks.length === 0}
+                onClick={async () => {
+                  await createGroup(groupName, groupPicks);
+                  setGroupOpen(false);
+                }}
+              >
+                {groupPicks.length
+                  ? `${t("wa_groupCreate")} (${groupPicks.length})`
+                  : t("wa_groupCreate")}
+              </Button>
+            </>
+          )}
+        </div>
+      </Modal>
 
       <div className="wa-chat-list">
         {!chatsLoaded && !chatList.length ? (

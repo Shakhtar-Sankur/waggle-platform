@@ -20,7 +20,7 @@ interface ChatState {
   selectThread: (id: string) => void;
   sendMessage: (body: string, photo?: PickedPhoto) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
-  createGroup: () => Promise<void>;
+  createGroup: (title: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
   leaveThread: (threadId: string) => Promise<void>;
 }
@@ -164,13 +164,20 @@ export const useChatStore = create<ChatState>()(
           useNotificationStore.getState().push(translate("notif_newMessage"), reply.body, "chat");
         }, 1200);
       },
-      createGroup: async () => {
+      createGroup: async (title, memberIds) => {
         const user = useAuthStore.getState().user;
+        const name = title.trim() || "New Driver Group";
         if (SupabaseService.enabled && user) {
           try {
-            const thread = await SupabaseService.createThread(user.id, "New Driver Group", true);
+            const thread = await SupabaseService.createThread(user.id, name, true);
+            // Members are added before the thread is shown, so a group never
+            // appears in the list as an empty room the creator is alone in.
+            await SupabaseService.addThreadMembers(thread.id, memberIds);
             set((state) => ({
-              threads: [thread, ...state.threads],
+              threads: [
+                { ...thread, participantIds: [user.id, ...memberIds] },
+                ...state.threads,
+              ],
               selectedThreadId: thread.id,
             }));
           } catch (error) {
@@ -187,8 +194,8 @@ export const useChatStore = create<ChatState>()(
           threads: [
             {
               id,
-              title: "New Driver Group",
-              participantIds: ["me", "worker_alex", "worker_maria"],
+              title: name,
+              participantIds: ["me", ...memberIds],
               isGroup: true,
               unreadCount: 0,
               typingUserIds: [],

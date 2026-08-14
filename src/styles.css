@@ -4896,3 +4896,35 @@ body::before {
 .working-app-card strong {
   color: var(--primary-text);
 }
+
+/* ── group builder ─────────────────────────────────────
+   Choosing people then naming the group, rather than a thread appearing
+   pre-made. Rows are 52px so they are comfortable thumb targets on a phone
+   held one-handed, which is how a driver uses this. */
+.wa-group-builder { display: flex; flex-direction: column; gap: 14px; }
+.wa-group-empty { color: var(--muted); font-size: 14.5px; margin: 0; }
+
+.wa-group-friends {
+  list-style: none; margin: 0; padding: 0;
+  max-height: 46vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.wa-group-friend {
+  width: 100%; display: flex; align-items: center; gap: 12px;
+  min-height: 52px; padding: 6px 10px; border-radius: 12px;
+  background: none; border: 1px solid transparent; cursor: pointer;
+  color: inherit; text-align: left; font: inherit;
+}
+.wa-group-friend:hover { background: rgba(127, 127, 127, 0.10); }
+.wa-group-friend.is-picked {
+  background: rgba(37, 211, 102, 0.12);
+  border-color: rgba(37, 211, 102, 0.45);
+}
+.wa-group-friend-name { flex: 1; font-weight: 550; }
+.wa-group-check { font-weight: 700; color: #25d366; width: 18px; text-align: center; }
+
+.wa-group-name {
+  width: 100%; min-height: 46px; padding: 0 14px;
+  border-radius: 12px; border: 1px solid var(--rule, rgba(127,127,127,.3));
+  background: transparent; color: inherit; font: inherit;
+}

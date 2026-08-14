@@ -701,6 +701,27 @@ export const SupabaseService = {
     }));
   },
 
+  /**
+   * Add other drivers to a thread the caller already belongs to.
+   *
+   * Separate from createThread because a group is named and populated in one
+   * step by the person creating it, and a half-made group — a thread with one
+   * member — is worse than none.
+   */
+  async addThreadMembers(threadId: string, userIds: string[]): Promise<void> {
+    assertSupabase();
+    if (!userIds.length) return;
+    // Through an RPC, not a direct insert: RLS on chat_thread_members permits
+    // `auth.uid() = user_id` only, so a driver can add themselves and nobody
+    // else. add_group_members is SECURITY DEFINER and checks that the caller is
+    // in the thread and that everyone added is an accepted connection.
+    const { error } = await supabase!.rpc("add_group_members", {
+      p_thread: threadId,
+      p_members: userIds,
+    });
+    if (error) throw error;
+  },
+
   async createThread(userId: string, title: string, isGroup: boolean): Promise<ChatThread> {
     assertSupabase();
     const { data: thread, error: threadError } = await supabase!
