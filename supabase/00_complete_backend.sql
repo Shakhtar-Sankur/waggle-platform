@@ -1596,6 +1596,10 @@ end $$;
 --   1. the caller must already be in the thread;
 --   2. every person added must be an ACCEPTED connection of the caller.
 -- Without (2) this would be a way to pull strangers into a group chat.
+Enforced in the database, not just the UI: the UI can be bypassed by anyone
+-- calling the API directly, and an unbounded group is a way to spam every
+-- driver in the app at once. Twenty is generous for a shift crew and small
+-- enough that a group chat stays readable.
 create or replace function public.add_group_members(p_thread uuid, p_members uuid[])
 returns void
 language plpgsql
@@ -1604,6 +1608,7 @@ set search_path = public
 as $$
 declare
   m uuid;
+  current_count int;
 begin
   if auth.uid() is null then
     raise exception 'not authenticated';
@@ -1627,6 +1632,14 @@ begin
         raise exception 'you can only add drivers you are connected with';
       end if;
 
+      -- Counted inside the loop, so adding five to a group of eighteen fails on
+      -- the third rather than letting all five through.
+      select count(*) into current_count
+        from public.chat_thread_members where thread_id = p_thread;
+      if current_count >= 20 then
+        raise exception 'a group can have at most 20 members';
+      end if;
+
       insert into public.chat_thread_members (thread_id, user_id)
       values (p_thread, m)
       on conflict do nothing;
@@ -1637,3 +1650,30 @@ $$;
 
 revoke all on function public.add_group_members(uuid, uuid[]) from public, anon;
 grant execute on function public.add_group_members(uuid, uuid[]) to authenticated;
+
+-- ============================================================================
+-- Reels: video (added 2026-08-14)
+-- ============================================================================
+-- Reels need to hold video, so the bucket must accept it and posts must be able
+-- to point at one.
+--
+-- The size limit is raised to 30 MB from 5 MB — enough for a 60-second phone
+-- clip, and no more. There is no transcoding in the app, so whatever the phone
+-- records is what gets uploaded; the cap is the only thing standing between a
+-- driver and a very expensive upload on a metered connection.
+update storage.buckets
+   set allowed_mime_types = array[
+         'image/jpeg','image/png','image/webp',
+         'video/mp4','video/quicktime','video/webm'
+       ],
+       file_size_limit = 31457280          -- 30 MB
+ where id = 'post-photos';
+
+-- A post carries either an image or a video, never both. Nullable, so every
+-- existing photo post is untouched.
+alter table public.feed_posts
+  add column if not exists video_url text;
+
+comment on column public.feed_posts.video_url is
+  'Storage URL of a reel video. Mutually exclusive with image_url in practice; '
+  'the reels list prefers video when both are somehow present.';

@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { seededChallenges, seededGroups, seededPosts, seededWorkers } from "../data/seed";
 import { SupabaseService } from "../services/SupabaseService";
 import { Outbox, blobToDataUrl } from "../services/Outbox";
-import type { PickedPhoto } from "../services/MediaService";
+import type { PickedPhoto, PickedVideo } from "../services/MediaService";
 import type {
   Challenge,
   ChallengeMetric,
@@ -29,7 +29,7 @@ interface CommunityState {
    *  unknown (offline / tables missing) and must NOT be shown as if real. */
   groupsFromCloud: boolean;
   loadCloudCommunity: () => Promise<void>;
-  addPost: (body: string, photo?: PickedPhoto) => void;
+  addPost: (body: string, photo?: PickedPhoto, video?: PickedVideo) => void;
   toggleLike: (postId: string) => void;
   deletePost: (postId: string) => Promise<void>;
   loadComments: (postId: string) => Promise<void>;
@@ -87,7 +87,7 @@ export const useCommunityStore = create<CommunityState>()(
           console.warn("Could not load groups:", error);
         }
       },
-      addPost: (body, photo) => {
+      addPost: (body, photo, video) => {
         const user = useAuthStore.getState().user;
         const tempId = uid("post");
         const optimistic: FeedPost = {
@@ -100,6 +100,9 @@ export const useCommunityStore = create<CommunityState>()(
           // once the upload lands.
           imageUrl: photo?.preview,
           imageThumbUrl: photo?.preview,
+          // A reel shows its local file straight away too, so the driver sees
+          // it in the tab before the upload finishes.
+          videoUrl: video?.preview,
           likes: 0,
           likedByMe: false,
           commentCount: 0,
@@ -113,7 +116,10 @@ export const useCommunityStore = create<CommunityState>()(
             const image = photo
               ? await SupabaseService.uploadPhoto(user.id, photo)
               : undefined;
-            const real = await SupabaseService.addPost(user.id, body, image);
+            const videoUrl = video
+              ? await SupabaseService.uploadVideo(user.id, video)
+              : undefined;
+            const real = await SupabaseService.addPost(user.id, body, image, videoUrl);
             // Swap the temp post for the saved one so its real id is usable for
             // likes and comments immediately.
             if (real)

@@ -92,7 +92,77 @@ function pickWebImage(): Promise<string | undefined> {
   });
 }
 
+
+/** A short video chosen for a reel, kept as a File so it uploads unmodified. */
+export interface PickedVideo {
+  file: File;
+  preview: string;      // object URL for the <video> element
+  durationSeconds: number;
+  sizeBytes: number;
+}
+
+// Deliberately small. These drivers pay for mobile data by the megabyte, and
+// the app has no transcoding — whatever the phone produces is what gets
+// uploaded, so the limit is the only thing protecting them from a 200 MB clip.
+export const REEL_MAX_BYTES = 30 * 1024 * 1024;   // 30 MB
+export const REEL_MAX_SECONDS = 60;
+
+/** Read a video's duration without decoding the whole file. */
+function probeDuration(url: string): Promise<number> {
+  return new Promise((resolve) => {
+    const v = document.createElement("video");
+    v.preload = "metadata";
+    v.onloadedmetadata = () => resolve(Number.isFinite(v.duration) ? v.duration : 0);
+    v.onerror = () => resolve(0);
+    v.src = url;
+  });
+}
+
 export const MediaService = {
+
+  /**
+   * Pick a short video for a reel.
+   *
+   * Returns a reason rather than throwing when the clip is rejected, so the
+   * composer can tell the driver WHY — "too long" and "too big" need different
+   * answers from them.
+   */
+  async pickVideo(): Promise<
+    { ok: true; video: PickedVideo } | { ok: false; reason: "cancelled" | "tooBig" | "tooLong" }
+  > {
+    const file = await new Promise<File | undefined>((resolve) => {
+      const input = document.createElement("input");
+      input.type = "file";
+      input.accept = "video/mp4,video/quicktime,video/webm";
+      input.style.display = "none";
+      document.body.appendChild(input);
+      let settled = false;
+      const done = (f?: File) => {
+        if (settled) return;
+        settled = true;
+        input.remove();
+        resolve(f);
+      };
+      input.onchange = () => done(input.files?.[0] ?? undefined);
+      window.addEventListener(
+        "focus",
+        () => window.setTimeout(() => { if (!input.files?.length) done(undefined); }, 1000),
+        { once: true },
+      );
+      input.click();
+    });
+
+    if (!file) return { ok: false, reason: "cancelled" };
+    if (file.size > REEL_MAX_BYTES) return { ok: false, reason: "tooBig" };
+
+    const preview = URL.createObjectURL(file);
+    const durationSeconds = await probeDuration(preview);
+    if (durationSeconds > REEL_MAX_SECONDS) {
+      URL.revokeObjectURL(preview);
+      return { ok: false, reason: "tooLong" };
+    }
+    return { ok: true, video: { file, preview, durationSeconds, sizeBytes: file.size } };
+  },
   /**
    * Open the camera or gallery and return the photo at two sizes, or undefined
    * if the driver cancelled or denied permission.

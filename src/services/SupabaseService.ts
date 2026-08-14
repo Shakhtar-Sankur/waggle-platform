@@ -16,7 +16,7 @@ import type {
   Worker,
 } from "../types";
 import { initials } from "../utils/format";
-import type { PickedPhoto } from "./MediaService";
+import type { PickedPhoto, PickedVideo } from "./MediaService";
 
 /** Object-storage bucket holding community and chat photos. */
 export const PHOTO_BUCKET = "post-photos";
@@ -241,7 +241,7 @@ export const SupabaseService = {
     // fine a moment ago. Ask for it, and fall back to the old shape if the
     // database has not caught up yet.
     const WITH_THUMB =
-      "id, user_id, body, image_url, image_thumb_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
+      "id, user_id, body, image_url, image_thumb_url, video_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
     const WITHOUT_THUMB =
       "id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
 
@@ -283,6 +283,7 @@ export const SupabaseService = {
         initials: initials(author),
         body: post.body,
         imageUrl: post.image_url ?? undefined,
+        videoUrl: post.video_url ?? undefined,
       imageThumbUrl: post.image_thumb_url ?? undefined,
         likes: Number(likeCount),
         likedByMe: likedIds.has(post.id),
@@ -299,6 +300,31 @@ export const SupabaseService = {
    * off the first path segment — a driver can only write inside their own
    * folder. `upsert: false` so a repeated name can never overwrite.
    */
+  /**
+   * Upload a reel video, unmodified.
+   *
+   * No thumbnail and no transcoding: the app cannot re-encode video on a phone,
+   * so the file the camera produced is the file that goes up. MediaService caps
+   * it at 30 MB / 60s before it ever reaches here.
+   */
+  async uploadVideo(userId: string, video: PickedVideo): Promise<string> {
+    assertSupabase();
+    const bucket = supabase!.storage.from(PHOTO_BUCKET);
+    const ext = video.file.type.includes("quicktime")
+      ? "mov"
+      : video.file.type.includes("webm")
+        ? "webm"
+        : "mp4";
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await bucket.upload(path, video.file, {
+      contentType: video.file.type || "video/mp4",
+      cacheControl: "31536000",
+      upsert: false,
+    });
+    if (error) throw error;
+    return bucket.getPublicUrl(path).data.publicUrl;
+  },
+
   async uploadPhoto(userId: string, photo: PickedPhoto): Promise<UploadedPhoto> {
     assertSupabase();
     const id = crypto.randomUUID();
@@ -326,10 +352,11 @@ export const SupabaseService = {
     userId: string,
     body: string,
     image?: { url: string; thumbUrl: string },
+    videoUrl?: string,
   ): Promise<FeedPost | null> {
     if (!supabase) return null;
     const SELECT_WITH =
-      "id, user_id, body, image_url, image_thumb_url, created_at, profiles!feed_posts_user_id_fkey(full_name)";
+      "id, user_id, body, image_url, image_thumb_url, video_url, created_at, profiles!feed_posts_user_id_fkey(full_name)";
     const SELECT_WITHOUT =
       "id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name)";
 
@@ -339,6 +366,7 @@ export const SupabaseService = {
         user_id: userId,
         body,
         image_url: image?.url ?? null,
+        video_url: videoUrl ?? null,
         image_thumb_url: image?.thumbUrl ?? null,
       })
       .select(SELECT_WITH)

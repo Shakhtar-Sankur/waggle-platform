@@ -31,7 +31,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { Wordmark } from "../components/Wordmark";
-import { MediaService, type PickedPhoto } from "../services/MediaService";
+import { MediaService, type PickedPhoto, type PickedVideo } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useT } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
@@ -101,7 +101,8 @@ export function CommunityScreen() {
   // happened to carry a photo. A reel needs an image, so the picker comes
   // first and the caption second.
   const [reelOpen, setReelOpen] = useState(false);
-  const [reelPhoto, setReelPhoto] = useState<PickedPhoto | undefined>();
+  const [reelVideo, setReelVideo] = useState<PickedVideo | undefined>();
+  const [reelError, setReelError] = useState<string | null>(null);
   const [reelCaption, setReelCaption] = useState("");
   const [pickingPhoto, setPickingPhoto] = useState(false);
   const [tagged, setTagged] = useState<Worker[]>([]);
@@ -143,7 +144,9 @@ export function CommunityScreen() {
       }),
     [connections, query, user?.id, workers],
   );
-  const reels = useMemo(() => posts.filter((p) => p.imageUrl ?? p.imageThumbUrl), [posts]);
+  // A reel is a video. Photo posts belong in the feed, not here — showing them
+  // as reels is what made the tab misleading in the first place.
+  const reels = useMemo(() => posts.filter((p) => p.videoUrl), [posts]);
 
   const pickPhoto = async () => {
     setPickingPhoto(true);
@@ -168,16 +171,25 @@ export function CommunityScreen() {
     setPostBody((prev) => (prev.trim() ? `${prev.trim()} — ${feeling}` : `${firstName} is ${feeling}`));
   };
 
-  const pickReelPhoto = async () => {
-    const picked = await MediaService.pickImage();
-    if (picked) setReelPhoto(picked);
+  const pickReelVideo = async () => {
+    const result = await MediaService.pickVideo();
+    if (result.ok) {
+      setReelError(null);
+      setReelVideo(result.video);
+      return;
+    }
+    // Say WHICH limit was hit. "Could not add that" leaves the driver guessing
+    // whether to trim the clip or pick a different one.
+    if (result.reason === "tooBig") setReelError(t("fb_reelTooBig"));
+    else if (result.reason === "tooLong") setReelError(t("fb_reelTooLong"));
   };
 
   const shareReel = () => {
-    if (!reelPhoto) return;               // a reel without an image is just a post
-    addPost(reelCaption.trim(), reelPhoto);
-    setReelPhoto(undefined);
+    if (!reelVideo) return;               // a reel is a video; without one it is just a post
+    addPost(reelCaption.trim(), undefined, reelVideo);
+    setReelVideo(undefined);
     setReelCaption("");
+    setReelError(null);
     setReelOpen(false);
   };
 
@@ -454,7 +466,17 @@ export function CommunityScreen() {
             <div className="fb-reels">
               {reels.map((reel) => (
                 <article className="fb-reel" key={reel.id}>
-                  <img src={reel.imageUrl} alt="" loading="lazy" />
+                  <video
+                    src={reel.videoUrl}
+                    playsInline
+                    muted
+                    loop
+                    preload="metadata"
+                    onClick={(e) => {
+                      const v = e.currentTarget;
+                      if (v.paused) void v.play(); else v.pause();
+                    }}
+                  />
                   <span className="fb-reel-play"><Play size={20} fill="currentColor" /></span>
                   <div className="fb-reel-overlay">
                     <strong>{reel.author}</strong>
@@ -478,23 +500,25 @@ export function CommunityScreen() {
             description={t("fb_createReelSub")}
           >
             <div className="fb-reel-composer">
-              {reelPhoto ? (
+              {reelVideo ? (
                 <div className="fb-reel-preview">
-                  <img src={reelPhoto.preview} alt="" />
+                  <video src={reelVideo.preview} controls playsInline preload="metadata" />
                   <button
                     type="button"
                     aria-label={t("a11y_removePhoto")}
-                    onClick={() => { MediaService.releasePreview(reelPhoto.preview); setReelPhoto(undefined); }}
+                    onClick={() => { URL.revokeObjectURL(reelVideo.preview); setReelVideo(undefined); }}
                   >
                     <X size={16} />
                   </button>
                 </div>
               ) : (
-                <button type="button" className="fb-reel-pick" onClick={() => void pickReelPhoto()}>
-                  <ImageIcon size={26} />
-                  <span>{t("fb_reelPickPhoto")}</span>
+                <button type="button" className="fb-reel-pick" onClick={() => void pickReelVideo()}>
+                  <Clapperboard size={26} />
+                  <span>{t("fb_reelPickVideo")}</span>
+                  <em>{t("fb_reelLimits")}</em>
                 </button>
               )}
+              {reelError ? <p className="fb-reel-error">{reelError}</p> : null}
 
               <input
                 className="fb-reel-caption"
@@ -503,7 +527,7 @@ export function CommunityScreen() {
                 onChange={(e) => setReelCaption(e.target.value)}
               />
 
-              <Button disabled={!reelPhoto} onClick={shareReel}>
+              <Button disabled={!reelVideo} onClick={shareReel}>
                 {t("fb_shareReel")}
               </Button>
             </div>

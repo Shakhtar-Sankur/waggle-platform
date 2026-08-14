@@ -145,6 +145,8 @@ export interface FeedPost {
   imageUrl?: string;
   /** Small copy shown in the feed. Absent on legacy inline-image posts. */
   imageThumbUrl?: string;
+  /** Set when this post is a reel. A post has an image or a video, not both. */
+  videoUrl?: string;
   /** Queued in the outbox: written locally, not yet accepted by the server. */
   pending?: boolean;
   likes: number;
