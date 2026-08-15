@@ -238,9 +238,137 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 .gword { color: #5B2BE0; -webkit-text-fill-color: #5B2BE0; background: none;
   font-weight: 700; letter-spacing: .04em; }
 .gz-mark { color: #5B2BE0; }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   THE BEE SYSTEM
+   ══════════════════════════════════════════════════════════════════════════
+   The app is called Buzz Buzz and its icon is a bee, but the page around it
+   was a generic warm layout that could have belonged to any product. A motif
+   does more for "next gen" than motion alone: motion without identity is just
+   a page that moves.
+
+   Three elements, used consistently:
+     honeycomb   a hexagonal field, as texture behind sections
+     hex frames  media and badges cut to hexagons rather than rectangles
+     flight      dashed curved paths, the way a bee's route is drawn
+
+   Honey gold joins orange as the second accent, so the palette has somewhere
+   to go that is not simply more orange.
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --honey:     #F5A524;
+  /* Gold is even weaker than the orange as text: #F5A524 measures 2.1:1 on
+     the cream. Anything readable uses this instead, at 5.2:1. */
+  --honey-ink: #8A5300;
+}
+
+/* ── honeycomb ─────────────────────────────────────────────────────────────
+   One SVG tile, repeated. Drawn as a data URI so the page stays a single
+   file with nothing fetched over the network. */
+.comb {
+  position: absolute; inset: 0; z-index: 0; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='97' viewBox='0 0 56 97'%3E%3Cg fill='none' stroke='%23FF4D17' stroke-width='1.4' stroke-opacity='.5'%3E%3Cpath d='M28 1 L55 16.5 L55 47.5 L28 63 L1 47.5 L1 16.5 Z'/%3E%3Cpath d='M28 49.5 L55 65 L55 96 L28 111.5 L1 96 L1 65 Z'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 56px 97px;
+  opacity: .16;
+  mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+  -webkit-mask-image: linear-gradient(180deg, transparent, #000 22%, #000 78%, transparent);
+}
+.band .comb { opacity: .2; filter: brightness(4); }
+section > .wrap, .band > .wrap { position: relative; z-index: 1; }
+
+/* ── hex frames ────────────────────────────────────────────────────────────
+   clip-path rather than a mask image: it clips the element's own box, so the
+   screenshot inside keeps its aspect ratio instead of being squashed. */
+.hex {
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+.hex-badge {
+  width: 62px; height: 70px; flex: none; display: grid; place-items: center;
+  background: linear-gradient(160deg, var(--honey), var(--flame));
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  color: #fff; font-weight: 800; font-size: 21px; font-family: var(--mono);
+}
+
+/* Stats sit in a honeycomb rather than a plain row. */
+.stats { gap: 22px 18px; }
+.stat {
+  position: relative; padding: 26px 18px 22px; text-align: center;
+  background: rgba(255,255,255,.07);
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* ── flight paths ──────────────────────────────────────────────────────────
+   A dashed curve with a bee travelling it. offset-path is not universal, so
+   the bee is a decorative extra: if it does not animate, the curve alone
+   still reads, and nothing on the page depends on either. */
+.flight { position: absolute; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.flight path {
+  fill: none; stroke: var(--honey); stroke-width: 2; stroke-dasharray: 7 9;
+  stroke-linecap: round; opacity: .5;
+}
+.flight .bee-dot { fill: var(--flame); }
+@supports (offset-path: path("M0 0")) {
+  .flight .bee-dot { offset-path: var(--p); animation: fly 17s linear infinite; offset-rotate: 0deg; }
+}
+@keyframes fly { to { offset-distance: 100%; } }
+
+/* ── scroll rail ───────────────────────────────────────────────────────── */
+.rail { position: fixed; top: 0; left: 0; height: 3px; z-index: 60;
+        background: linear-gradient(90deg, var(--honey), var(--flame)); width: 0; }
+
+/* ── language marquee ──────────────────────────────────────────────────── */
+.marq { overflow: hidden; margin-top: 40px; position: relative;
+        mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent);
+        -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.marq-in { display: flex; gap: 14px; width: max-content; animation: slide 34s linear infinite; }
+.marq span {
+  padding: 9px 17px; border-radius: 999px; white-space: nowrap;
+  background: rgba(255,255,255,.10); color: #FFEFE7; font-size: 14.5px;
+  border: 1px solid rgba(255,255,255,.20);
+}
+@keyframes slide { to { transform: translateX(-50%); } }
+
+/* ── earnings calculator ───────────────────────────────────────────────── */
+.calc {
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 22px;
+  padding: clamp(26px, 4vw, 40px); margin-top: 42px;
+}
+.calc-out { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.calc-money { font-size: clamp(46px, 8vw, 82px); font-weight: 800; letter-spacing: -.045em;
+              color: var(--flame-ink); line-height: 1; font-variant-numeric: tabular-nums; }
+.calc-sub { font-size: 15px; color: var(--muted); }
+input[type=range] {
+  width: 100%; margin-top: 26px; accent-color: var(--flame-btn); height: 30px;
+}
+.calc-scale { display: flex; justify-content: space-between; font-family: var(--mono);
+              font-size: 12px; color: var(--muted); margin-top: -4px; }
+.calc-note { margin-top: 20px; font-size: 14.5px; color: var(--body); }
+
+/* ── floating UI chips around the hero phone ───────────────────────────── */
+.chip {
+  position: absolute; display: flex; align-items: center; gap: 9px;
+  background: var(--paper-2); border: 1px solid var(--rule); border-radius: 14px;
+  padding: 11px 15px; box-shadow: 0 18px 40px -24px rgba(90,40,0,.45);
+  font-size: 13.5px; font-weight: 600; color: var(--ink); white-space: nowrap;
+  animation: bob 5.5s ease-in-out infinite;
+}
+.chip i { width: 9px; height: 9px; border-radius: 50%; background: var(--flame); flex: none; }
+.chip.a { top: 14%; left: -6%;  animation-delay: -.4s; }
+.chip.b { top: 45%; right: -8%; animation-delay: -2.1s; }
+.chip.c { bottom: 13%; left: -3%; animation-delay: -3.6s; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@media (max-width: 900px) { .chip { display: none; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .marq-in, .chip, .flight .bee-dot { animation: none; }
+}
+
 </style>
 </head>
 <body>
+
+<div class="rail" id="rail" aria-hidden="true"></div>
 
 <nav id="nav">
   <div class="wrap">
@@ -276,6 +404,11 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 
   <!-- ── hero ──────────────────────────────────────────────────────────── -->
   <section class="hero">
+    <div class="comb" aria-hidden="true"></div>
+    <svg class="flight" viewBox="0 0 1200 700" preserveAspectRatio="none" aria-hidden="true">
+      <path id="fp1" d="M-40 520 C 240 380, 420 610, 700 430 S 1080 250, 1260 330"/>
+      <circle class="bee-dot" r="4.5" style="--p:path('M-40 520 C 240 380, 420 610, 700 430 S 1080 250, 1260 330')"/>
+    </svg>
     <div class="wrap">
       <div>
         <span class="eyebrow rv">Android · A GIGZEN product</span>
@@ -289,8 +422,13 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
         </div>
         <p class="hero-note rv">Version 1.5 · Android 8.0 and later · 7.9&nbsp;MB · free, with no ads</p>
       </div>
-      <div class="rv">
+      <div class="rv" style="position:relative">
         <div class="phone"><img src="shots/home.jpg" alt="The Buzz Buzz home screen, showing today's distance, active time and earnings, with a Start Tracking button." width="310" height="672" loading="eager"></div>
+        <!-- Chips repeat things the app genuinely shows, so the page is not
+             promising behaviour the product does not have. -->
+        <div class="chip a"><i></i>Tracking · 12.4 km</div>
+        <div class="chip b"><i></i>3 riders nearby</div>
+        <div class="chip c"><i></i>Queued offline · sent</div>
       </div>
     </div>
   </section>
@@ -322,7 +460,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
           default, not something you have to go and configure.</p>
         </div>
         <div class="feature-media rv">
-          <div class="phone"><img src="shots/map.jpg" alt="The routes map showing streets and rider positions." loading="lazy"></div>
+          <div class="phone"><img class="hexable" src="shots/map.jpg" alt="The routes map showing streets and rider positions." loading="lazy"></div>
         </div>
       </div>
 
@@ -344,12 +482,18 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 
   <!-- ── the numbers ───────────────────────────────────────────────────── -->
   <section class="band" id="reach">
+    <div class="comb" aria-hidden="true"></div>
     <div class="wrap">
       <span class="eyebrow rv">Reach</span>
       <h2 class="rv">Built for wherever the work is</h2>
       <p class="lede rv" style="margin-top:18px;max-width:52ch;color:#FFEFE7">
       Language and currency come from where the rider actually is. Right-to-left
       layouts included, not bolted on.</p>
+      <!-- The list is the claim. "16 languages" is a number; showing them is
+           evidence, and the duplicate copy is what makes the loop seamless. -->
+      <div class="marq" aria-label="Supported languages">
+        <div class="marq-in"><span>English</span><span>Filipino</span><span>Español</span><span>हिन्दी</span><span>বাংলা</span><span>Bahasa Indonesia</span><span>Bahasa Melayu</span><span>ไทย</span><span>Tiếng Việt</span><span>Português</span><span>Français</span><span>Deutsch</span><span>中文</span><span>日本語</span><span>한국어</span><span>العربية</span><span>English</span><span>Filipino</span><span>Español</span><span>हिन्दी</span><span>বাংলা</span><span>Bahasa Indonesia</span><span>Bahasa Melayu</span><span>ไทย</span><span>Tiếng Việt</span><span>Português</span><span>Français</span><span>Deutsch</span><span>中文</span><span>日本語</span><span>한국어</span><span>العربية</span></div>
+      </div>
       <div class="stats">
         <div class="stat rv"><span class="v">16</span><span class="k">languages, at full parity</span></div>
         <div class="stat rv"><span class="v">27</span><span class="k">currencies</span></div>
@@ -387,6 +531,31 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
           <p>The path most apps never exercise. You can delete your account from inside
           the app, and it removes your data rather than hiding it.</p>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── the calculator ────────────────────────────────────────────────── -->
+  <section id="calc" style="padding-top:0">
+    <div class="comb" aria-hidden="true"></div>
+    <div class="wrap">
+      <span class="eyebrow rv">Try the maths</span>
+      <h2 class="rv" style="margin-top:16px">What a day actually pays</h2>
+      <p class="lede rv" style="margin-top:18px;max-width:52ch">Drag the distance.
+      This is the same arithmetic the app does — nothing rounded up to look better.</p>
+
+      <div class="calc rv">
+        <div class="calc-out">
+          <span class="calc-money" id="money">&#8377;0</span>
+          <span class="calc-sub" id="breakdown">0 km &middot; &#8377;10 per km</span>
+        </div>
+        <label for="km" class="calc-sub">Distance covered today</label>
+        <input type="range" id="km" min="0" max="120" step="1" value="34"
+               aria-describedby="breakdown">
+        <div class="calc-scale"><span>0 km</span><span>60 km</span><span>120 km</span></div>
+        <p class="calc-note"><b>Sitting still pays nothing.</b> The figure moves only
+        with distance, so time stuck in traffic does not inflate it. The rate and the
+        currency follow whichever country the rider is in.</p>
       </div>
     </div>
   </section>
@@ -477,12 +646,64 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
     items().forEach((el) => el.classList.add("in"));
   }
 
-  /* Nav hairline, painted only on a frame boundary. */
+  /* Nav hairline and the scroll rail, both painted on one frame boundary
+     rather than on every scroll event. */
   const nav = document.getElementById("nav");
+  const rail = document.getElementById("rail");
   let ticking = false;
-  const paint = () => { nav.classList.toggle("stuck", scrollY > 8); ticking = false; };
+  const paint = () => {
+    nav.classList.toggle("stuck", scrollY > 8);
+    const max = document.documentElement.scrollHeight - innerHeight;
+    rail.style.width = (max > 0 ? (scrollY / max) * 100 : 0) + "%";
+    ticking = false;
+  };
   addEventListener("scroll", () => { if (!ticking) { ticking = true; requestAnimationFrame(paint); } }, { passive: true });
+  addEventListener("resize", paint, { passive: true });
   paint();
+
+  /* ── the earnings calculator ────────────────────────────────────────────
+     The rate and currency are the app's own defaults. Kept deliberately
+     simple: this demonstrates that earnings track distance, and it must not
+     imply a precision the product does not promise. */
+  const km = document.getElementById("km");
+  if (km) {
+    const money = document.getElementById("money");
+    const breakdown = document.getElementById("breakdown");
+    const RATE = 10;
+    const fmt = new Intl.NumberFormat("en-IN", {
+      style: "currency", currency: "INR", maximumFractionDigits: 0,
+    });
+    const draw = () => {
+      const d = +km.value;
+      money.textContent = fmt.format(d * RATE);
+      breakdown.textContent = d + " km · " + fmt.format(RATE) + " per km";
+    };
+    km.addEventListener("input", draw);
+    draw();
+  }
+
+  /* Counters on the stats band, once, when it arrives. */
+  const stats = [...document.querySelectorAll(".stat .v")];
+  if (stats.length && !matchMedia("(prefers-reduced-motion: reduce)").matches
+      && "IntersectionObserver" in window) {
+    const run = (el) => {
+      const raw = el.textContent.trim();
+      const target = parseFloat(raw);
+      if (!isFinite(target)) return;
+      const suffix = raw.replace(/^[\d.,]+/, "");
+      const t0 = performance.now();
+      const step = (now) => {
+        const t = Math.min(1, (now - t0) / 950);
+        el.textContent = Math.round(target * (1 - Math.pow(1 - t, 3))) + suffix;
+        if (t < 1) requestAnimationFrame(step); else el.textContent = raw;
+      };
+      requestAnimationFrame(step);
+    };
+    const cio = new IntersectionObserver((es) => es.forEach((e) => {
+      if (e.isIntersecting) { run(e.target); cio.unobserve(e.target); }
+    }), { threshold: 0.6 });
+    stats.forEach((el) => cio.observe(el));
+  }
 })();
 </script>
 </body>
