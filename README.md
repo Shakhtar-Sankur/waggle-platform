@@ -10,6 +10,25 @@ across all of them.
 Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populace), which was written for
 this app and then became a product of its own.
 
+**Website:** https://shakhtar-sankur.github.io/buzz-buzz/ &nbsp;·&nbsp;
+**Download:** [BuzzBuzz-v1.5.apk](https://shakhtar-sankur.github.io/buzz-buzz/BuzzBuzz-v1.5.apk)
+(7.9 MB, Android 8.0+) &nbsp;·&nbsp;
+**Test report:** [gigzen.github.io/test-report](https://shakhtar-sankur.github.io/gigzen/test-report.html)
+
+## Where it stands
+
+- **16 languages** at full parity, right-to-left included; **27 currencies** across **49 countries**,
+  selected from where the rider actually is.
+- **Version 1.5 (build 6)**, signed release, in closed testing. Not yet publicly on Google Play.
+- Verified by a six-user concurrent simulation against the live backend: **400 API calls, no
+  failures**, 13/13 adapter methods covered, every test account deleted afterwards.
+- The run before that one found **five real defects** in this app after it had already passed a
+  full manual test — including one that stopped account creation entirely.
+
+The paths that still need real handsets — push notification delivery, and one rider watching
+another move on the map — are written up in [`TWO_USER_TEST.md`](TWO_USER_TEST.md) and have not
+been run. The test report says so too.
+
 ---
 
 ## What it does
