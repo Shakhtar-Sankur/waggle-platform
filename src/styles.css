@@ -5294,3 +5294,13 @@ body { font-weight: 400; }
   background: var(--accent, #ff5a1f); color: #fff;
   box-shadow: 0 2px 6px rgba(0,0,0,.3);
 }
+
+/* The company name reads as a wordmark inside the byline: capitals, with
+   positive tracking so the letters do not jam together the way they would at
+   the surrounding text's spacing. Matches the Buzz Buzz website and the
+   portfolio, where the same name is set the same way. */
+.gigzen-word {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+}

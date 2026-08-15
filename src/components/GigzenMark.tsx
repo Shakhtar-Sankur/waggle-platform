@@ -66,7 +66,12 @@ export function GigzenByline({
   return (
     <span className={`gigzen-byline ${tone} ${className}`} title={COMPANY_NAME}>
       <GigzenMark size={13} inherit={tone === "solid"} />
-      <span>A {COMPANY_SHORT} product</span>
+      {/* The name is set in capitals as a wordmark, but the constant stays a
+          proper noun: it is also the title attribute and feeds the legal
+          notice, where GIGZEN PRIVATE LIMITED would be wrong. */}
+      <span>
+        A <span className="gigzen-word">{COMPANY_SHORT}</span> product
+      </span>
     </span>
   );
 }
