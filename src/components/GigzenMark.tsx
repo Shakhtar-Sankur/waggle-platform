@@ -1,5 +1,7 @@
-import { useId } from "react";
 import { COMPANY_NAME, COMPANY_SHORT } from "../config/constants";
+
+/** Gigzen electric indigo. One value, shared with every web property. */
+export const GIGZEN_INDIGO = "#5B2BE0";
 
 /**
  * The Gigzen company mark.
@@ -8,11 +10,12 @@ import { COMPANY_NAME, COMPANY_SHORT } from "../config/constants";
  * outside through the G's mouth, so the shape is simply connected. Same artwork
  * as the company site, so the app and the site cannot drift apart.
  *
- * Painted in the company blue rather than `currentColor`. The gradient's light
- * stop is #6FB4F5 and not the paler blue the sites first used: this mark renders
- * at 13-16px, and a stop light enough to disappear against a white row turns the
- * silhouette into a smudge. Logos are exempt from the contrast minimum, which
- * is not the same as being legible.
+ * Flat colour, not a gradient. This renders at 13-16px, where a gradient cannot
+ * be perceived at all — you keep every cost of one (no single ink to reproduce,
+ * a <defs> block per instance, a muddy result when scaled down) and get none of
+ * the effect. Dropping it also removed the need for a unique id per instance,
+ * which existed only because two marks on one screen would otherwise have
+ * shared a gradient definition.
  *
  * Pass `inherit` where the mark sits on a coloured surface — the orange auth
  * header, or anywhere the surrounding text colour is already carrying it.
@@ -26,10 +29,6 @@ export function GigzenMark({
   className?: string;
   inherit?: boolean;
 }) {
-  // Unique per instance: several marks render on one screen, and a shared
-  // gradient id would make every instance after the first resolve to the
-  // first one's definition.
-  const id = `gz-${useId().replace(/:/g, "")}`;
   return (
     <svg
       className={className}
@@ -39,18 +38,9 @@ export function GigzenMark({
       fill="none"
       aria-hidden="true"
     >
-      {!inherit && (
-        <defs>
-          <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#6FB4F5" />
-            <stop offset="0.55" stopColor="#2E7FE0" />
-            <stop offset="1" stopColor="#0038B8" />
-          </linearGradient>
-        </defs>
-      )}
       <path
         d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z"
-        fill={inherit ? "currentColor" : `url(#${id})`}
+        fill={inherit ? "currentColor" : GIGZEN_INDIGO}
       />
     </svg>
   );

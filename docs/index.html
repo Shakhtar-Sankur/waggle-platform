@@ -60,10 +60,8 @@
      nothing has to be read off it. */
   --flame-btn:  #C63B00;
 
-  /* Gigzen blue — the parent mark, identical to the other two properties. */
-  --gz-1: #6FB4F5;
-  --gz-2: #2E7FE0;
-  --gz-3: #0038B8;
+  /* Gigzen electric indigo — the parent mark, identical on every property. */
+  --gz: #5B2BE0;
 
   --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", Menlo, Consolas, monospace;
@@ -103,15 +101,6 @@ section { padding-block: clamp(72px, 10vw, 132px); position: relative; }
 
 /* ── the Gigzen lockup ─────────────────────────────────────────────────── */
 .gz-mark { height: 20px; width: auto; display: block; }
-.gword {
-  background: linear-gradient(100deg, var(--gz-1) 0%, var(--gz-2) 50%, var(--gz-3) 100%);
-  -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 700; letter-spacing: -.01em;
-}
-@supports not ((background-clip: text) or (-webkit-background-clip: text)) {
-  .gword { background: none; -webkit-text-fill-color: currentColor; color: var(--gz-3); }
-}
 
 /* ── nav ───────────────────────────────────────────────────────────────── */
 nav {
@@ -150,7 +139,7 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
   background:
     radial-gradient(48% 44% at 88% 6%,  color-mix(in srgb, var(--flame) 22%, transparent) 0%, transparent 70%),
     radial-gradient(42% 40% at 4% 88%,  color-mix(in srgb, #FFB067 34%, transparent) 0%, transparent 72%),
-    radial-gradient(40% 36% at 70% 96%, color-mix(in srgb, var(--gz-1) 20%, transparent) 0%, transparent 74%);
+    radial-gradient(40% 36% at 70% 96%, color-mix(in srgb, var(--gz) 16%, transparent) 0%, transparent 74%);
 }
 .hero .wrap { position: relative; z-index: 1; display: grid; gap: clamp(36px, 5vw, 68px);
               grid-template-columns: 1.08fr .92fr; align-items: center; }
@@ -241,21 +230,20 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 .js .rv { opacity: 0; transform: translateY(24px); transition: opacity .8s cubic-bezier(.22,.61,.36,1), transform .8s cubic-bezier(.22,.61,.36,1); }
 .js .rv.in { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .rv { opacity: 1; transform: none; transition: none; } }
+
+/* Gigzen electric indigo. Flat, not a gradient: at the 20px this renders at,
+   a gradient cannot be perceived, but it still costs one-colour printing and a
+   clean favicon. #5B2BE0 measures 7.3:1 on white; #9B7BFF is the lifted tone for
+   near-black grounds, where the darker indigo closes up. */
+.gword { color: #5B2BE0; -webkit-text-fill-color: #5B2BE0; background: none;
+  font-weight: 700; letter-spacing: -.01em; }
+.gz-mark { color: #5B2BE0; }
 </style>
 </head>
 <body>
 
 <!-- The Gigzen mark's gradient, declared once and referenced by every
      instance. A duplicated id would leave only the first one resolving. -->
-<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;pointer-events:none">
-  <defs>
-    <linearGradient id="gzBlue" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#6FB4F5"/>
-      <stop offset=".55" stop-color="#2E7FE0"/>
-      <stop offset="1" stop-color="#0038B8"/>
-    </linearGradient>
-  </defs>
-</svg>
 
 <nav id="nav">
   <div class="wrap">
@@ -452,7 +440,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
     <div>
       <span style="display:inline-flex;align-items:center;gap:9px">
         <svg class="gz-mark" viewBox="0 0 64 64" aria-hidden="true">
-          <path d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z" fill="url(#gzBlue)"/>
+          <path d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z" fill="currentColor"/>
         </svg>
         <span class="gword">Gigzen</span>
       </span>
