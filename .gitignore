@@ -33,3 +33,4 @@ agents/
 # so it is deliberately tracked. Negations must come after the pattern they
 # undo, which is why this sits at the end of the file.
 !docs/*.apk
+.env.production
