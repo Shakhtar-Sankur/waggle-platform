@@ -181,7 +181,10 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 30px; margin-top: 46px; }
 .stat .v { display: block; font-size: clamp(40px, 5.4vw, 62px); font-weight: 750; letter-spacing: -.04em;
            color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
-.stat .k { display: block; margin-top: 10px; font-size: 14.5px; color: #FFD9C8; }
+/* On the orange band this label sits on rgb(189,66,18); the old #FFD9C8 came
+   to 4.05 against it, under the 4.5 needed at 14.5px. The eyebrow keeps the
+   deeper peach because it is large text and only needs 3. */
+.stat .k { display: block; margin-top: 10px; font-size: 14.5px; color: #FFF2EC; }
 
 /* ── cards ─────────────────────────────────────────────────────────────── */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 20px; margin-top: 44px; }
@@ -474,7 +477,7 @@ input[type=range] {
       <p class="runnote rv" style="margin-top:26px;max-width:62ch;font-size:15.5px">
         Built end to end at Gigzen and tested by
         <a href="https://shakhtar-sankur.github.io/populace/">Populace</a>, our own tool, which
-        drove twenty simulated riders through <b>6,450 API calls with no failures</b> — after an
+        drove thirty-six simulated riders through <b>7,485 API calls with no failures</b> — after an
         earlier run found six real defects this app's own author had missed.
         <a href="https://shakhtar-sankur.github.io/gigzen/test-report.html">The full record</a>,
         including what was never tested.
