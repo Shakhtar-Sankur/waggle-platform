@@ -79,7 +79,6 @@ export const useAuthStore = create<AuthState>()(
           }
           const user = await SupabaseService.signIn(phone, password);
           set({ user });
-          await SupabaseService.ensureDefaultThreads(user.id);
           useNotificationStore
             .getState()
             .push(translate("notif_welcomeBack"), translate("notif_welcomeBackBody"), "system");
@@ -99,7 +98,6 @@ export const useAuthStore = create<AuthState>()(
           assertPhone(phone);
           const user = await SupabaseService.signUp(phone, password, fullName);
           set({ user });
-          await SupabaseService.ensureDefaultThreads(user.id);
           useNotificationStore.getState().push(translate("notif_accountCreated"), translate("notif_accountCreatedBody"), "system");
           return;
         }

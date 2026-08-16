@@ -84,11 +84,6 @@ async function withNetworkContext<T>(run: () => Promise<T>): Promise<T> {
   }
 }
 
-/** Shared by concurrent ensureDefaultThreads callers so the default group is
- *  created once, not once per overlapping poll. Keyed by user so an overlapping
- *  call for a different driver can never be handed the previous one's threads. */
-const defaultThreadsInFlight = new Map<string, Promise<ChatThread[]>>();
-
 /**
  * The device's IANA time zone, e.g. "Asia/Kolkata". Sent with each location
  * update so the server resets a driver's daily counters at their own midnight
@@ -838,28 +833,6 @@ export const SupabaseService = {
       typingUserIds: [],
       updatedAt: new Date(thread.updated_at).getTime(),
     };
-  },
-
-  async ensureDefaultThreads(userId: string): Promise<ChatThread[]> {
-    // Single-flight. loadCloudChats calls this on every poll, and MessagesScreen
-    // polls every 2.5s — so on a fresh account two calls would overlap, both see
-    // an empty list, and both create the default group. That is exactly how a
-    // real device ended up with "Manila Drivers" listed twice.
-    const pending = defaultThreadsInFlight.get(userId);
-    if (pending) return pending;
-
-    const run = (async () => {
-      const existing = await this.loadThreads(userId);
-      if (existing.length) return existing;
-      return [await this.createThread(userId, "Manila Drivers", true)];
-    })();
-    defaultThreadsInFlight.set(userId, run);
-
-    try {
-      return await run;
-    } finally {
-      defaultThreadsInFlight.delete(userId);
-    }
   },
 
   /**

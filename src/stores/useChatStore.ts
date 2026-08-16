@@ -34,7 +34,7 @@ export const useChatStore = create<ChatState>()(
       chatsLoaded: false,
       loadCloudChats: async (userId) => {
         try {
-          const threads = await SupabaseService.ensureDefaultThreads(userId);
+          const threads = await SupabaseService.loadThreads(userId);
           const threadMessages = await Promise.all(
             threads.map((thread) => SupabaseService.loadMessages(thread.id)),
           );
