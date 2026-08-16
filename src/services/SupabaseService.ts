@@ -46,6 +46,44 @@ export const supabase: SupabaseClient | null = isSupabaseConfigured
     })
   : null;
 
+/** The host the app is actually talking to, for error messages. */
+const backendHost = (() => {
+  try {
+    return new URL(supabaseUrl!).host;
+  } catch {
+    return supabaseUrl || "(not configured)";
+  }
+})();
+
+/**
+ * A transport failure arrives from supabase-js as a bare "Failed to fetch",
+ * which says nothing about where the request was going. A release build once
+ * shipped pointing at a developer's local backend, and the message gave no
+ * hint — it looked identical to a bad password or a dead connection. Name the
+ * host, and call out a loopback address for what it is, since on a phone that
+ * means the phone itself.
+ */
+function describeNetworkFailure(error: unknown): Error | null {
+  const message = error instanceof Error ? error.message : String(error ?? "");
+  if (!/failed to fetch|fetch failed|network ?error|load failed/i.test(message)) return null;
+  const isLoopback = /^(127\.|localhost|\[?::1\]?|10\.0\.2\.2)/i.test(backendHost);
+  return new Error(
+    isLoopback
+      ? `Could not reach ${backendHost}. That address is this device, so this build is pointed at a local backend that is not running.`
+      : `Could not reach ${backendHost}. Check your connection and try again.`,
+  );
+}
+
+/** Runs a Supabase call, replacing an unhelpful transport error with one that
+ *  names the host. Auth errors pass through untouched. */
+async function withNetworkContext<T>(run: () => Promise<T>): Promise<T> {
+  try {
+    return await run();
+  } catch (error) {
+    throw describeNetworkFailure(error) ?? error;
+  }
+}
+
 /** Shared by concurrent ensureDefaultThreads callers so the default group is
  *  created once, not once per overlapping poll. Keyed by user so an overlapping
  *  call for a different driver can never be handed the previous one's threads. */
@@ -76,11 +114,13 @@ export const SupabaseService = {
 
   async signIn(phone: string, password: string): Promise<UserSession> {
     assertSupabase();
-    const { data, error } = await supabase!.auth.signInWithPassword({
-      email: phoneToEmail(phone),
-      password,
-    });
-    if (error) throw error;
+    const { data, error } = await withNetworkContext(() =>
+      supabase!.auth.signInWithPassword({
+        email: phoneToEmail(phone),
+        password,
+      }),
+    );
+    if (error) throw describeNetworkFailure(error) ?? error;
     if (!data.user) throw new Error("No user returned from Supabase.");
     await this.ensureProfile(data.user, phone);
     return toUserSession(data.user, phone);
@@ -88,17 +128,19 @@ export const SupabaseService = {
 
   async signUp(phone: string, password: string, fullName: string): Promise<UserSession> {
     assertSupabase();
-    const { data, error } = await supabase!.auth.signUp({
-      email: phoneToEmail(phone),
-      password,
-      options: {
-        data: {
-          full_name: fullName,
-          phone,
+    const { data, error } = await withNetworkContext(() =>
+      supabase!.auth.signUp({
+        email: phoneToEmail(phone),
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone,
+          },
         },
-      },
-    });
-    if (error) throw error;
+      }),
+    );
+    if (error) throw describeNetworkFailure(error) ?? error;
     if (!data.user) throw new Error("No user returned from Supabase.");
     await this.ensureProfile(data.user, phone, fullName);
     return toUserSession(data.user, phone);
