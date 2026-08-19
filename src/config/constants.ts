@@ -1,11 +1,11 @@
 import type { WorkApp } from "../types";
 
-export const APP_NAME = "Buzz Buzz";
+export const APP_NAME = "Buzz";
 
 /**
  * The company behind the app.
  *
- * Buzz Buzz shipped without naming its maker anywhere — not on the auth screen,
+ * Buzz shipped without naming its maker anywhere — not on the auth screen,
  * not in the profile, and not in the privacy policy, which is a contract that
  * has to say who the other party is. A driver handing over their location is
  * entitled to know whose company holds it.

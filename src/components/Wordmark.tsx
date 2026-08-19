@@ -2,7 +2,7 @@ import { useId } from "react";
 import { APP_NAME } from "../config/constants";
 
 /**
- * The Buzz Buzz bee mark.
+ * The Buzz bee mark.
  *
  * Drawn with `currentColor` and a mask, so the stripes are cut OUT of the body
  * rather than painted on. That means the same mark reads correctly as orange on

@@ -27,7 +27,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Kept for local debugging; a crash-reporting SDK can be wired in here later.
-    console.error("Buzz Buzz crashed:", error, info.componentStack);
+    console.error("Buzz crashed:", error, info.componentStack);
   }
 
   private handleReload = () => {

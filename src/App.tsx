@@ -154,7 +154,7 @@ export default function App() {
         <Route
           path="/home"
           element={
-            <AppShell title="Buzz Buzz">
+            <AppShell title="Buzz">
               <HomeScreen />
             </AppShell>
           }

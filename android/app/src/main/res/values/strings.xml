@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Buzz Buzz</string>
-    <string name="title_activity_main">Buzz Buzz</string>
+    <string name="app_name">Buzz</string>
+    <string name="title_activity_main">Buzz</string>
     <string name="package_name">com.masayaako.driver</string>
     <string name="custom_url_scheme">com.masayaako.driver</string>
 </resources>

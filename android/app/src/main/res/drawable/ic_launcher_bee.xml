@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Buzz Buzz launcher foreground: the bee mark.
+  Buzz launcher foreground: the bee mark.
 
   Drawn inside the 108x108dp adaptive-icon canvas, with all meaning kept inside
   the centre ~72x72dp safe zone so no launcher mask (circle, squircle, rounded

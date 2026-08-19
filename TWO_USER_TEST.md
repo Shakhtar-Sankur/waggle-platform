@@ -1,4 +1,4 @@
-# Buzz Buzz — Two-User Live Test
+# Buzz — Two-User Live Test
 
 Everything in the app that involves *another person* can only be proven with two
 real accounts. This is that test. It takes about 20 minutes.

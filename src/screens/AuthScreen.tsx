@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Lock, MapPin, Phone, UserRound, Zap } from "lucide-react";
+import { Eye, EyeOff, Lock, Phone, UserRound } from "lucide-react";
 import { BeeMark } from "../components/Wordmark";
 import { GigzenByline } from "../components/GigzenMark";
 import { FormEvent, useState } from "react";
@@ -72,25 +72,26 @@ export function AuthScreen() {
   return (
     <main className="auth-screen">
       <section className="auth-card">
+        {/* The mark, the name, and nothing else.
+            This block used to carry a tagline and a Track / Earn / Connect
+            row with icons — a landing-page feature strip. A driver opening
+            the app to sign in has already chosen it; selling it back to them
+            at the door is what made this read as a web page rather than an
+            app. */}
         <div className="brand-block">
           <div className="brand-icon">
-            <BeeMark size={46} />
+            <BeeMark size={54} />
           </div>
           <h1 className="brand-name">{APP_NAME}</h1>
-          <p>{t("auth_tagline")}</p>
-          <div className="brand-mini-row">
-            <span><MapPin size={18} /> {t("auth_track")}</span>
-            <span><Zap size={18} /> {t("auth_earn")}</span>
-            <span><UserRound size={18} /> {t("auth_connect")}</span>
-          </div>
-          {/* Who is asking for the phone number below. */}
-          <GigzenByline tone="solid" />
         </div>
 
         <form className="auth-form" onSubmit={submit}>
           {mode === "signup" ? (
             <label>
-              <span>{t("auth_fullName")}</span>
+              {/* Labels are visually hidden, not deleted. The placeholder says
+                  the same thing to someone who can see the field, but a screen
+                  reader needs a real label, and a placeholder is not one. */}
+              <span className="sr-only">{t("auth_fullName")}</span>
               <div className="input-shell auth-input">
                 <UserRound size={19} />
                 <input
@@ -103,7 +104,7 @@ export function AuthScreen() {
             </label>
           ) : null}
           <label>
-            <span>{t("auth_phone")}</span>
+            <span className="sr-only">{t("auth_phone")}</span>
             <div className="input-shell auth-input">
               <Phone size={19} />
               <input
@@ -116,7 +117,7 @@ export function AuthScreen() {
             </div>
           </label>
           <label>
-            <span>{t("auth_password")}</span>
+            <span className="sr-only">{t("auth_password")}</span>
             <div className="input-shell auth-input">
               <Lock size={19} />
               <input
@@ -197,6 +198,12 @@ export function AuthScreen() {
         {t("auth_footerPrefix")} <Link to="/terms">{t("consent_terms")}</Link>{" "}
         {t("consent_and")} <Link to="/privacy">{t("consent_privacyPolicy")}</Link>.
       </p>
+      {/* Who is asking for the phone number. It was in the hero, competing with
+          the app's own name; it belongs at the foot, where a maker's byline
+          normally sits. */}
+      <div className="auth-byline">
+        <GigzenByline tone="solid" />
+      </div>
     </main>
   );
 }

@@ -197,13 +197,27 @@ select:focus {
   padding-bottom: 96px;
 }
 
+/* The header was a filled orange bar with a title and three icons — a web
+   navbar. At rest it now sits on the page background with a large title, and
+   only takes on a surface once content scrolls under it, which is what a phone
+   app does. */
 .app-header {
   position: sticky;
   top: 0;
   z-index: 40;
-  background: var(--accent-grad);
-  border-bottom: none;
-  box-shadow: 0 6px 20px rgba(255, 77, 23, 0.22);
+  background: transparent;
+  border-bottom: 1px solid transparent;
+  box-shadow: none;
+  transition: background-color 160ms ease, border-color 160ms ease,
+    box-shadow 160ms ease;
+}
+
+.app-header.is-collapsed {
+  /* Opaque, not translucent: the feed scrolls under this and text showing
+     through a blur would be unreadable on a cheap screen in daylight. */
+  background: var(--card);
+  border-bottom-color: var(--border);
+  box-shadow: 0 1px 12px rgba(23, 26, 33, 0.06);
 }
 
 .shell-row,
@@ -214,16 +228,28 @@ select:focus {
 }
 
 .shell-row {
-  height: 66px;
+  height: 88px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 16px;
+  transition: height 160ms ease;
+}
+.app-header.is-collapsed .shell-row {
+  height: 56px;
 }
 
+/* Large at rest, compact once scrolled — the title is the page's heading
+   rather than a label stamped on a coloured bar. */
 .app-header h1 {
-  color: #fff;
-  font-size: 21px;
+  color: var(--foreground);
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  transition: font-size 160ms ease;
+}
+.app-header.is-collapsed h1 {
+  font-size: 18px;
   font-weight: 600;
   letter-spacing: -0.022em;
 }
@@ -234,8 +260,10 @@ select:focus {
   gap: 4px;
 }
 
+/* These were white for the orange bar. The bar is the page background now, so
+   they take the page's own ink. */
 .header-icon {
-  color: rgba(255, 255, 255, 0.92);
+  color: var(--foreground);
   position: relative;
   /* 44px is the minimum comfortable touch target (was 42). */
   min-width: 44px;
@@ -243,9 +271,12 @@ select:focus {
 }
 
 .header-icon:hover {
-  background: rgba(255, 255, 255, 0.12);
+  background: var(--muted);
 }
 
+/* Was white ringed in orange, which only read on the orange bar. Inverted:
+   brand orange ringed in the page colour so it stays a distinct dot whether
+   the header is transparent or collapsed onto its surface. */
 .header-dot {
   position: absolute;
   width: 8px;
@@ -253,8 +284,8 @@ select:focus {
   top: 8px;
   right: 8px;
   border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 0 0 2px var(--primary);
+  background: var(--primary);
+  box-shadow: 0 0 0 2px var(--card);
 }
 
 .page-shell {
@@ -354,7 +385,12 @@ select:focus {
   justify-content: center;
   gap: 22px;
   padding: 32px 24px;
-  background: linear-gradient(135deg, #ff4400 0%, #ff4400 48%, #ff6a00 100%);
+  /* Was #ff4400 → #ff6a00. Pure white on that is 3.45:1, and the secondary text
+     sat at 72% alpha, which measured 2.38:1 — eight of the nine strings on this
+     screen failed AA, on the first screen anyone sees. Deepening the ramp puts
+     white at 5.18:1 against the lightest stop while keeping it unmistakably the
+     brand orange. */
+  background: linear-gradient(135deg, #b83a05 0%, #b83a05 48%, #c2410c 100%);
   color: #fff;
 }
 
@@ -462,9 +498,15 @@ select:focus {
 }
 
 .auth-input {
-  border-color: rgba(255, 255, 255, 0.2);
-  background: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.58);
+  border-color: rgba(255, 255, 255, 0.34);
+  /* Darken the field rather than lighten it. A translucent WHITE fill raises
+     the luminance behind white text, which is the wrong direction: it put the
+     typed value at 4.27:1 and the placeholder at 3.86:1 on an orange screen.
+     A black wash takes them to 6.77 and 5.98 and still reads as a recessed
+     field. */
+  background: rgba(0, 0, 0, 0.16);
+  /* The leading icon. Was 58%, which is decoration you cannot see. */
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .auth-input input {
@@ -473,7 +515,9 @@ select:focus {
 }
 
 .auth-input input::placeholder {
-  color: rgba(255, 255, 255, 0.55);
+  /* This is now the only visible label on the field, so it has to be readable
+     rather than a hint. Was 55%, which measured 1.88:1. */
+  color: rgba(255, 255, 255, 0.92);
 }
 
 .auth-input button {
@@ -486,7 +530,10 @@ select:focus {
   width: 100%;
   min-height: 50px;
   background: #fff;
-  color: var(--primary);
+  /* The vivid brand orange on white is 3.32:1 — the single most repeated
+     contrast failure in this project. The deeper ramp reads the same and
+     measures 5.18:1. */
+  color: var(--primary-text);
   box-shadow: 0 12px 24px rgba(120, 31, 0, 0.16);
 }
 
@@ -495,10 +542,13 @@ select:focus {
   font-size: 13px;
 }
 
+/* Solid white, not 72%. Dimming text to suggest secondary importance is a
+   habit from light backgrounds; on a saturated colour it just makes it
+   unreadable — this measured 2.38:1. Size and weight carry the hierarchy. */
 .auth-toggle,
 .terms {
   text-align: center;
-  color: rgba(255, 255, 255, 0.72);
+  color: #fff;
   font-size: 14px;
 }
 
@@ -1964,7 +2014,7 @@ select:focus {
 }
 
 /* "A Gigzen product". Deliberately quiet — it names the maker without
-   competing with the Buzz Buzz mark it sits beneath. */
+   competing with the Buzz mark it sits beneath. */
 .gigzen-byline {
   display: inline-flex;
   align-items: center;
@@ -2620,7 +2670,7 @@ html {
   width: 34px;
   height: 34px;
 }
-/* Buzz Buzz chat wallpaper — our own doodle tile, the way WhatsApp has one.
+/* Buzz chat wallpaper — our own doodle tile, the way WhatsApp has one.
    Motifs are all ours: bees, honeycomb cells, "buzz" arcs, a map pin and a
    dashed route, tying the bee brand to the driving. Kept at very low opacity
    on a warm honey base so it never competes with the message bubbles. */
@@ -2882,7 +2932,7 @@ html {
 }
 
 /* ---------------------------------------------------------------------------
-   Buzz Buzz wordmark — bee mark + name. The bee inherits currentColor so the
+   Buzz wordmark — bee mark + name. The bee inherits currentColor so the
    same artwork works orange-on-light and white-on-orange.
    --------------------------------------------------------------------------- */
 .wordmark {
@@ -5315,7 +5365,7 @@ body { font-weight: 400; }
 
 /* The company name reads as a wordmark inside the byline: capitals, with
    positive tracking so the letters do not jam together the way they would at
-   the surrounding text's spacing. Matches the Buzz Buzz website and the
+   the surrounding text's spacing. Matches the Buzz website and the
    portfolio, where the same name is set the same way. */
 .gigzen-word {
   text-transform: uppercase;
@@ -5502,4 +5552,28 @@ body { font-weight: 400; }
   display: flex;
   justify-content: center;
   padding: 18px 0 2px;
+}
+
+/* Visible to screen readers, not on screen. The auth fields dropped their
+   printed labels — the placeholder carries the same words for anyone who can
+   see the field — but a placeholder is not a label: it vanishes on focus and
+   is not reliably announced. The real label stays here. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Maker's byline at the foot of the auth screen. */
+.auth-byline {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 10px;
+  opacity: 0.85;
 }

@@ -1025,7 +1025,7 @@ function ProfileStat({ icon, value, label }: { icon: ReactNode; value: string; l
 }
 
 function sharePost(body: string) {
-  const data = { title: "Buzz Buzz", text: body };
+  const data = { title: "Buzz", text: body };
   if (navigator.share) {
     void navigator.share(data).catch(() => undefined);
   } else if (navigator.clipboard) {
@@ -1033,7 +1033,7 @@ function sharePost(body: string) {
   }
 }
 
-// Cross-post a Buzz Buzz update to Facebook. Meta shut down direct app-to-group
+// Cross-post a Buzz update to Facebook. Meta shut down direct app-to-group
 // posting in 2020, so the honest path is to hand the text to Facebook's own share
 // flow: on a phone the native share sheet opens Facebook (timeline OR a group the
 // user chooses); on desktop we open Facebook's web share dialog. Either way the
@@ -1042,7 +1042,7 @@ function sharePost(body: string) {
 function shareToFacebook(text: string) {
   if (navigator.clipboard) void navigator.clipboard.writeText(text).catch(() => undefined);
   if (navigator.share) {
-    void navigator.share({ title: "Buzz Buzz", text }).catch(() => undefined);
+    void navigator.share({ title: "Buzz", text }).catch(() => undefined);
     return;
   }
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(

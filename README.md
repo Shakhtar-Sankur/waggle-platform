@@ -1,10 +1,10 @@
-# Buzz Buzz
+# Buzz
 
 **A tracking and community app for gig workers — free for the people who use it.**
 
 A Swiggy rider, an Uber driver and an Amazon Flex courier are often the same person, but no platform
 connects those identities. More than half of gig workers operate across multiple platforms at once,
-and each platform sees only its own slice. Buzz Buzz is the professional and social layer that sits
+and each platform sees only its own slice. Buzz is the professional and social layer that sits
 across all of them.
 
 Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populace), which was written for

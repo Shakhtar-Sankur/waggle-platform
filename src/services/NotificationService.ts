@@ -63,7 +63,7 @@ export const NotificationService = {
       await PushNotifications.addListener("pushNotificationReceived", (notification) => {
         void NotificationService.sendNative(
           NotificationService.create(
-            notification.title ?? "Buzz Buzz",
+            notification.title ?? "Buzz",
             notification.body ?? "You have a new notification.",
             "system",
           ),
