@@ -98,6 +98,47 @@ function localTimeZone(): string | undefined {
 }
 
 
+/** Columns every worker-shaped query needs. Kept in one place so the community
+ *  list and people search cannot drift apart. */
+const WORKER_SELECT =
+  "id, full_name, worker_locations(lat,lng,active_app,today_distance_km,today_earnings,rating,tags,updated_at)";
+
+/** "online" if a presence heartbeat landed in the last 90 seconds. */
+const PRESENCE_WINDOW = 1000 * 90;
+
+/** Shapes one profiles row, with its joined worker_locations, into a Worker. */
+function toWorker(profile: any): Worker {
+  const loc = Array.isArray(profile.worker_locations)
+    ? profile.worker_locations[0]
+    : profile.worker_locations;
+  const locUpdated = loc?.updated_at ? new Date(loc.updated_at).getTime() : 0;
+  const lastSeenMs = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
+  // Prefer the presence heartbeat; before presence.sql is run, fall back to the
+  // last location update time (old behaviour) so nothing regresses.
+  const isOnline = lastSeenMs
+    ? lastSeenMs > Date.now() - PRESENCE_WINDOW
+    : locUpdated > Date.now() - 1000 * 60 * 8;
+  // "Today's" stats only count if the last update was actually today — so a
+  // driver who tracked yesterday shows 0 to others even before the cron reset.
+  const trackedToday = locUpdated > 0 && isSameLocalDay(locUpdated, Date.now());
+  return {
+    id: profile.id,
+    name: profile.full_name ?? "Driver",
+    app: loc?.active_app ?? "others",
+    distanceKm: trackedToday ? Number(loc?.today_distance_km ?? 0) : 0,
+    earnings: trackedToday ? Number(loc?.today_earnings ?? 0) : 0,
+    isOnline,
+    lastSeen: lastSeenMs || locUpdated || undefined,
+    location: {
+      lat: Number(loc?.lat ?? MANILA_CENTER.lat),
+      lng: Number(loc?.lng ?? MANILA_CENTER.lng),
+      timestamp: locUpdated || Date.now(),
+    },
+    rating: Number(loc?.rating ?? 4.8),
+    tags: loc?.tags ?? [],
+  };
+}
+
 export const SupabaseService = {
   enabled: isSupabaseConfigured,
 
@@ -591,8 +632,6 @@ export const SupabaseService = {
   // enriched with live location/stats when they have shared them.
   async loadWorkers(currentUserId?: string): Promise<Worker[]> {
     if (!supabase) return [];
-    const locationSelect =
-      "id, full_name, worker_locations(lat,lng,active_app,today_distance_km,today_earnings,rating,tags,updated_at)";
 
     // Presence lives in profiles.last_seen (added by supabase/presence.sql). If that
     // migration hasn't run yet, the column is missing → fall back gracefully so the
@@ -601,47 +640,53 @@ export const SupabaseService = {
     let error: any = null;
     ({ data, error } = await supabase
       .from("profiles")
-      .select(`${locationSelect}, last_seen`)
+      .select(`${WORKER_SELECT}, last_seen`)
       .limit(500));
     if (error) {
-      ({ data, error } = await supabase.from("profiles").select(locationSelect).limit(500));
+      ({ data, error } = await supabase.from("profiles").select(WORKER_SELECT).limit(500));
       if (error) throw error;
     }
 
-    const PRESENCE_WINDOW = 1000 * 90; // "online" if a heartbeat landed in the last 90s
     return (data ?? [])
       .filter((profile: any) => profile.id !== currentUserId)
-      .map((profile: any) => {
-        const loc = Array.isArray(profile.worker_locations)
-          ? profile.worker_locations[0]
-          : profile.worker_locations;
-        const locUpdated = loc?.updated_at ? new Date(loc.updated_at).getTime() : 0;
-        const lastSeenMs = profile.last_seen ? new Date(profile.last_seen).getTime() : 0;
-        // Prefer the presence heartbeat; before presence.sql is run, fall back to the
-        // last location update time (old behaviour) so nothing regresses.
-        const isOnline = lastSeenMs
-          ? lastSeenMs > Date.now() - PRESENCE_WINDOW
-          : locUpdated > Date.now() - 1000 * 60 * 8;
-        // "Today's" stats only count if the last update was actually today — so a
-        // driver who tracked yesterday shows 0 to others even before the cron reset.
-        const trackedToday = locUpdated > 0 && isSameLocalDay(locUpdated, Date.now());
-        return {
-          id: profile.id,
-          name: profile.full_name ?? "Driver",
-          app: loc?.active_app ?? "others",
-          distanceKm: trackedToday ? Number(loc?.today_distance_km ?? 0) : 0,
-          earnings: trackedToday ? Number(loc?.today_earnings ?? 0) : 0,
-          isOnline,
-          lastSeen: lastSeenMs || locUpdated || undefined,
-          location: {
-            lat: Number(loc?.lat ?? MANILA_CENTER.lat),
-            lng: Number(loc?.lng ?? MANILA_CENTER.lng),
-            timestamp: locUpdated || Date.now(),
-          },
-          rating: Number(loc?.rating ?? 4.8),
-          tags: loc?.tags ?? [],
-        };
-      });
+      .map(toWorker);
+  },
+
+  /**
+   * Find registered drivers by name, whether or not you are connected to them.
+   *
+   * Searching server-side rather than filtering loadWorkers' result matters:
+   * that call is capped at 500 profiles, so once the app has more drivers than
+   * that, a client-side filter would silently stop finding people who exist.
+   */
+  async searchWorkers(query: string, currentUserId?: string): Promise<Worker[]> {
+    if (!supabase) return [];
+    const term = query.trim();
+    if (term.length < 2) return [];
+    // % and _ are wildcards in LIKE, so a driver searching for "100_" would
+    // otherwise match names they did not type.
+    const escaped = term.replace(/[\\%_]/g, (c) => `\\${c}`);
+
+    let data: any[] | null = null;
+    let error: any = null;
+    ({ data, error } = await supabase
+      .from("profiles")
+      .select(`${WORKER_SELECT}, last_seen`)
+      .ilike("full_name", `%${escaped}%`)
+      .limit(40));
+    if (error) {
+      // Same presence fallback as loadWorkers.
+      ({ data, error } = await supabase
+        .from("profiles")
+        .select(WORKER_SELECT)
+        .ilike("full_name", `%${escaped}%`)
+        .limit(40));
+      if (error) throw error;
+    }
+
+    return (data ?? [])
+      .filter((profile: any) => profile.id !== currentUserId)
+      .map(toWorker);
   },
 
   // Heartbeat: mark the current user as "seen now" so others get live presence.

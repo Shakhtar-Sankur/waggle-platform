@@ -94,6 +94,11 @@ export function CommunityScreen() {
   const [tab, setTab] = useState<FbTab>("home");
   const [postBody, setPostBody] = useState("");
   const [query, setQuery] = useState("");
+  // People matching the search box. Searched on the server rather than filtered
+  // out of `workers`, which is capped at 500 profiles — past that a local filter
+  // would quietly stop finding drivers who do exist.
+  const [peopleResults, setPeopleResults] = useState<Worker[]>([]);
+  const [peopleSearching, setPeopleSearching] = useState(false);
   const [openComments, setOpenComments] = useState<string | null>(null);
   const [commentDraft, setCommentDraft] = useState("");
   const [selectedWorker, setSelectedWorker] = useState<Worker | null>(null);
@@ -126,6 +131,36 @@ export function CommunityScreen() {
         (!q || post.author.toLowerCase().includes(q) || (post.body ?? "").toLowerCase().includes(q)),
     );
   }, [posts, hidden, query]);
+
+  // Debounced people search. Every keystroke would otherwise be a round trip,
+  // and a slow reply for "ma" must never land after the reply for "maria" and
+  // overwrite it — hence the cancelled flag.
+  useEffect(() => {
+    const term = query.trim();
+    if (term.length < 2) {
+      setPeopleResults([]);
+      setPeopleSearching(false);
+      return;
+    }
+    let cancelled = false;
+    setPeopleSearching(true);
+    const timer = setTimeout(() => {
+      void SupabaseService.searchWorkers(term, user?.id)
+        .then((found) => {
+          if (!cancelled) setPeopleResults(found);
+        })
+        .catch(() => {
+          if (!cancelled) setPeopleResults([]);
+        })
+        .finally(() => {
+          if (!cancelled) setPeopleSearching(false);
+        });
+    }, 250);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [query, user?.id]);
 
   const hidePost = (id: string) => setHidden((prev) => new Set(prev).add(id));
 
@@ -267,6 +302,34 @@ export function CommunityScreen() {
 
       {tab === "home" ? (
         <div className="fb-body">
+          {/* People matching the search box. Anyone registered shows up here,
+              connected or not, and tapping a row opens their profile. */}
+          {query.trim().length >= 2 ? (
+            <section className="fb-card">
+              <div className="fb-section-head">
+                <h4>{t("fb_people")}</h4>
+                {peopleResults.length ? <em>{peopleResults.length}</em> : null}
+              </div>
+              {peopleResults.length ? (
+                peopleResults.map((worker) => (
+                  <PersonRow
+                    key={worker.id}
+                    worker={worker}
+                    state={connectionFor(connections, user?.id, worker.id).state}
+                    t={t}
+                    onOpen={() => setSelectedWorker(worker)}
+                    onAdd={() => void sendConnection(worker.id)}
+                    onMessage={() => void messageDriver(worker.id)}
+                  />
+                ))
+              ) : (
+                <p className="fb-comment-empty">
+                  {peopleSearching ? `${t("fb_search")}…` : t("fb_noPeople")}
+                </p>
+              )}
+            </section>
+          ) : null}
+
           {/* Stories */}
           <div className="fb-stories">
             <button className="fb-story fb-story-create" onClick={() => void pickPhoto()}>
@@ -829,6 +892,62 @@ function ConnectAction({
         </Button>
       );
   }
+}
+
+/**
+ * One person in a search result. The row itself opens their profile whatever
+ * your relationship is — that is the point of search — while the button on the
+ * right offers the only action that makes sense for the current state.
+ */
+function PersonRow({
+  worker,
+  state,
+  t,
+  onOpen,
+  onAdd,
+  onMessage,
+}: {
+  worker: Worker;
+  state: ConnectionState;
+  t: ReturnType<typeof useT>;
+  onOpen: () => void;
+  onAdd: () => void;
+  onMessage: () => void;
+}) {
+  const app = getWorkApp(worker.app);
+  return (
+    <div className="fb-friend-row">
+      <button className="fb-friend-tap" onClick={onOpen}>
+        <span className="fb-avatar lg">{initials(worker.name)}</span>
+        <div>
+          <strong>{worker.name}</strong>
+          <p>
+            {app?.logo} {app?.name ?? "Driver"} · {worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}
+          </p>
+        </div>
+      </button>
+      {state === "connected" ? (
+        <Button size="sm" variant="outline" onClick={onMessage}>
+          <MessageCircle size={15} /> {t("fb_message")}
+        </Button>
+      ) : state === "pending_out" ? (
+        <Button size="sm" variant="outline" disabled>
+          {t("fb_requested")}
+        </Button>
+      ) : state === "pending_in" ? (
+        // They have already asked to connect. Offering "Add" back would be
+        // confusing, and confirming belongs on the Friends tab where the
+        // request lives.
+        <Button size="sm" variant="outline" onClick={onMessage}>
+          <MessageCircle size={15} /> {t("fb_message")}
+        </Button>
+      ) : (
+        <Button size="sm" className="fb-add" onClick={onAdd}>
+          <UserPlus size={15} /> {t("fb_add")}
+        </Button>
+      )}
+    </div>
+  );
 }
 
 function WorkerProfileModal({
