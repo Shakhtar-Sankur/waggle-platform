@@ -72,6 +72,28 @@ function distanceFrom(from: { lat: number; lng: number }, hit: SearchHit): numbe
   return dLat * dLat + dLng * dLng;
 }
 
+/**
+ * Escapes text destined for a Leaflet divIcon's HTML string.
+ *
+ * Marker HTML is built by concatenation, not by React, so nothing sanitises it
+ * on the way in. A driver's name is another person's typed input, and it is
+ * shown on every other driver's map.
+ */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+/** First name only — a full name overruns the callout on a phone-width map. */
+function firstNameOf(name: string): string {
+  const first = name.trim().split(/\s+/)[0] ?? "";
+  return first.length > 14 ? `${first.slice(0, 13)}…` : first;
+}
+
 export function RoutesScreen() {
   const t = useT();
   const currentLocation = useLocationStore((state) => state.currentLocation);
@@ -452,7 +474,18 @@ export function RoutesScreen() {
                 position={[worker.location.lat, worker.location.lng]}
                 icon={L.divIcon({
                   className: "driver-marker-wrap",
-                  html: `<div class="driver-marker" style="background:${getWorkApp(worker.app)?.color ?? "#555"}">${markOf(worker.app)}</div>`,
+                  // The name rides above the circle in a small callout. It is
+                  // positioned absolutely, so the wrapper stays 34x34 and the
+                  // circle still sits exactly on the coordinate — iconAnchor
+                  // below depends on that being unchanged.
+                  //
+                  // worker.name is another driver's typed input going into an
+                  // HTML string, so it is escaped rather than interpolated raw.
+                  html:
+                    `<div class="driver-marker" style="background:${getWorkApp(worker.app)?.color ?? "#555"}">` +
+                    `${markOf(worker.app)}` +
+                    `<span class="driver-cloud">${escapeHtml(firstNameOf(worker.name))}</span>` +
+                    `</div>`,
                   iconSize: [34, 34],
                   iconAnchor: [17, 17],
                 })}

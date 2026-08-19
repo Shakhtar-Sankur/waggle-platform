@@ -14,9 +14,18 @@
   --primary-soft: #fff1ea;
   --success: #16c784;
   --secondary: #1f2430;
-  --danger: #ef4444;
+  --danger: #c81e1e;
   --radius: 22px;
-  --accent-grad: linear-gradient(135deg, #ff5a1f 0%, #ff7a2e 55%, #ff9d3d 100%);
+  /* Filled surfaces that carry white text: buttons, avatars, badges.
+     The old ramp ran #ff5a1f → #ff9d3d, and white on those stops measures
+     3.12, 2.60 and 2.07 — so every primary button in the app, and every
+     avatar, was below AA. Deepened so the lightest stop still clears 4.5
+     (5.61) while reading as the same orange.
+     The bright --primary survives for marks, rules and glows, where nothing
+     has to be read off it. */
+  --accent-grad: linear-gradient(135deg, #a82f00 0%, #b23200 55%, #bc3a06 100%);
+  /* A flat fill for the same job. */
+  --primary-fill: #b23200;
   --shadow-card: 0 6px 22px rgba(23, 26, 33, 0.06), 0 1px 3px rgba(23, 26, 33, 0.05);
   --shadow-elevated: 0 24px 54px rgba(23, 26, 33, 0.16);
   --shadow-glow-primary: 0 10px 26px rgba(255, 77, 23, 0.32);
@@ -776,7 +785,7 @@ select:focus {
 }
 
 .stat-box.highlight strong {
-  color: var(--primary);
+  color: var(--primary-text);
 }
 
 .micro-copy {
@@ -819,7 +828,7 @@ select:focus {
   border-radius: 999px;
   padding: 0 10px;
   background: var(--primary-soft);
-  color: var(--primary);
+  color: var(--primary-text);
   font-size: 12px;
   font-weight: 800;
 }
@@ -1022,7 +1031,7 @@ select:focus {
   border-radius: 12px;
   border: 1px solid var(--border);
   background: #fff;
-  color: var(--primary);
+  color: var(--primary-text);
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -1146,6 +1155,46 @@ select:focus {
   background: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   border: 3px solid var(--primary);
+  /* Anchor for the name callout. The circle keeps its 34x34 box so the marker
+     still sits on the coordinate; the label floats out of the flow. */
+  position: relative;
+}
+
+/* The driver's name, above their circle. Opaque rather than translucent: this
+   sits over map tiles, which can be any colour, and a blurred label over a
+   satellite photo is unreadable. */
+.driver-cloud {
+  position: absolute;
+  bottom: calc(100% + 7px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+  white-space: nowrap;
+  max-width: 108px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.22);
+  border: 1px solid var(--border);
+  pointer-events: none;
+}
+
+/* The little tail pointing down at the circle. */
+.driver-cloud::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--card);
+  /* Sits a pixel up so it meets the bubble rather than leaving a hairline gap. */
+  margin-top: -1px;
 }
 
 .driver-marker.me {
@@ -3817,7 +3866,7 @@ html {
   cursor: pointer;
 }
 .sv-nav-tabs button.active {
-  color: var(--sv-orange);
+  color: var(--primary-text);
   background: #fff2ec;
 }
 
@@ -3909,7 +3958,7 @@ html {
   width: 32px;
   height: 32px;
   border-radius: 9px;
-  background: var(--sv-orange);
+  background: var(--primary-fill);
   color: #fff;
   cursor: pointer;
 }
@@ -4161,7 +4210,7 @@ html {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: var(--sv-orange);
+  background: var(--primary-fill);
   color: #fff;
   font-family: var(--font-display);
   font-size: 16px;
@@ -5091,7 +5140,7 @@ body::before {
    ══════════════════════════════════════════════════════ */
 
 :root {
-  --ink-quiet: color-mix(in srgb, currentColor 58%, transparent);
+  --ink-quiet: color-mix(in srgb, currentColor 68%, transparent);
 }
 
 /* Names, titles, the things you scan for. */
@@ -5576,4 +5625,12 @@ body { font-weight: 400; }
   justify-content: center;
   padding: 4px 0 10px;
   opacity: 0.85;
+}
+
+/* Leaflet's own attribution link ships at #0078a8, which measures 4.39:1 on
+   the control's near-white background — just under AA. It is required
+   attribution, so it has to be readable rather than hidden. */
+.leaflet-control-attribution,
+.leaflet-control-attribution a {
+  color: #0a5878;
 }
