@@ -33,7 +33,7 @@ import { Modal } from "../components/ui/Modal";
 import { BeeMark } from "../components/Wordmark";
 import { MediaService, type PickedPhoto, type PickedVideo } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
-import { useT } from "../i18n";
+import { useT, usePlural } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
 import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
@@ -63,6 +63,7 @@ export function CommunityScreen() {
   const navigate = useNavigate();
 
   const t = useT();
+  const plural = usePlural();
   const user = useAuthStore((state) => state.user);
   const posts = useCommunityStore((state) => state.posts);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
@@ -731,8 +732,11 @@ export function CommunityScreen() {
                   <strong>{group.name}</strong>
                   <p>{group.description}</p>
                   <small>
+                    {/* The count is inside the translated string, not glued in
+                        front of it: word order differs by language, and Thai,
+                        Japanese and Korean put the number mid-phrase. */}
                     {groupsFromCloud
-                      ? `${group.members.toLocaleString()} ${t("fb_members")}`
+                      ? plural("fb_members", group.members)
                       : t("fb_membersUnknown")}
                   </small>
                   <div className="fb-group-actions">
