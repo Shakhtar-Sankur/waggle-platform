@@ -151,6 +151,9 @@ export interface FeedPost {
   pending?: boolean;
   likes: number;
   likedByMe: boolean;
+  /** Reposts default to 0 on a database that has not run reposts.sql yet. */
+  reposts: number;
+  repostedByMe: boolean;
   commentCount: number;
   createdAt: number;
 }

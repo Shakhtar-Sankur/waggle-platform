@@ -3,7 +3,6 @@ import {
   Clapperboard,
   ExternalLink,
   Facebook,
-  Globe,
   Heart,
   Home,
   Image as ImageIcon,
@@ -17,7 +16,7 @@ import {
   Share2,
   Smile,
   Star,
-  ThumbsUp,
+  Repeat2,
   Trash2,
   UserPlus,
   Users,
@@ -31,7 +30,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
-import { Wordmark } from "../components/Wordmark";
+import { BeeMark } from "../components/Wordmark";
 import { MediaService, type PickedPhoto, type PickedVideo } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useT } from "../i18n";
@@ -44,6 +43,19 @@ import { isTrending, rankReels } from "../utils/reelRank";
 import { getWorkApp } from "../utils/workApps";
 
 type FbTab = "home" | "reels" | "friends" | "groups";
+
+/**
+ * A display handle for the timeline, derived from the driver's name.
+ *
+ * Drivers do not choose a username — they sign up with a phone number — so this
+ * is presentation only and never an identifier. Non-Latin names would reduce to
+ * an empty string, which would read as a bare "@", so those keep their name as
+ * written rather than being mangled into nothing.
+ */
+function handleOf(name: string): string {
+  const latin = name.toLowerCase().replace(/[^a-z0-9]/g, "");
+  return latin || name.trim().replace(/\s+/g, "");
+}
 
 const FEELINGS = ["😊 feeling happy", "🚗 on the road", "☕ taking a break", "💪 grinding", "🎯 hitting goals"];
 
@@ -62,6 +74,7 @@ export function CommunityScreen() {
   const connections = useCommunityStore((state) => state.connections);
   const addPost = useCommunityStore((state) => state.addPost);
   const toggleLike = useCommunityStore((state) => state.toggleLike);
+  const toggleRepost = useCommunityStore((state) => state.toggleRepost);
   const deletePost = useCommunityStore((state) => state.deletePost);
   const loadComments = useCommunityStore((state) => state.loadComments);
   const addComment = useCommunityStore((state) => state.addComment);
@@ -270,9 +283,11 @@ export function CommunityScreen() {
 
   return (
     <main className="page-shell fb-page">
-      {/* Facebook-style top bar */}
+      {/* Top bar. The bee alone, not the wordmark: the app name belongs on Home
+          and Profile, and dropping it here gives the search box the width it
+          needs to look like the primary control on this screen. */}
       <div className="fb-topbar">
-        <Wordmark size={22} className="fb-wordmark" />
+        <BeeMark size={30} className="fb-beemark" />
         <div className="fb-search">
           <Search size={17} />
           <input
@@ -330,25 +345,11 @@ export function CommunityScreen() {
             </section>
           ) : null}
 
-          {/* Stories */}
-          <div className="fb-stories">
-            <button className="fb-story fb-story-create" onClick={() => void pickPhoto()}>
-              <span className="fb-story-avatar">{initials(user?.fullName ?? "You")}</span>
-              <span className="fb-story-plus"><Plus size={16} /></span>
-              <span className="fb-story-label">{t("fb_createStory")}</span>
-            </button>
-            {workers.slice(0, 10).map((worker) => (
-              <button className="fb-story" key={worker.id} onClick={() => setSelectedWorker(worker)}>
-                <span
-                  className="fb-story-bg"
-                  style={{ background: `linear-gradient(160deg, ${getWorkApp(worker.app)?.color ?? "#1877f2"}, #050505)` }}
-                >
-                  <span className="fb-story-ring">{initials(worker.name)}</span>
-                </span>
-                <span className="fb-story-name">{worker.name.split(" ")[0]}</span>
-              </button>
-            ))}
-          </div>
+          {/* The stories strip lived here. A timeline is a single column of
+              posts, and a horizontal carousel of faces above it is the one
+              piece of furniture that made this read as Facebook rather than
+              Twitter. Profiles are still one tap away from any post or from
+              search. */}
 
           {/* Composer */}
           <form className="fb-composer" onSubmit={submitPost}>
@@ -357,7 +358,7 @@ export function CommunityScreen() {
               <textarea
                 value={postBody}
                 onChange={(event) => setPostBody(event.target.value)}
-                placeholder={t("fb_whatsOnMind", { name: firstName })}
+                placeholder={t("tw_whatsHappening")}
                 rows={1}
               />
             </div>
@@ -418,68 +419,80 @@ export function CommunityScreen() {
             <FeedSkeleton />
           ) : visiblePosts.length ? (
             visiblePosts.map((post) => (
-              <article className="fb-post" key={post.id}>
-                <div className="fb-post-head">
-                  <span className="fb-avatar">{post.initials}</span>
-                  <div className="fb-post-meta">
-                    <strong>{post.author}</strong>
-                    <p>
-                      {timeAgo(post.createdAt)} · <Globe size={12} />
-                      {post.pending ? <span className="pending-chip">{t("post_pending")}</span> : null}
-                    </p>
+              <article className="tw-post" key={post.id}>
+                <span className="tw-avatar">{post.initials}</span>
+                <div className="tw-post-main">
+                  <div className="tw-post-head">
+                    {/* Name, handle and age on one line, the way a timeline
+                        reads — the identity is the sentence, not a header. */}
+                    <strong className="tw-name">{post.author}</strong>
+                    <span className="tw-handle">@{handleOf(post.author)}</span>
+                    <span className="tw-dot">·</span>
+                    <span className="tw-time">{timeAgo(post.createdAt)}</span>
+                    {post.pending ? <span className="pending-chip">{t("post_pending")}</span> : null}
+                    {/* Your own post can be genuinely deleted; someone else's
+                        can only be hidden from your own feed. */}
+                    {post.userId && post.userId === user?.id ? (
+                      <button
+                        className="tw-more"
+                        aria-label={t("fb_deletePost")}
+                        onClick={() => setConfirmDelete(post.id)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    ) : (
+                      <button className="tw-more" aria-label={t("fb_hidePost")} onClick={() => hidePost(post.id)}>
+                        <MoreHorizontal size={18} />
+                      </button>
+                    )}
                   </div>
-                  {/* Your own post can be genuinely deleted; someone else's can
-                      only be hidden from your own feed. */}
-                  {post.userId && post.userId === user?.id ? (
+
+                  {post.body ? <p className="tw-body">{post.body}</p> : null}
+                  {post.imageUrl ? (
+                    <img
+                      className="tw-image"
+                      /* The feed shows the ~20 KB thumbnail. Legacy posts have no
+                         thumbnail — their image is inline, so it costs nothing extra
+                         to keep showing it. */
+                      src={post.imageThumbUrl ?? post.imageUrl}
+                      alt="Shared attachment"
+                      loading="lazy"
+                      decoding="async"
+                      onClick={() => post.imageUrl && setViewerUrl(post.imageUrl)}
+                    />
+                  ) : null}
+
+                  {/* Counts live on the actions themselves rather than in a
+                      separate bar, so a quiet post stays visually quiet. */}
+                  <div className="tw-actions">
                     <button
-                      className="fb-post-more"
-                      aria-label={t("fb_deletePost")}
-                      onClick={() => setConfirmDelete(post.id)}
+                      className={openComments === post.id ? "tw-act tw-reply active" : "tw-act tw-reply"}
+                      aria-label={t("fb_comment")}
+                      onClick={() => toggleCommentSection(post.id)}
                     >
-                      <Trash2 size={18} />
+                      <MessageCircle size={17} />
+                      {post.commentCount ? <span>{post.commentCount}</span> : null}
                     </button>
-                  ) : (
-                    <button className="fb-post-more" aria-label={t("fb_hidePost")} onClick={() => hidePost(post.id)}>
-                      <MoreHorizontal size={20} />
+                    <button
+                      className={post.repostedByMe ? "tw-act tw-repost active" : "tw-act tw-repost"}
+                      aria-label={t("tw_repost")}
+                      onClick={() => toggleRepost(post.id)}
+                    >
+                      <Repeat2 size={18} />
+                      {post.reposts ? <span>{post.reposts}</span> : null}
                     </button>
-                  )}
-                </div>
-                {post.body ? <p className="fb-post-body">{post.body}</p> : null}
-                {post.imageUrl ? (
-                  <img
-                    className="fb-post-image"
-                    /* The feed shows the ~20 KB thumbnail. Legacy posts have no
-                       thumbnail — their image is inline, so it costs nothing extra
-                       to keep showing it. */
-                    src={post.imageThumbUrl ?? post.imageUrl}
-                    alt="Shared attachment"
-                    loading="lazy"
-                    decoding="async"
-                    onClick={() => post.imageUrl && setViewerUrl(post.imageUrl)}
-                  />
-                ) : null}
-                {post.likes || post.commentCount ? (
-                  <div className="fb-post-stats">
-                    <span className="fb-like-bubble"><ThumbsUp size={11} /></span>
-                    {post.likes ? <span>{post.likes}</span> : null}
-                    {post.commentCount ? (
-                      <span className="fb-stats-comments">
-                        {post.commentCount} comment{post.commentCount > 1 ? "s" : ""}
-                      </span>
-                    ) : null}
+                    <button
+                      className={post.likedByMe ? "tw-act tw-like active" : "tw-act tw-like"}
+                      aria-label={t("fb_like")}
+                      onClick={() => toggleLike(post.id)}
+                    >
+                      <Heart size={17} fill={post.likedByMe ? "currentColor" : "none"} />
+                      {post.likes ? <span>{post.likes}</span> : null}
+                    </button>
+                    <button className="tw-act tw-share" aria-label={t("fb_share")} onClick={() => sharePost(post.body)}>
+                      <Share2 size={16} />
+                    </button>
                   </div>
-                ) : null}
-                <div className="fb-post-actions">
-                  <button className={post.likedByMe ? "active" : ""} onClick={() => toggleLike(post.id)}>
-                    <ThumbsUp size={19} /> {t("fb_like")}
-                  </button>
-                  <button className={openComments === post.id ? "active" : ""} onClick={() => toggleCommentSection(post.id)}>
-                    <MessageCircle size={19} /> {t("fb_comment")}
-                  </button>
-                  <button onClick={() => sharePost(post.body)}>
-                    <Share2 size={19} /> {t("fb_share")}
-                  </button>
-                </div>
 
                 {openComments === post.id ? (
                   <div className="fb-comments">
@@ -508,6 +521,7 @@ export function CommunityScreen() {
                     </form>
                   </div>
                 ) : null}
+                </div>
               </article>
             ))
           ) : (

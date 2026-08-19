@@ -368,6 +368,25 @@ export const SupabaseService = {
       likedIds = new Set((myLikes ?? []).map((row: any) => row.post_id));
     }
 
+    // Reposts live in their own table, added after the feed shipped. Query them
+    // separately and soft-fail rather than joining: a database that has not run
+    // reposts.sql yet should show a feed with no reposts, not no feed at all.
+    const repostCounts = new Map<string, number>();
+    const repostedIds = new Set<string>();
+    const postIds = (data ?? []).map((post: any) => post.id);
+    if (postIds.length) {
+      const { data: repostRows, error: repostError } = await supabase
+        .from("post_reposts")
+        .select("post_id, user_id")
+        .in("post_id", postIds);
+      if (!repostError) {
+        for (const row of repostRows ?? []) {
+          repostCounts.set(row.post_id, (repostCounts.get(row.post_id) ?? 0) + 1);
+          if (userId && row.user_id === userId) repostedIds.add(row.post_id);
+        }
+      }
+    }
+
     return (data ?? []).map((post: any) => {
       const author = post.profiles?.full_name ?? "Driver";
       const likeCount = post.post_likes?.[0]?.count ?? 0;
@@ -383,6 +402,8 @@ export const SupabaseService = {
       imageThumbUrl: post.image_thumb_url ?? undefined,
         likes: Number(likeCount),
         likedByMe: likedIds.has(post.id),
+        reposts: repostCounts.get(post.id) ?? 0,
+        repostedByMe: repostedIds.has(post.id),
         commentCount: Number(commentCount),
         createdAt: new Date(post.created_at).getTime(),
       };
@@ -487,6 +508,8 @@ export const SupabaseService = {
       body: data.body,
       imageUrl: data.image_url ?? undefined,
       imageThumbUrl: data.image_thumb_url ?? undefined,
+      reposts: 0,
+      repostedByMe: false,
       likes: 0,
       likedByMe: false,
       commentCount: 0,
@@ -533,6 +556,31 @@ export const SupabaseService = {
     } else {
       const { error } = await supabase!
         .from("post_likes")
+        .delete()
+        .eq("post_id", postId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    }
+  },
+
+  /**
+   * Repost or un-repost, mirroring setLike exactly — including the reason it is
+   * an INSERT rather than an upsert. post_reposts has insert and delete policies
+   * and deliberately no UPDATE policy, so an upsert compiles to
+   * ON CONFLICT DO UPDATE and RLS refuses it. That is the same mistake that
+   * broke likes, profile edits and group joins in this app.
+   */
+  async setRepost(postId: string, userId: string, reposted: boolean) {
+    assertSupabase();
+    if (reposted) {
+      const { error } = await supabase!
+        .from("post_reposts")
+        .insert({ post_id: postId, user_id: userId });
+      // 23505 means it was already reposted, which is the state we wanted.
+      if (error && error.code !== "23505") throw error;
+    } else {
+      const { error } = await supabase!
+        .from("post_reposts")
         .delete()
         .eq("post_id", postId)
         .eq("user_id", userId);

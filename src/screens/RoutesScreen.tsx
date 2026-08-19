@@ -23,7 +23,7 @@ import { ChallengeIcon } from "../components/ChallengeIcon";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
-import { Wordmark } from "../components/Wordmark";
+import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
 import { LocationService } from "../services/LocationService";
 import { SupabaseService } from "../services/SupabaseService";
@@ -419,7 +419,8 @@ export function RoutesScreen() {
   return (
     <main className="strava-screen">
       <div className="sv-nav">
-        <Wordmark size={19} className="sv-nav-brand" />
+        {/* Bee only. The app name lives on Home and Profile. */}
+        <BeeMark size={26} className="sv-nav-brand" />
         <div className="sv-nav-tabs">
           <button className={view === "maps" ? "active" : ""} onClick={() => setView("maps")}>{t("sv_maps")}</button>
           <button className={view === "challenges" ? "active" : ""} onClick={() => setView("challenges")}>{t("sv_challenges")}</button>

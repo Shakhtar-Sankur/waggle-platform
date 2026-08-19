@@ -6,6 +6,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { GigzenByline } from "../components/GigzenMark";
+import { Wordmark } from "../components/Wordmark";
 import { COMPANY_SITE } from "../config/constants";
 import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
 import { detectCountry } from "../i18n/region";
@@ -195,6 +196,15 @@ export function ProfileScreen() {
         <Link to="/privacy">{t("consent_privacyPolicy")}</Link>
         <Link to="/terms">{t("consent_terms")}</Link>
       </section>
+
+      {/* The app name appears on Home and here. Community and Routes carry the
+          bee alone, so the name is stated where someone looks for it rather
+          than repeated on every screen. */}
+      <div className="profile-brand">
+        {/* Default tone, not solid: the solid variant renders the bee in the
+            text colour, which made the logo black here. The bee is orange. */}
+        <Wordmark size={24} />
+      </div>
 
       <a className="gigzen-link" href={COMPANY_SITE} target="_blank" rel="noreferrer">
         <GigzenByline />

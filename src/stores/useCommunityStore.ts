@@ -31,6 +31,7 @@ interface CommunityState {
   loadCloudCommunity: () => Promise<void>;
   addPost: (body: string, photo?: PickedPhoto, video?: PickedVideo) => void;
   toggleLike: (postId: string) => void;
+  toggleRepost: (postId: string) => void;
   deletePost: (postId: string) => Promise<void>;
   loadComments: (postId: string) => Promise<void>;
   addComment: (postId: string, body: string) => Promise<void>;
@@ -105,6 +106,8 @@ export const useCommunityStore = create<CommunityState>()(
           videoUrl: video?.preview,
           likes: 0,
           likedByMe: false,
+          reposts: 0,
+          repostedByMe: false,
           commentCount: 0,
           createdAt: Date.now(),
         };
@@ -170,6 +173,32 @@ export const useCommunityStore = create<CommunityState>()(
               ),
             }));
             console.warn("Could not update like:", error);
+          });
+      },
+      toggleRepost: (postId) => {
+        const user = useAuthStore.getState().user;
+        const current = get().posts.find((p) => p.id === postId);
+        if (!current) return;
+        const reposted = !current.repostedByMe;
+        const delta = reposted ? 1 : -1;
+        set((state) => ({
+          posts: state.posts.map((p) =>
+            p.id === postId
+              ? { ...p, repostedByMe: reposted, reposts: Math.max(0, p.reposts + delta) }
+              : p,
+          ),
+        }));
+        if (user && SupabaseService.enabled)
+          void SupabaseService.setRepost(postId, user.id, reposted).catch((error) => {
+            // Revert on failure, exactly as a like does.
+            set((state) => ({
+              posts: state.posts.map((p) =>
+                p.id === postId
+                  ? { ...p, repostedByMe: !reposted, reposts: Math.max(0, p.reposts - delta) }
+                  : p,
+              ),
+            }));
+            console.warn("Could not update repost:", error);
           });
       },
       deletePost: async (postId) => {

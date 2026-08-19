@@ -103,6 +103,7 @@ export default function App() {
     const unsubscribe = [
       SupabaseService.subscribeToTable("feed_posts", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("post_likes", () => void loadCloudCommunity()),
+      SupabaseService.subscribeToTable("post_reposts", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("post_comments", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("worker_locations", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("chat_messages", () => void loadCloudChats(user.id)),

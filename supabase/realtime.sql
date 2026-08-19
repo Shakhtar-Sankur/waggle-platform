@@ -9,7 +9,7 @@ declare
   t text;
 begin
   foreach t in array array[
-    'feed_posts', 'post_likes', 'post_comments', 'connections',
+    'feed_posts', 'post_likes', 'post_reposts', 'post_comments', 'connections',
     'chat_messages', 'chat_threads', 'chat_thread_members',
     'worker_locations', 'notifications', 'jobs'
   ]
