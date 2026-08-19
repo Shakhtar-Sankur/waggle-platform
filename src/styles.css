@@ -677,7 +677,12 @@ select:focus {
   color: var(--foreground);
 }
 
-.working-app-card span {
+/* :not(.wam) because the platform monogram is a span too, and this rule beat
+   `.wam { color: #fff }` on specificity — 0,2,0 against 0,1,0. The letter was
+   being painted muted grey on the platform's own dark brand colour, which
+   measured 1.21:1: the chip rendered as a blank coloured square. This is meant
+   for the "Change" label beside it, nothing else. */
+.working-app-card span:not(.wam) {
   color: var(--muted-foreground);
 }
 
