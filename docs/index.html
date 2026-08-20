@@ -78,10 +78,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-h1, h2, h3 { margin: 0; color: var(--ink); line-height: 1.1; letter-spacing: -.028em; font-weight: 700; }
-h1 { font-size: clamp(40px, 7vw, 76px); }
-h2 { font-size: clamp(29px, 4.4vw, 46px); }
-h3 { font-size: clamp(19px, 2.2vw, 23px); letter-spacing: -.018em; }
+/* Scale carries the hierarchy. Tighter tracking and leading than before,
+   because display type set at these sizes needs both pulled in to stop the
+   words drifting apart. */
+h1, h2, h3 { margin: 0; color: var(--ink); line-height: 1.02; letter-spacing: -.042em; font-weight: 700; }
+h1 { font-size: clamp(44px, 9.4vw, 108px); line-height: .94; letter-spacing: -.05em; }
+h2 { font-size: clamp(32px, 5.6vw, 62px); }
+h3 { font-size: clamp(19px, 2.2vw, 23px); letter-spacing: -.018em; line-height: 1.24; }
 p  { margin: 0; }
 a  { color: var(--flame-ink); }
 
@@ -96,6 +99,20 @@ section { padding-block: clamp(72px, 10vw, 132px); position: relative; }
 .eyebrow::before {
   content: ""; width: 22px; height: 3px; border-radius: 2px;
   background: var(--flame); flex: none;
+}
+
+/* ── section numerals ──
+   The page reads as an index rather than a scroll of unrelated pitches. The
+   dash rule stays for the hero and any eyebrow outside a numbered section;
+   inside one, the number replaces it. Counter-generated, so reordering the
+   sections cannot leave the numbering wrong. */
+body { counter-reset: sec; }
+section[id] { counter-increment: sec; }
+section[id] .eyebrow::before {
+  content: counter(sec, decimal-leading-zero);
+  width: auto; height: auto; border-radius: 0; background: none;
+  color: var(--flame-ink); font-family: var(--mono); font-weight: 700;
+  letter-spacing: .12em;
 }
 .lede { font-size: clamp(18px, 2.1vw, 21px); line-height: 1.55; color: var(--body); }
 
@@ -392,7 +409,7 @@ input[type=range] {
         <ellipse cx="34.6" cy="13.2" rx="6.4" ry="3.6" transform="rotate(32 34.6 13.2)" fill="#FF4D17" opacity=".38"/>
         <rect width="48" height="48" fill="#FF4D17" mask="url(#beeMask)"/>
       </svg>
-      Buzz&nbsp;Buzz
+      Buzz
     </a>
     <div class="navlinks">
       <a href="#why">Why</a>
