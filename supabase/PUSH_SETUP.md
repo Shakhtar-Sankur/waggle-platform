@@ -6,6 +6,26 @@ This wires real push notifications end-to-end:
 Local/in-app notifications already work without any of this. Follow these steps
 only when you want notifications delivered while the app is closed.
 
+## Where this stands (checked 2026-08-20)
+
+| Step | State |
+|---|---|
+| 1. Firebase project + `google-services.json` | **done** — project `buzz-buzz-2390c`, package `com.masayaako.driver`, file in `android/app/` |
+| 2. Service account key | user-side, cannot be verified from here |
+| 3. Deploy `send-push` + set 4 secrets | **not done** |
+| 4. `private.push_config` row | not verified (needs service-role access) |
+| 5. `VITE_ENABLE_PUSH=true` | **done** — set in `.env.production` |
+
+Step 3 was checked directly: `POST /functions/v1/send-push` on production returns
+`{"code":"NOT_FOUND","message":"Requested function was not found"}` — byte-identical
+to the response for a function name invented at random. A *deployed* function
+answers `401` to an unauthenticated call, so this is conclusive rather than
+inferred: the function does not exist on production.
+
+**This is the whole reason push does not arrive.** Step 4 is worth checking too,
+but a config row would only point at a URL that 404s, so step 3 is the blocker.
+The app, the trigger and the Firebase side are all already in place.
+
 ---
 
 ## 1. Create a Firebase project (free)
@@ -32,9 +52,24 @@ only when you want notifications delivered while the app is closed.
 
 Install the Supabase CLI (<https://supabase.com/docs/guides/cli>), then:
 
+> **Check what you are linked to first.** There are three projects and only one
+> is live:
+>
+> | ref | what it is |
+> |---|---|
+> | `ypdaetbeexyepswyhbui` | **production — deploy here** |
+> | `jqepegeifmnfofeyebrz` | test project, safe to experiment against |
+> | `rqzuuvlougzhynckvqzd` | **retired.** Nothing here is used by anyone. |
+>
+> `supabase/.temp/project-ref` currently reads `rqzuuvlougzhynckvqzd`, so a
+> `deploy` without re-linking ships the function to the dead project. It will
+> report success and push will still never arrive, with nothing visibly wrong.
+> Re-link before deploying, and confirm with `supabase projects list` that the
+> linked marker sits on the production row.
+
 ```bash
 supabase login
-supabase link --project-ref <your-project-ref>
+supabase link --project-ref ypdaetbeexyepswyhbui   # production
 
 # Set secrets (use the values from step 2). Keep the private key quotes exactly.
 supabase secrets set FCM_PROJECT_ID="your-project-id"
@@ -56,7 +91,7 @@ In the Supabase SQL Editor, run **`supabase/production.sql`**, then insert one c
 insert into private.push_config (id, function_url, webhook_secret)
 values (
   1,
-  'https://<your-project-ref>.supabase.co/functions/v1/send-push',
+  'https://ypdaetbeexyepswyhbui.supabase.co/functions/v1/send-push',
   'pick-a-long-random-string'   -- MUST equal PUSH_WEBHOOK_SECRET above
 )
 on conflict (id) do update
