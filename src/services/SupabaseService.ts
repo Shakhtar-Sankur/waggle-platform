@@ -20,6 +20,8 @@ import type { PickedPhoto, PickedVideo } from "./MediaService";
 
 /** Object-storage bucket holding community and chat photos. */
 export const PHOTO_BUCKET = "post-photos";
+/** Voice notes live apart from pictures, so their access rules do too. */
+export const VOICE_BUCKET = "chat-voice";
 
 export interface UploadedPhoto {
   url: string;
@@ -440,6 +442,28 @@ export const SupabaseService = {
     });
     if (error) throw error;
     return bucket.getPublicUrl(path).data.publicUrl;
+  },
+
+  /**
+   * Put a voice note in the driver's own folder and hand back its URL.
+   *
+   * Its own bucket, not the photo one: a storage policy written for pictures
+   * should never end up deciding who may hear a private conversation. The path
+   * begins with the user's id because that is what the insert policy checks.
+   */
+  async uploadVoice(userId: string, blob: Blob, mimeType: string): Promise<string> {
+    assertSupabase();
+    // The container decides the extension, and it differs by platform — Android
+    // records webm, iOS records mp4. Guessing one breaks playback on the other.
+    const ext = mimeType.includes("mp4") ? "m4a" : mimeType.includes("ogg") ? "ogg" : "webm";
+    const path = `${userId}/${crypto.randomUUID()}.${ext}`;
+    const { error } = await supabase!.storage.from(VOICE_BUCKET).upload(path, blob, {
+      contentType: mimeType,
+      cacheControl: "31536000",   // immutable: the name carries a uuid
+      upsert: false,
+    });
+    if (error) throw error;
+    return supabase!.storage.from(VOICE_BUCKET).getPublicUrl(path).data.publicUrl;
   },
 
   async uploadPhoto(userId: string, photo: PickedPhoto): Promise<UploadedPhoto> {
@@ -935,6 +959,11 @@ export const SupabaseService = {
       body: message.body,
       attachmentUrl: message.attachment_url ?? undefined,
       attachmentThumbUrl: message.attachment_thumb_url ?? undefined,
+      voiceUrl: message.voice_url ?? undefined,
+      voiceSeconds: message.voice_seconds == null ? undefined : Number(message.voice_seconds),
+      // Stored as jsonb. A client older than the column gets undefined and
+      // draws a flat bar rather than throwing on a missing array.
+      voiceLevels: Array.isArray(message.voice_levels) ? message.voice_levels : undefined,
       createdAt: new Date(message.created_at).getTime(),
       status: message.status ?? "sent",
     }));
@@ -1018,6 +1047,17 @@ export const SupabaseService = {
       attachment_url: message.attachmentUrl ?? null,
       ...(message.attachmentThumbUrl
         ? { attachment_thumb_url: message.attachmentThumbUrl }
+        : {}),
+      // Spread rather than always sent: a project that has not run
+      // chat_voice_notes.sql would reject the entire insert on an unknown
+      // column, so a plain text message would fail for want of a field it
+      // does not even use.
+      ...(message.voiceUrl
+        ? {
+            voice_url: message.voiceUrl,
+            voice_seconds: message.voiceSeconds ?? null,
+            voice_levels: message.voiceLevels ?? null,
+          }
         : {}),
       status: message.status,
       created_at: new Date(message.createdAt).toISOString(),

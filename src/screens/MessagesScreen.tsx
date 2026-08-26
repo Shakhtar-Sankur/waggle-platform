@@ -1,4 +1,4 @@
-import { ArrowLeft, ImagePlus, LogOut, MessageCircle, MoreVertical, Search, Send, Trash2, UsersRound } from "lucide-react";
+import { ArrowLeft, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, Trash2, UsersRound } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -7,6 +7,7 @@ import { Modal } from "../components/ui/Modal";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { useT } from "../i18n";
 import { MediaService, type PickedPhoto } from "../services/MediaService";
+import { clockOf, startRecording, voiceSupported, waveform, type Recorder } from "../services/VoiceService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
@@ -63,6 +64,85 @@ export function MessagesScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  /* Voice notes. The recorder lives in a ref rather than state because it is
+     a live object with a microphone attached — putting it in state would
+     re-render the whole thread sixty times a second as the level changes. */
+  const recorderRef = useRef<Recorder | null>(null);
+  const [recording, setRecording] = useState(false);
+  const [recSeconds, setRecSeconds] = useState(0);
+  const [recLevels, setRecLevels] = useState<number[]>([]);
+  const [voiceOk] = useState(() => voiceSupported());
+  /** Which note is playing, so only one sounds at a time. */
+  const [playingId, setPlayingId] = useState<string | null>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  const beginRecording = async () => {
+    if (recorderRef.current) return;
+    try {
+      recorderRef.current = await startRecording(() => void finishRecording());
+      setRecording(true);
+    } catch {
+      // Refused microphone, or a browser that cannot record. Saying nothing
+      // would leave a button that does nothing when pressed, which is how a
+      // driver decides a feature is broken.
+      setRecording(false);
+      recorderRef.current = null;
+      window.alert(t("wa_micDenied"));
+    }
+  };
+
+  const cancelRecording = () => {
+    recorderRef.current?.cancel();
+    recorderRef.current = null;
+    setRecording(false);
+    setRecSeconds(0);
+    setRecLevels([]);
+  };
+
+  const finishRecording = async () => {
+    const rec = recorderRef.current;
+    if (!rec) return;
+    recorderRef.current = null;
+    setRecording(false);
+    setRecSeconds(0);
+    setRecLevels([]);
+    const note = await rec.stop();
+    // A tap that was not meant as a recording returns null rather than an
+    // empty bubble.
+    if (!note) return;
+    await sendMessage("", undefined, {
+      blob: note.blob, mimeType: note.mimeType, seconds: note.seconds, levels: note.levels,
+    });
+    URL.revokeObjectURL(note.preview);
+  };
+
+  /* Tick the timer and the live waveform while recording. One interval, not a
+     render loop: the button only needs to move a few times a second. */
+  useEffect(() => {
+    if (!recording) return undefined;
+    const id = window.setInterval(() => {
+      const rec = recorderRef.current;
+      if (!rec) return;
+      setRecSeconds(rec.elapsed());
+      setRecLevels((prev) => [...prev.slice(-40), rec.level()]);
+    }, 120);
+    return () => window.clearInterval(id);
+  }, [recording]);
+
+  /* A half-finished recording must not outlive the screen — the microphone
+     indicator would stay lit with nothing listening. */
+  useEffect(() => () => { recorderRef.current?.cancel(); audioRef.current?.pause(); }, []);
+
+  const playVoice = (id: string, url: string) => {
+    if (playingId === id) { audioRef.current?.pause(); setPlayingId(null); return; }
+    audioRef.current?.pause();
+    const audio = new Audio(url);
+    audioRef.current = audio;
+    audio.onended = () => setPlayingId(null);
+    audio.onerror = () => setPlayingId(null);
+    void audio.play().then(() => setPlayingId(id)).catch(() => setPlayingId(null));
+  };
 
   // WhatsApp-style group creation: choose people first, name it, then create.
   // It used to make a thread called "New Driver Group" the instant the button
@@ -498,6 +578,27 @@ export function MessagesScreen() {
                         decoding="async"
                       />
                     ) : null}
+                    {/* A voice note. The waveform is drawn from levels captured
+                        while recording, so it appears immediately rather than
+                        after downloading and decoding the audio — on a driver's
+                        connection that is the difference between a chat that
+                        renders and one that hangs. */}
+                    {message.voiceUrl ? (
+                      <button
+                        type="button"
+                        className={`wa-voice${playingId === message.id ? " is-playing" : ""}`}
+                        onClick={() => playVoice(message.id, message.voiceUrl!)}
+                        aria-label={t("wa_voiceNote")}
+                      >
+                        {playingId === message.id ? <Pause size={16} /> : <Play size={16} />}
+                        <span className="wa-voice-wave">
+                          {waveform(message.voiceLevels ?? []).map((v, i) => (
+                            <i key={i} style={{ height: `${Math.round(4 + v * 16)}px` }} />
+                          ))}
+                        </span>
+                        <small>{clockOf(message.voiceSeconds ?? 0)}</small>
+                      </button>
+                    ) : null}
                     {message.body ? <p>{message.body}</p> : null}
                     <small>
                       {clock(message.createdAt)}
@@ -539,10 +640,47 @@ export function MessagesScreen() {
               onChange={(event) => setDraft(event.target.value)}
               placeholder={attachment ? t("wa_caption") : t("wa_typeMessage")}
             />
-            <button type="submit" className="wa-send" aria-label={t("a11y_send")}>
-              <Send size={18} />
-            </button>
+            {/* Mic when there is nothing to send, send when there is — one
+                button, because a screen held one-handed on a bike has no room
+                for both and no time to aim between them. */}
+            {draft.trim() || attachment ? (
+              <button type="submit" className="wa-send" aria-label={t("a11y_send")}>
+                <Send size={18} />
+              </button>
+            ) : voiceOk ? (
+              <button
+                type="button"
+                className={`wa-send wa-mic${recording ? " is-rec" : ""}`}
+                aria-label={t("wa_holdToTalk")}
+                // Pointer events, not mouse or touch: one code path for a
+                // finger, a stylus and a desktop mouse, and it cannot fire twice
+                // on a device that reports both.
+                onPointerDown={(e) => { e.preventDefault(); void beginRecording(); }}
+                onPointerUp={() => void finishRecording()}
+                onPointerLeave={() => { if (recording) cancelRecording(); }}
+                onPointerCancel={() => { if (recording) cancelRecording(); }}
+              >
+                <Mic size={18} />
+              </button>
+            ) : null}
           </form>
+
+          {/* While recording: how long, how loud, and the way out. Someone who
+              started this by accident needs a cancel they can hit without
+              looking at the screen. */}
+          {recording ? (
+            <div className="wa-rec">
+              <button type="button" className="wa-rec-cancel" onClick={cancelRecording}>
+                <Trash2 size={16} /> {t("sv_cancel")}
+              </button>
+              <span className="wa-rec-wave">
+                {recLevels.slice(-24).map((v, i) => (
+                  <i key={i} style={{ height: `${Math.round(6 + v * 20)}px` }} />
+                ))}
+              </span>
+              <b>{clockOf(recSeconds)}</b>
+            </div>
+          ) : null}
 
           {confirmDelete ? (
             <div className="wa-confirm-scrim" onClick={() => setConfirmDelete(null)}>

@@ -5,6 +5,15 @@ import { ChatService } from "../services/ChatService";
 import { SupabaseService } from "../services/SupabaseService";
 import { Outbox, blobToDataUrl } from "../services/Outbox";
 import type { PickedPhoto } from "../services/MediaService";
+
+/** A recorded note on its way out: the audio, how long it runs, and the
+ *  loudness series the bubble draws its waveform from. */
+export interface OutgoingVoice {
+  blob: Blob;
+  mimeType: string;
+  seconds: number;
+  levels: number[];
+}
 import { translate } from "../i18n";
 import type { ChatMessage, ChatThread } from "../types";
 import { uid } from "../utils/format";
@@ -18,7 +27,7 @@ interface ChatState {
   chatsLoaded: boolean;
   loadCloudChats: (userId: string) => Promise<void>;
   selectThread: (id: string) => void;
-  sendMessage: (body: string, photo?: PickedPhoto) => Promise<void>;
+  sendMessage: (body: string, photo?: PickedPhoto, voice?: OutgoingVoice) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: (title: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
@@ -97,13 +106,25 @@ export const useChatStore = create<ChatState>()(
           console.warn("Could not delete message:", error);
         }
       },
-      sendMessage: async (body, photo) => {
+      sendMessage: async (body, photo, voice) => {
         const threadId = get().selectedThreadId;
         const user = useAuthStore.getState().user;
         if (!user) return;
         const senderId = SupabaseService.enabled ? user.id : "me";
         // Upload first so the stored message carries URLs, not image bytes.
         // A failure here falls through to the outbox below with the photo intact.
+        // Uploaded before the row is written, so the message carries a URL rather
+        // than bytes. A failure here leaves voiceUrl undefined and the text still
+        // sends: losing the audio is bad, losing the message as well would be worse.
+        let voiceUrl: string | undefined;
+        if (voice && SupabaseService.enabled) {
+          try {
+            voiceUrl = await SupabaseService.uploadVoice(user.id, voice.blob, voice.mimeType);
+          } catch {
+            voiceUrl = undefined;
+          }
+        }
+
         let image: { url: string; thumbUrl: string } | undefined;
         if (photo && SupabaseService.enabled) {
           try {

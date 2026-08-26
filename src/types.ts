@@ -128,6 +128,13 @@ export interface ChatMessage {
   replyToId?: string;
   /** emoji -> the ids of everyone who reacted with it. */
   reactions?: Record<string, string[]>;
+  /** A voice note, in its own fields. An audio file left in attachmentUrl would
+   *  be rendered as a broken image by any client that has not been updated. */
+  voiceUrl?: string;
+  voiceSeconds?: number;
+  /** Loudness captured while recording, so the waveform draws immediately
+   *  instead of downloading and decoding the audio to find its shape. */
+  voiceLevels?: number[];
 }
 
 export interface ChatThread {
