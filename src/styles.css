@@ -1565,15 +1565,23 @@ select:focus {
 }
 
 .profile-app-grid button {
-  min-height: 92px;
+  min-height: 96px;
   position: relative;
+  /* Room under the label for the indicator, so the two cannot share space
+     again however the label wraps. */
+  padding-bottom: 16px;
 }
 
 .profile-app-grid button em {
   position: absolute;
-  bottom: 12px;
-  width: 8px;
-  height: 8px;
+  /* Measured on screen: the tile is 84px tall and the label runs y52 to y72, so
+     a dot at bottom:12px landed at y63 — inside the word, printing "Gr●b".
+     A bar under the label reads as a selection rather than as a typo. */
+  bottom: 7px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 18px;
+  height: 3px;
   border-radius: 999px;
   background: var(--primary);
 }
