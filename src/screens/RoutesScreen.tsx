@@ -1,4 +1,5 @@
 import {
+  ArrowLeftRight,
   Award,
   CalendarDays,
   Flag,
@@ -415,6 +416,18 @@ export function RoutesScreen() {
     [onlineWorkers, connections, user?.id],
   );
 
+  /** How many people you are actually connected to, driving or not.
+   *  Counted from the connections themselves rather than from who happens to be
+   *  on the map, because that is the difference between "you have no friends
+   *  yet" and "your friends are not out right now". */
+  const acceptedFriendCount = useMemo(
+    () =>
+      (connections ?? []).filter(
+        (c) => c.status === "accepted" && (c.requesterId === user?.id || c.addresseeId === user?.id),
+      ).length,
+    [connections, user?.id],
+  );
+
   /** Two-letter mark for a map pin, matching WorkAppMark's rule. */
   const markOf = (appId: typeof activeApp) => {
     const name = getWorkApp(appId)?.name ?? "";
@@ -535,24 +548,19 @@ export function RoutesScreen() {
           {/* Me / Friends. Sits over the map rather than above it, because the
               map is the screen and a bar pushing it down costs more than the
               switch is worth. */}
-          <div className="sv-mapmode" role="tablist">
-            <button
-              role="tab"
-              aria-selected={mapMode === "me"}
-              className={mapMode === "me" ? "on" : ""}
-              onClick={() => setMapMode("me")}
-            >
-              {t("sv_modeMe")}
-            </button>
-            <button
-              role="tab"
-              aria-selected={mapMode === "friends"}
-              className={mapMode === "friends" ? "on" : ""}
-              onClick={() => setMapMode("friends")}
-            >
-              {t("sv_modeFriends")}
-            </button>
-          </div>
+          {/* One button, not two.
+              A pair of tabs spends width saying what you are already looking at.
+              With only two modes the useful control is a switch: it names where
+              tapping takes you, and the note underneath says where you are. */}
+          <button
+            className={"sv-mapmode is-" + mapMode}
+            onClick={() => setMapMode(mapMode === "me" ? "friends" : "me")}
+            aria-label={t(mapMode === "me" ? "sv_switchToFriends" : "sv_switchToMe")}
+          >
+            <span className="sv-mapmode-now">{t(mapMode === "me" ? "sv_modeMe" : "sv_modeFriends")}</span>
+            <ArrowLeftRight size={14} />
+            <span className="sv-mapmode-next">{t(mapMode === "me" ? "sv_modeFriends" : "sv_modeMe")}</span>
+          </button>
 
           {/* One line saying what is on screen, and how much to trust it. The
               path is either matched to roads or it is a straight line between
@@ -573,6 +581,13 @@ export function RoutesScreen() {
               )
             ) : friendWorkers.length ? (
               <span>{t("sv_friendsOn", { count: String(friendWorkers.length) })}</span>
+            ) : acceptedFriendCount === 0 ? (
+              // Two different empty maps that used to read the same. Nobody
+              // connected is a thing to go and do; connected-but-not-driving is
+              // a thing to wait for. Telling someone their friends are not
+              // sharing their location when they have no friends yet sends them
+              // looking for a setting that was never the problem.
+              <span>{t("sv_noFriendsYet")}</span>
             ) : (
               <span>{t("sv_noFriends")}</span>
             )}

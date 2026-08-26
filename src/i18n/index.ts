@@ -36,6 +36,7 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+    sv_noFriendsYet: "No friends yet — connect with drivers in Community", sv_switchToFriends: "Show friends", sv_switchToMe: "Show my path",
     sv_modeMe: "Me", sv_modeFriends: "Friends", sv_myPath: "My path", sv_friendsOn: "{count} friends sharing", sv_noPathDay: "No route recorded on this day", sv_noFriends: "No connections are sharing their location", sv_snapped: "following roads", sv_notSnapped: "straight line between recorded points", sv_today: "Today", sv_pickDay: "Pick a day", sv_loadingPath: "Loading your path…",
   ...legalEn,
   nav_home: "Home",
@@ -375,6 +376,7 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+    sv_noFriendsYet: "Wala pang kaibigan — kumonekta sa mga driver sa Komunidad", sv_switchToFriends: "Ipakita ang mga kaibigan", sv_switchToMe: "Ipakita ang ruta ko",
     sv_modeMe: "Ako", sv_modeFriends: "Mga Kaibigan", sv_myPath: "Ruta ko", sv_friendsOn: "{count} kaibigan ang nagbabahagi", sv_noPathDay: "Walang naitalang ruta sa araw na ito", sv_noFriends: "Walang koneksyon na nagbabahagi ng lokasyon", sv_snapped: "sumusunod sa kalsada", sv_notSnapped: "tuwid na linya sa pagitan ng mga naitalang punto", sv_today: "Ngayon", sv_pickDay: "Pumili ng araw", sv_loadingPath: "Kinukuha ang iyong ruta…",
     fb_createReel: "Gumawa ng reel", fb_createReelSub: "Magbahagi ng maikling video mula sa iyong shift", fb_reelCaption: "Magsabi ng tungkol dito (opsyonal)", fb_reelLimits: "Hanggang 60 segundo, 30 MB", fb_reelPickVideo: "Pumili ng video", fb_reelTooBig: "Lampas 30 MB ang video na iyan. Pumili ng mas maikli.", fb_reelTooLong: "Mas mahaba sa 60 segundo ang video na iyan.", fb_shareReel: "Ibahagi ang reel", fb_trending: "Trending", pf_changePhoto: "Palitan ang profile photo", wa_andMore: "+{count} pa", wa_groupCreate: "Gumawa ng grupo", wa_groupName: "Pangalan ng grupo (opsyonal)", wa_groupNoFriends: "Wala pang koneksyon", wa_groupNoFriendsBody: "Kumonekta muna sa mga driver sa Komunidad, tapos makakagawa ka ng grupo kasama sila.", wa_groupPick: "Piliin kung sino ang idadagdag", wa_membersCount: "{count} miyembro", wa_unknownMember: "Driver", wa_viewMembers: "Tingnan ang mga miyembro",
   nav_home: "Home", nav_community: "Komunidad", nav_routes: "Ruta", nav_messages: "Mensahe", nav_profile: "Profile",
@@ -413,6 +415,7 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+    sv_noFriendsYet: "Aún no tienes amigos — conéctate con conductores en Comunidad", sv_switchToFriends: "Ver amigos", sv_switchToMe: "Ver mi ruta",
     sv_modeMe: "Yo", sv_modeFriends: "Amigos", sv_myPath: "Mi ruta", sv_friendsOn: "{count} amigos compartiendo", sv_noPathDay: "No hay ruta registrada ese día", sv_noFriends: "Ninguna conexión comparte su ubicación", sv_snapped: "siguiendo las calles", sv_notSnapped: "línea recta entre los puntos registrados", sv_today: "Hoy", sv_pickDay: "Elegir un día", sv_loadingPath: "Cargando tu ruta…",
     fb_createReel: "Crear un reel", fb_createReelSub: "Comparte un video corto de tu turno", fb_reelCaption: "Di algo sobre esto (opcional)", fb_reelLimits: "Hasta 60 segundos, 30 MB", fb_reelPickVideo: "Elegir un video", fb_reelTooBig: "Ese video supera los 30 MB. Elige un clip más corto.", fb_reelTooLong: "Ese video dura más de 60 segundos.", fb_shareReel: "Compartir reel", fb_trending: "Tendencias", pf_changePhoto: "Cambiar foto de perfil", wa_andMore: "+{count} más", wa_groupCreate: "Crear grupo", wa_groupName: "Nombre del grupo (opcional)", wa_groupNoFriends: "Aún no tienes conexiones", wa_groupNoFriendsBody: "Conéctate primero con conductores en Comunidad y luego podrás crear un grupo con ellos.", wa_groupPick: "Elige a quién agregar", wa_membersCount: "{count} miembros", wa_unknownMember: "Conductor", wa_viewMembers: "Ver miembros",
   nav_home: "Inicio", nav_community: "Comunidad", nav_routes: "Rutas", nav_messages: "Mensajes", nav_profile: "Perfil",
@@ -451,6 +454,7 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+    sv_noFriendsYet: "अभी कोई दोस्त नहीं — कम्युनिटी में ड्राइवरों से जुड़ें", sv_switchToFriends: "दोस्त दिखाएँ", sv_switchToMe: "मेरा रास्ता दिखाएँ",
     sv_modeMe: "मैं", sv_modeFriends: "दोस्त", sv_myPath: "मेरा रास्ता", sv_friendsOn: "{count} दोस्त साझा कर रहे हैं", sv_noPathDay: "इस दिन कोई रास्ता दर्ज नहीं", sv_noFriends: "कोई कनेक्शन अपनी लोकेशन साझा नहीं कर रहा", sv_snapped: "सड़कों के अनुसार", sv_notSnapped: "दर्ज बिंदुओं के बीच सीधी रेखा", sv_today: "आज", sv_pickDay: "दिन चुनें", sv_loadingPath: "आपका रास्ता लोड हो रहा है…",
     fb_createReel: "रील बनाएँ", fb_createReelSub: "अपनी शिफ़्ट का छोटा वीडियो साझा करें", fb_reelCaption: "इसके बारे में कुछ कहें (वैकल्पिक)", fb_reelLimits: "60 सेकंड तक, 30 MB", fb_reelPickVideo: "वीडियो चुनें", fb_reelTooBig: "यह वीडियो 30 MB से बड़ा है। छोटा क्लिप चुनें।", fb_reelTooLong: "यह वीडियो 60 सेकंड से लंबा है।", fb_shareReel: "रील साझा करें", fb_trending: "ट्रेंडिंग", pf_changePhoto: "प्रोफ़ाइल फ़ोटो बदलें", wa_andMore: "+{count} और", wa_groupCreate: "ग्रुप बनाएँ", wa_groupName: "ग्रुप का नाम (वैकल्पिक)", wa_groupNoFriends: "अभी कोई कनेक्शन नहीं", wa_groupNoFriendsBody: "पहले कम्युनिटी में ड्राइवरों से जुड़ें, फिर आप उनके साथ ग्रुप बना सकते हैं।", wa_groupPick: "चुनें किसे जोड़ना है", wa_membersCount: "{count} सदस्य", wa_unknownMember: "ड्राइवर", wa_viewMembers: "सदस्य देखें",
   nav_home: "होम", nav_community: "समुदाय", nav_routes: "रूट", nav_messages: "संदेश", nav_profile: "प्रोफ़ाइल",
@@ -489,6 +493,7 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+    sv_noFriendsYet: "এখনও কোনো বন্ধু নেই — কমিউনিটিতে চালকদের সঙ্গে যুক্ত হন", sv_switchToFriends: "বন্ধুদের দেখান", sv_switchToMe: "আমার পথ দেখান",
     sv_modeMe: "আমি", sv_modeFriends: "বন্ধুরা", sv_myPath: "আমার পথ", sv_friendsOn: "{count} জন বন্ধু শেয়ার করছেন", sv_noPathDay: "এই দিনে কোনো পথ রেকর্ড হয়নি", sv_noFriends: "কোনো সংযোগ তাদের অবস্থান শেয়ার করছে না", sv_snapped: "রাস্তা অনুসরণ করে", sv_notSnapped: "রেকর্ড করা বিন্দুর মধ্যে সরলরেখা", sv_today: "আজ", sv_pickDay: "একটি দিন বাছুন", sv_loadingPath: "আপনার পথ লোড হচ্ছে…",
     fb_createReel: "রিল তৈরি করুন", fb_createReelSub: "আপনার শিফটের একটি ছোট ভিডিও শেয়ার করুন", fb_reelCaption: "এটি সম্পর্কে কিছু বলুন (ঐচ্ছিক)", fb_reelLimits: "সর্বোচ্চ ৬০ সেকেন্ড, ৩০ MB", fb_reelPickVideo: "একটি ভিডিও বেছে নিন", fb_reelTooBig: "ভিডিওটি ৩০ MB-র বেশি। ছোট ক্লিপ বেছে নিন।", fb_reelTooLong: "ভিডিওটি ৬০ সেকেন্ডের বেশি লম্বা।", fb_shareReel: "রিল শেয়ার করুন", fb_trending: "ট্রেন্ডিং", pf_changePhoto: "প্রোফাইল ছবি বদলান", wa_andMore: "+{count} আরও", wa_groupCreate: "গ্রুপ তৈরি করুন", wa_groupName: "গ্রুপের নাম (ঐচ্ছিক)", wa_groupNoFriends: "এখনও কোনো সংযোগ নেই", wa_groupNoFriendsBody: "প্রথমে কমিউনিটিতে চালকদের সঙ্গে যুক্ত হন, তারপর তাঁদের নিয়ে গ্রুপ তৈরি করতে পারবেন।", wa_groupPick: "কাকে যোগ করবেন বেছে নিন", wa_membersCount: "{count} সদস্য", wa_unknownMember: "চালক", wa_viewMembers: "সদস্য দেখুন",
   nav_home: "হোম", nav_community: "কমিউনিটি", nav_routes: "রুট", nav_messages: "বার্তা", nav_profile: "প্রোফাইল",
@@ -527,6 +532,7 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+    sv_noFriendsYet: "Belum ada teman — hubungkan dengan pengemudi di Komunitas", sv_switchToFriends: "Tampilkan teman", sv_switchToMe: "Tampilkan rute saya",
     sv_modeMe: "Saya", sv_modeFriends: "Teman", sv_myPath: "Rute saya", sv_friendsOn: "{count} teman berbagi", sv_noPathDay: "Tidak ada rute tercatat pada hari ini", sv_noFriends: "Tidak ada koneksi yang membagikan lokasinya", sv_snapped: "mengikuti jalan", sv_notSnapped: "garis lurus antara titik yang terekam", sv_today: "Hari ini", sv_pickDay: "Pilih hari", sv_loadingPath: "Memuat rute Anda…",
     fb_createReel: "Buat reel", fb_createReelSub: "Bagikan video singkat dari shift Anda", fb_reelCaption: "Ceritakan sesuatu (opsional)", fb_reelLimits: "Maksimal 60 detik, 30 MB", fb_reelPickVideo: "Pilih video", fb_reelTooBig: "Video itu lebih dari 30 MB. Pilih klip yang lebih pendek.", fb_reelTooLong: "Video itu lebih dari 60 detik.", fb_shareReel: "Bagikan reel", fb_trending: "Sedang tren", pf_changePhoto: "Ubah foto profil", wa_andMore: "+{count} lagi", wa_groupCreate: "Buat grup", wa_groupName: "Nama grup (opsional)", wa_groupNoFriends: "Belum ada koneksi", wa_groupNoFriendsBody: "Hubungkan dulu dengan pengemudi di Komunitas, lalu Anda bisa membuat grup bersama mereka.", wa_groupPick: "Pilih siapa yang ditambahkan", wa_membersCount: "{count} anggota", wa_unknownMember: "Pengemudi", wa_viewMembers: "Lihat anggota",
   nav_home: "Beranda", nav_community: "Komunitas", nav_routes: "Rute", nav_messages: "Pesan", nav_profile: "Profil",
@@ -565,6 +571,7 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+    sv_noFriendsYet: "Belum ada rakan — berhubung dengan pemandu di Komuniti", sv_switchToFriends: "Tunjukkan rakan", sv_switchToMe: "Tunjukkan laluan saya",
     sv_modeMe: "Saya", sv_modeFriends: "Rakan", sv_myPath: "Laluan saya", sv_friendsOn: "{count} rakan berkongsi", sv_noPathDay: "Tiada laluan direkod pada hari ini", sv_noFriends: "Tiada sambungan berkongsi lokasi mereka", sv_snapped: "mengikut jalan", sv_notSnapped: "garis lurus antara titik yang direkod", sv_today: "Hari ini", sv_pickDay: "Pilih hari", sv_loadingPath: "Memuatkan laluan anda…",
     fb_createReel: "Cipta reel", fb_createReelSub: "Kongsi video pendek dari syif anda", fb_reelCaption: "Katakan sesuatu tentangnya (pilihan)", fb_reelLimits: "Sehingga 60 saat, 30 MB", fb_reelPickVideo: "Pilih video", fb_reelTooBig: "Video itu melebihi 30 MB. Pilih klip lebih pendek.", fb_reelTooLong: "Video itu melebihi 60 saat.", fb_shareReel: "Kongsi reel", fb_trending: "Sedang tren", pf_changePhoto: "Tukar foto profil", wa_andMore: "+{count} lagi", wa_groupCreate: "Cipta kumpulan", wa_groupName: "Nama kumpulan (pilihan)", wa_groupNoFriends: "Belum ada sambungan", wa_groupNoFriendsBody: "Berhubung dahulu dengan pemandu di Komuniti, kemudian anda boleh memulakan kumpulan dengan mereka.", wa_groupPick: "Pilih siapa untuk ditambah", wa_membersCount: "{count} ahli", wa_unknownMember: "Pemandu", wa_viewMembers: "Lihat ahli",
   nav_home: "Utama", nav_community: "Komuniti", nav_routes: "Laluan", nav_messages: "Mesej", nav_profile: "Profil",
@@ -603,6 +610,7 @@ const ms: Dict = {
 };
 
 const th: Dict = {
+    sv_noFriendsYet: "ยังไม่มีเพื่อน — เชื่อมต่อกับคนขับในชุมชน", sv_switchToFriends: "แสดงเพื่อน", sv_switchToMe: "แสดงเส้นทางของฉัน",
     sv_modeMe: "ฉัน", sv_modeFriends: "เพื่อน", sv_myPath: "เส้นทางของฉัน", sv_friendsOn: "เพื่อน {count} คนกำลังแชร์", sv_noPathDay: "ไม่มีเส้นทางที่บันทึกไว้ในวันนี้", sv_noFriends: "ไม่มีการเชื่อมต่อที่แชร์ตำแหน่ง", sv_snapped: "ตามแนวถนน", sv_notSnapped: "เส้นตรงระหว่างจุดที่บันทึกไว้", sv_today: "วันนี้", sv_pickDay: "เลือกวัน", sv_loadingPath: "กำลังโหลดเส้นทางของคุณ…",
     fb_createReel: "สร้างรีล", fb_createReelSub: "แชร์วิดีโอสั้นจากกะงานของคุณ", fb_reelCaption: "เขียนอะไรสักหน่อย (ไม่บังคับ)", fb_reelLimits: "ไม่เกิน 60 วินาที 30 MB", fb_reelPickVideo: "เลือกวิดีโอ", fb_reelTooBig: "วิดีโอนี้เกิน 30 MB เลือกคลิปที่สั้นกว่านี้", fb_reelTooLong: "วิดีโอนี้ยาวเกิน 60 วินาที", fb_shareReel: "แชร์รีล", fb_trending: "กำลังมาแรง", pf_changePhoto: "เปลี่ยนรูปโปรไฟล์", wa_andMore: "+{count} เพิ่มเติม", wa_groupCreate: "สร้างกลุ่ม", wa_groupName: "ชื่อกลุ่ม (ไม่บังคับ)", wa_groupNoFriends: "ยังไม่มีการเชื่อมต่อ", wa_groupNoFriendsBody: "เชื่อมต่อกับคนขับในชุมชนก่อน แล้วคุณจะสร้างกลุ่มกับพวกเขาได้", wa_groupPick: "เลือกคนที่จะเพิ่ม", wa_membersCount: "สมาชิก {count} คน", wa_unknownMember: "คนขับ", wa_viewMembers: "ดูสมาชิก",
   nav_home: "หน้าหลัก", nav_community: "ชุมชน", nav_routes: "เส้นทาง", nav_messages: "ข้อความ", nav_profile: "โปรไฟล์",
@@ -641,6 +649,7 @@ const th: Dict = {
 };
 
 const vi: Dict = {
+    sv_noFriendsYet: "Chưa có bạn nào — hãy kết nối với tài xế trong Cộng đồng", sv_switchToFriends: "Xem bạn bè", sv_switchToMe: "Xem lộ trình của tôi",
     sv_modeMe: "Tôi", sv_modeFriends: "Bạn bè", sv_myPath: "Lộ trình của tôi", sv_friendsOn: "{count} bạn đang chia sẻ", sv_noPathDay: "Không có lộ trình nào được ghi trong ngày này", sv_noFriends: "Không có kết nối nào chia sẻ vị trí", sv_snapped: "bám theo đường", sv_notSnapped: "đường thẳng nối các điểm đã ghi", sv_today: "Hôm nay", sv_pickDay: "Chọn ngày", sv_loadingPath: "Đang tải lộ trình…",
     fb_createReel: "Tạo reel", fb_createReelSub: "Chia sẻ video ngắn từ ca làm của bạn", fb_reelCaption: "Nói gì đó về nó (tùy chọn)", fb_reelLimits: "Tối đa 60 giây, 30 MB", fb_reelPickVideo: "Chọn video", fb_reelTooBig: "Video đó vượt quá 30 MB. Hãy chọn đoạn ngắn hơn.", fb_reelTooLong: "Video đó dài hơn 60 giây.", fb_shareReel: "Chia sẻ reel", fb_trending: "Thịnh hành", pf_changePhoto: "Đổi ảnh đại diện", wa_andMore: "+{count} nữa", wa_groupCreate: "Tạo nhóm", wa_groupName: "Tên nhóm (tùy chọn)", wa_groupNoFriends: "Chưa có kết nối nào", wa_groupNoFriendsBody: "Hãy kết nối với các tài xế trong Cộng đồng trước, rồi bạn có thể lập nhóm với họ.", wa_groupPick: "Chọn người để thêm", wa_membersCount: "{count} thành viên", wa_unknownMember: "Tài xế", wa_viewMembers: "Xem thành viên",
   nav_home: "Trang chủ", nav_community: "Cộng đồng", nav_routes: "Tuyến", nav_messages: "Tin nhắn", nav_profile: "Hồ sơ",
@@ -679,6 +688,7 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+    sv_noFriendsYet: "Ainda sem amigos — conecte-se com motoristas na Comunidade", sv_switchToFriends: "Ver amigos", sv_switchToMe: "Ver meu trajeto",
     sv_modeMe: "Eu", sv_modeFriends: "Amigos", sv_myPath: "Meu trajeto", sv_friendsOn: "{count} amigos compartilhando", sv_noPathDay: "Nenhum trajeto registrado neste dia", sv_noFriends: "Nenhuma conexão está compartilhando a localização", sv_snapped: "seguindo as ruas", sv_notSnapped: "linha reta entre os pontos registrados", sv_today: "Hoje", sv_pickDay: "Escolher um dia", sv_loadingPath: "Carregando seu trajeto…",
     fb_createReel: "Criar um reel", fb_createReelSub: "Compartilhe um vídeo curto do seu turno", fb_reelCaption: "Diga algo sobre isso (opcional)", fb_reelLimits: "Até 60 segundos, 30 MB", fb_reelPickVideo: "Escolher um vídeo", fb_reelTooBig: "Esse vídeo passa de 30 MB. Escolha um clipe mais curto.", fb_reelTooLong: "Esse vídeo tem mais de 60 segundos.", fb_shareReel: "Compartilhar reel", fb_trending: "Em alta", pf_changePhoto: "Alterar foto do perfil", wa_andMore: "+{count} mais", wa_groupCreate: "Criar grupo", wa_groupName: "Nome do grupo (opcional)", wa_groupNoFriends: "Ainda sem conexões", wa_groupNoFriendsBody: "Conecte-se primeiro com motoristas na Comunidade e depois você poderá criar um grupo com eles.", wa_groupPick: "Escolha quem adicionar", wa_membersCount: "{count} membros", wa_unknownMember: "Motorista", wa_viewMembers: "Ver membros",
   nav_home: "Início", nav_community: "Comunidade", nav_routes: "Rotas", nav_messages: "Mensagens", nav_profile: "Perfil",
@@ -717,6 +727,7 @@ const pt: Dict = {
 };
 
 const fr: Dict = {
+    sv_noFriendsYet: "Aucun ami pour l'instant — connectez-vous avec des chauffeurs dans Communauté", sv_switchToFriends: "Voir les amis", sv_switchToMe: "Voir mon trajet",
     sv_modeMe: "Moi", sv_modeFriends: "Amis", sv_myPath: "Mon trajet", sv_friendsOn: "{count} amis partagent", sv_noPathDay: "Aucun trajet enregistré ce jour-là", sv_noFriends: "Aucune connexion ne partage sa position", sv_snapped: "suit les routes", sv_notSnapped: "ligne droite entre les points enregistrés", sv_today: "Aujourd'hui", sv_pickDay: "Choisir un jour", sv_loadingPath: "Chargement de votre trajet…",
     fb_createReel: "Créer un reel", fb_createReelSub: "Partagez une courte vidéo de votre service", fb_reelCaption: "Dites-en quelque chose (facultatif)", fb_reelLimits: "Jusqu'à 60 secondes, 30 Mo", fb_reelPickVideo: "Choisir une vidéo", fb_reelTooBig: "Cette vidéo dépasse 30 Mo. Choisissez un extrait plus court.", fb_reelTooLong: "Cette vidéo dure plus de 60 secondes.", fb_shareReel: "Partager le reel", fb_trending: "Tendances", pf_changePhoto: "Changer la photo de profil", wa_andMore: "+{count} de plus", wa_groupCreate: "Créer un groupe", wa_groupName: "Nom du groupe (facultatif)", wa_groupNoFriends: "Aucune connexion pour l'instant", wa_groupNoFriendsBody: "Connectez-vous d'abord avec des chauffeurs dans Communauté, puis vous pourrez créer un groupe avec eux.", wa_groupPick: "Choisissez qui ajouter", wa_membersCount: "{count} membres", wa_unknownMember: "Chauffeur", wa_viewMembers: "Voir les membres",
   nav_home: "Accueil", nav_community: "Communauté", nav_routes: "Itinéraires", nav_messages: "Messages", nav_profile: "Profil",
@@ -755,6 +766,7 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    sv_noFriendsYet: "Noch keine Freunde — verbinde dich mit Fahrern in der Community", sv_switchToFriends: "Freunde anzeigen", sv_switchToMe: "Meine Route anzeigen",
     sv_modeMe: "Ich", sv_modeFriends: "Freunde", sv_myPath: "Meine Route", sv_friendsOn: "{count} Freunde teilen", sv_noPathDay: "An diesem Tag wurde keine Route aufgezeichnet", sv_noFriends: "Keine Kontakte teilen ihren Standort", sv_snapped: "folgt den Straßen", sv_notSnapped: "gerade Linie zwischen den aufgezeichneten Punkten", sv_today: "Heute", sv_pickDay: "Tag wählen", sv_loadingPath: "Route wird geladen…",
     fb_createReel: "Reel erstellen", fb_createReelSub: "Teile ein kurzes Video aus deiner Schicht", fb_reelCaption: "Sag etwas dazu (optional)", fb_reelLimits: "Bis zu 60 Sekunden, 30 MB", fb_reelPickVideo: "Video auswählen", fb_reelTooBig: "Dieses Video ist über 30 MB groß. Wähle einen kürzeren Clip.", fb_reelTooLong: "Dieses Video ist länger als 60 Sekunden.", fb_shareReel: "Reel teilen", fb_trending: "Im Trend", pf_changePhoto: "Profilbild ändern", wa_andMore: "+{count} weitere", wa_groupCreate: "Gruppe erstellen", wa_groupName: "Gruppenname (optional)", wa_groupNoFriends: "Noch keine Kontakte", wa_groupNoFriendsBody: "Verbinde dich zuerst in der Community mit Fahrern, dann kannst du eine Gruppe mit ihnen starten.", wa_groupPick: "Wähle aus, wen du hinzufügst", wa_membersCount: "{count} Mitglieder", wa_unknownMember: "Fahrer", wa_viewMembers: "Mitglieder ansehen",
   nav_home: "Start", nav_community: "Community", nav_routes: "Routen", nav_messages: "Nachrichten", nav_profile: "Profil",
@@ -793,6 +805,7 @@ const de: Dict = {
 };
 
 const zh: Dict = {
+    sv_noFriendsYet: "还没有好友 — 去社区与司机建立联系", sv_switchToFriends: "显示好友", sv_switchToMe: "显示我的路线",
     sv_modeMe: "我", sv_modeFriends: "好友", sv_myPath: "我的路线", sv_friendsOn: "{count} 位好友正在共享", sv_noPathDay: "这一天没有记录路线", sv_noFriends: "没有联系人在共享位置", sv_snapped: "沿道路显示", sv_notSnapped: "记录点之间的直线", sv_today: "今天", sv_pickDay: "选择日期", sv_loadingPath: "正在加载你的路线…",
     fb_createReel: "创建快拍", fb_createReelSub: "分享你轮班中的短视频", fb_reelCaption: "说点什么（可选）", fb_reelLimits: "最长 60 秒，30 MB", fb_reelPickVideo: "选择视频", fb_reelTooBig: "该视频超过 30 MB，请选择更短的片段。", fb_reelTooLong: "该视频超过 60 秒。", fb_shareReel: "分享快拍", fb_trending: "热门", pf_changePhoto: "更换头像", wa_andMore: "+{count} 更多", wa_groupCreate: "创建群组", wa_groupName: "群组名称（可选）", wa_groupNoFriends: "还没有联系人", wa_groupNoFriendsBody: "先在社区中与司机建立联系，然后就可以和他们创建群组。", wa_groupPick: "选择要添加的人", wa_membersCount: "{count} 位成员", wa_unknownMember: "司机", wa_viewMembers: "查看成员",
   nav_home: "首页", nav_community: "社区", nav_routes: "路线", nav_messages: "消息", nav_profile: "我的",
@@ -831,6 +844,7 @@ const zh: Dict = {
 };
 
 const ja: Dict = {
+    sv_noFriendsYet: "友だちがまだいません — コミュニティでドライバーとつながりましょう", sv_switchToFriends: "友だちを表示", sv_switchToMe: "自分のルートを表示",
     sv_modeMe: "自分", sv_modeFriends: "友だち", sv_myPath: "自分のルート", sv_friendsOn: "{count}人の友だちが共有中", sv_noPathDay: "この日は記録されたルートがありません", sv_noFriends: "位置を共有しているつながりはありません", sv_snapped: "道路に沿って表示", sv_notSnapped: "記録した地点を結ぶ直線", sv_today: "今日", sv_pickDay: "日付を選ぶ", sv_loadingPath: "ルートを読み込み中…",
     fb_createReel: "リールを作成", fb_createReelSub: "シフト中の短い動画をシェア", fb_reelCaption: "ひとこと添える（任意）", fb_reelLimits: "最長60秒、30 MB", fb_reelPickVideo: "動画を選択", fb_reelTooBig: "この動画は30 MBを超えています。短いクリップを選んでください。", fb_reelTooLong: "この動画は60秒を超えています。", fb_shareReel: "リールをシェア", fb_trending: "トレンド", pf_changePhoto: "プロフィール写真を変更", wa_andMore: "他{count}人", wa_groupCreate: "グループを作成", wa_groupName: "グループ名（任意）", wa_groupNoFriends: "つながりがまだありません", wa_groupNoFriendsBody: "まずコミュニティでドライバーとつながると、その人たちとグループを作れます。", wa_groupPick: "追加する人を選択", wa_membersCount: "メンバー{count}人", wa_unknownMember: "ドライバー", wa_viewMembers: "メンバーを見る",
   nav_home: "ホーム", nav_community: "コミュニティ", nav_routes: "ルート", nav_messages: "メッセージ", nav_profile: "プロフィール",
@@ -869,6 +883,7 @@ const ja: Dict = {
 };
 
 const ko: Dict = {
+    sv_noFriendsYet: "아직 친구가 없습니다 — 커뮤니티에서 기사님들과 연결하세요", sv_switchToFriends: "친구 보기", sv_switchToMe: "내 경로 보기",
     sv_modeMe: "나", sv_modeFriends: "친구", sv_myPath: "내 경로", sv_friendsOn: "{count}명의 친구가 공유 중", sv_noPathDay: "이 날 기록된 경로가 없습니다", sv_noFriends: "위치를 공유하는 연결이 없습니다", sv_snapped: "도로를 따라 표시", sv_notSnapped: "기록된 지점을 잇는 직선", sv_today: "오늘", sv_pickDay: "날짜 선택", sv_loadingPath: "경로를 불러오는 중…",
     fb_createReel: "릴 만들기", fb_createReelSub: "근무 중 찍은 짧은 영상을 공유하세요", fb_reelCaption: "설명을 남겨보세요 (선택)", fb_reelLimits: "최대 60초, 30 MB", fb_reelPickVideo: "동영상 선택", fb_reelTooBig: "이 동영상은 30 MB를 넘습니다. 더 짧은 클립을 선택하세요.", fb_reelTooLong: "이 동영상은 60초보다 깁니다.", fb_shareReel: "릴 공유", fb_trending: "인기", pf_changePhoto: "프로필 사진 변경", wa_andMore: "외 {count}명", wa_groupCreate: "그룹 만들기", wa_groupName: "그룹 이름 (선택)", wa_groupNoFriends: "아직 연결된 사람이 없습니다", wa_groupNoFriendsBody: "먼저 커뮤니티에서 기사님들과 연결하면 함께 그룹을 만들 수 있습니다.", wa_groupPick: "추가할 사람 선택", wa_membersCount: "멤버 {count}명", wa_unknownMember: "기사", wa_viewMembers: "멤버 보기",
   nav_home: "홈", nav_community: "커뮤니티", nav_routes: "경로", nav_messages: "메시지", nav_profile: "프로필",
@@ -907,6 +922,7 @@ const ko: Dict = {
 };
 
 const ar: Dict = {
+    sv_noFriendsYet: "لا أصدقاء بعد — تواصل مع السائقين في المجتمع", sv_switchToFriends: "عرض الأصدقاء", sv_switchToMe: "عرض مساري",
     sv_modeMe: "أنا", sv_modeFriends: "الأصدقاء", sv_myPath: "مساري", sv_friendsOn: "{count} أصدقاء يشاركون", sv_noPathDay: "لا يوجد مسار مسجّل في هذا اليوم", sv_noFriends: "لا توجد اتصالات تشارك موقعها", sv_snapped: "يتبع الطرق", sv_notSnapped: "خط مستقيم بين النقاط المسجّلة", sv_today: "اليوم", sv_pickDay: "اختر يومًا", sv_loadingPath: "جارٍ تحميل مسارك…",
     fb_createReel: "إنشاء ريل", fb_createReelSub: "شارك مقطعًا قصيرًا من ورديتك", fb_reelCaption: "أضف تعليقًا (اختياري)", fb_reelLimits: "حتى 60 ثانية، 30 ميغابايت", fb_reelPickVideo: "اختر مقطعًا", fb_reelTooBig: "هذا المقطع يتجاوز 30 ميغابايت. اختر مقطعًا أقصر.", fb_reelTooLong: "هذا المقطع أطول من 60 ثانية.", fb_shareReel: "مشاركة الريل", fb_trending: "الرائج", pf_changePhoto: "تغيير صورة الملف الشخصي", wa_andMore: "+{count} آخرون", wa_groupCreate: "إنشاء مجموعة", wa_groupName: "اسم المجموعة (اختياري)", wa_groupNoFriends: "لا توجد اتصالات بعد", wa_groupNoFriendsBody: "تواصل أولًا مع السائقين في المجتمع، ثم يمكنك إنشاء مجموعة معهم.", wa_groupPick: "اختر من تضيف", wa_membersCount: "{count} عضوًا", wa_unknownMember: "سائق", wa_viewMembers: "عرض الأعضاء",
   nav_home: "الرئيسية", nav_community: "المجتمع", nav_routes: "المسارات", nav_messages: "الرسائل", nav_profile: "الملف",

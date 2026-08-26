@@ -5640,46 +5640,41 @@ body { font-weight: 400; }
   color: #0a5878;
 }
 
-/* ── map modes: Me / Friends ──────────────────────────────────────────
-   Both used to be drawn at once — your line under other people's pins.
-   The switch floats over the map because the map is the screen, and a bar
-   above it would cost height on a phone for the sake of two words.
-   Bottom-left, clear of the search bar in .sv-top and of the recording
-   controls on the right. */
+/* ── map modes: one switch, not two tabs ──────────────────────────────
+   A pair of tabs spends width telling you what you are already looking at.
+   With two modes the useful control names where tapping takes you: the
+   current mode, an arrow, then the other one. Floats over the map because
+   the map is the screen, and clear of the search bar and the recording
+   controls. */
 .sv-mapmode {
   position: absolute;
   left: 12px;
   bottom: 108px;
   z-index: 500;
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 999px;
-  background: var(--background, #fff);
-  border: 1px solid var(--border);
-  box-shadow: 0 2px 10px rgb(0 0 0 / 0.14);
-}
-.sv-mapmode button {
-  border: 0;
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   cursor: pointer;
   border-radius: 999px;
-  padding: 7px 15px;
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  background: var(--background, #fff);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.16);
   font: 600 13px/1 var(--font-display, inherit);
   color: var(--muted-foreground);
 }
-.sv-mapmode button.on {
-  background: var(--sv-orange, #fc5200);
-  color: #fff;
-}
-/* Focus must stay visible: this is the one control that changes what the
-   whole screen means. */
-.sv-mapmode button:focus-visible {
+/* The mode you are in reads as the label; the one you would switch to is
+   quieter, so the button says "here, and there" rather than shouting both. */
+.sv-mapmode .sv-mapmode-now { color: var(--sv-orange, #fc5200); }
+.sv-mapmode .sv-mapmode-next { color: var(--muted-foreground); opacity: .75; }
+.sv-mapmode svg { color: var(--muted-foreground); opacity: .6; flex: none; }
+.sv-mapmode:focus-visible {
   outline: 2px solid var(--sv-orange, #fc5200);
   outline-offset: 2px;
 }
+.sv-mapmode:active { transform: scale(.97); }
 
-/* One line naming what is on screen, sitting directly under the switch. */
+/* One line naming what is on screen, directly under the switch. */
 .sv-mapnote {
   position: absolute;
   left: 12px;
