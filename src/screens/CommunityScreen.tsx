@@ -141,15 +141,17 @@ export function CommunityScreen() {
      can be lost. */
   const composerRef = useRef<HTMLFormElement | null>(null);
   const jumpToComposer = () => {
-    const form = composerRef.current;
-    if (!form) return;
-    form.scrollIntoView({ behavior: "smooth", block: "start" });
-    // Focus after the scroll, not with it: focusing an off-screen field makes
-    // the browser jump to it instantly and cancels the smooth scroll.
+    setComposeOpen(true);
+    // After the sheet has mounted, not with it — there is nothing to focus yet
+    // on the tick the state changes.
     window.setTimeout(() => {
-      form.querySelector<HTMLElement>("textarea, input")?.focus();
-    }, 420);
+      composerRef.current?.querySelector<HTMLElement>("textarea, input")?.focus();
+    }, 60);
   };
+  /** The compose sheet. There is still exactly ONE composer — it moved into a
+   *  sheet rather than being duplicated, so a half-written post has only one
+   *  place it can live. */
+  const [composeOpen, setComposeOpen] = useState(false);
   // Full-size image is fetched only when a photo is tapped.
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
@@ -279,6 +281,7 @@ export function CommunityScreen() {
     // into a group directly — the user taps "Post" in Facebook themselves).
     if (shareFb && withTags) shareToFacebook(withTags);
     setPostBody("");
+    setComposeOpen(false);
     // The store holds the blobs now; the composer can let its preview go.
     setPhoto(undefined);
     setTagged([]);
@@ -371,7 +374,20 @@ export function CommunityScreen() {
               Twitter. Profiles are still one tap away from any post or from
               search. */}
 
-          {/* Composer */}
+          {/* The composer used to sit at the top of the timeline. A box asking
+              "What's happening?" above the feed, with a row of Photo / Tag /
+              Feeling buttons under it, is the Facebook shape — the reference
+              here is a timeline, which has no composer in it at all and a
+              compose button instead.
+
+              It is the same form, moved into a sheet, not a second one: two
+              composers would mean two places a half-written post can be lost,
+              which is why there was only ever one. */}
+          <Modal
+            open={composeOpen}
+            title={t("fb_compose")}
+            onClose={() => setComposeOpen(false)}
+          >
           <form className="fb-composer" onSubmit={submitPost} ref={composerRef}>
             <div className="fb-composer-row">
               <span className="fb-avatar">{initials(user?.fullName ?? "Driver")}</span>
@@ -433,6 +449,7 @@ export function CommunityScreen() {
               </>
             ) : null}
           </form>
+          </Modal>
 
           {/* Feed */}
           {!loaded && !posts.length ? (

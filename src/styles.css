@@ -7397,3 +7397,44 @@ body[data-band="profile"] {
 /* The 82% now lives on the stack, so the bubble fills it rather than
    taking a second percentage of an already-narrowed box. */
 .wa-stack .wa-bubble { max-width: 100%; }
+
+/* ── The Community tab labels were hanging off the top ────────────────
+   Measured: the tab cell runs 58→100 with its centre at 79, and the word
+   sat at 65 — pinned to the top edge, 14px high, with 29px of nothing
+   underneath it and the active underline floating 25px below the text it
+   is supposed to underline.
+
+   The button is a column of [icon, label] with justify-content left at
+   its default. That was right while the icon existed: icon on top, label
+   under it, both packed to the start. I hid the icon and the label kept
+   the position the icon had been holding for it — so the word ended up
+   jammed against the search bar above with a gap beneath.
+
+   Centred now, and the underline pulled up to sit just under the word. */
+.fb-tab {
+  justify-content: center;
+  gap: 0;
+}
+.fb-tab.active::after { bottom: 7px; }
+
+/* ── Name before handle ───────────────────────────────────────────────
+   Both were `flex: 0 1 auto`, so they shrank together and a long name got
+   clipped at the same time as its handle — "Ramesh Kad… @rameshkad…",
+   two truncations where one would do. The handle is the disposable half:
+   it is derived from the name, so it is the part a reader can lose. */
+/* A shrink factor only changes the PROPORTION of the overflow each item
+   absorbs, so a heavier factor on the handle still left the name losing a
+   slice — "Ramesh Kad…" survived it. The name does not shrink at all now;
+   the handle absorbs the whole overflow and truncates alone.
+
+   The cap is the guard: a name long enough to fill the row on its own is
+   still cut, rather than pushing the handle, the age and the menu off the
+   end. */
+.tw-post-head strong {
+  flex-shrink: 0;
+  max-width: 62%;
+}
+.tw-handle {
+  flex-shrink: 12;
+  min-width: 0;
+}
