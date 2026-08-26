@@ -7352,3 +7352,48 @@ body[data-band="profile"] {
   cursor: pointer;
 }
 .wa-attach-card button:hover { background: var(--border); color: var(--foreground); }
+
+/* ── The Community search row, off by two ─────────────────────────────
+   The bar padded 8px above and 6px below. The three things in the row —
+   logo, search field, message button — all sat on cy 31 inside a bar
+   whose own centre is 30, so the row was a pixel low, and the tighter
+   gap underneath left the field crowding the tabs below it rather than
+   sitting between them and the top edge.
+
+   Flipped: 6 above, 8 below. The row rises two pixels, the space opens
+   up under the field instead of over it, and the whole group now reads a
+   hair above centre, which is where a header row wants to sit — dead
+   centre reads low. */
+.fb-topbar { padding: 6px 12px 8px; }
+
+/* ── The thread was drifting toward the middle ────────────────────────
+   Measured: an incoming bubble sat 57px from the left edge while an
+   outgoing one sat 12px from the right. Both sides pulled inward, which
+   is what makes a thread look centred rather than aligned.
+
+   Mine. Every row used to carry a delete button on the driver's own
+   messages only; giving all of them a reply/react/delete group put a
+   42px block in front of the bubble on incoming rows, and a flex item in
+   flow takes its width whether or not you can see it.
+
+   The controls belong on the INNER side of the bubble — toward the
+   middle of the thread, away from the edge the message is anchored to —
+   which is where every chat app puts them. On an outgoing row that is
+   already where they land; on an incoming one they have to move after
+   the bubble. Both edges are 12px now. */
+.wa-row:not(.me) .wa-acts { order: 2; }
+
+/* The bubble, its reaction chips and the picker are one vertical stack.
+   The row is a horizontal flex container, so as plain siblings the chips
+   were laid out beside the bubble rather than beneath it. */
+.wa-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 82%;
+  min-width: 0;
+}
+.wa-row.me .wa-stack { align-items: flex-end; }
+/* The 82% now lives on the stack, so the bubble fills it rather than
+   taking a second percentage of an already-narrowed box. */
+.wa-stack .wa-bubble { max-width: 100%; }

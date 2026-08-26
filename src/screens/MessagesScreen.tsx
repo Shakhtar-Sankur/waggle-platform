@@ -614,6 +614,10 @@ export function MessagesScreen() {
                         </button>
                       ) : null}
                     </div>
+                    {/* Bubble, reaction chips and picker stack vertically; the
+                        row itself is horizontal, so without this wrapper the
+                        chips landed BESIDE the bubble instead of under it. */}
+                    <div className="wa-stack">
                     <div className={`wa-bubble ${isMe ? "me" : ""}`}>
                     {/* The quote is resolved from the live message list rather
                         than copied at send time, so an edit shows through and a
@@ -720,6 +724,7 @@ export function MessagesScreen() {
                         ))}
                       </div>
                     ) : null}
+                    </div>
                   </div>
                   </Fragment>
                 );
