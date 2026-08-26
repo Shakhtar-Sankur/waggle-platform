@@ -6110,3 +6110,42 @@ body[data-band] { background: #fbf7f4; }
 .sv-stats .sv-stat:nth-child(2) svg { color: #b45309; }
 .sv-stats .sv-stat:nth-child(3) { background: #fff1ea; border: 1px solid #ffdcc9; }
 .sv-stats .sv-stat:nth-child(3) svg { color: var(--primary-text); }
+
+/* ══ Type: a native scale, not a web one ══════════════════════════════
+   Measured before changing anything: line-height was 1.47 on the caption,
+   the card title, the stat number, the micro copy, the nav label, the
+   button and the band caption — one global rule applied to every size at
+   once, which is a web stylesheet's body default. Native type tightens as
+   it grows and loosens as it shrinks. Body and buttons were 16px, where
+   Material's spec is 14sp; and the stat numbers were 18px, smaller than
+   the card title above them, when they are the reason the screen exists.
+
+   Sizes only — no typeface change. Inter is defensible; the metrics were
+   not. */
+
+/* Headings tighten. */
+.page-shell h2 { line-height: 1.15; letter-spacing: -0.02em; }
+.page-shell h3,
+.section-heading h3 { font-size: 16px; line-height: 1.25; font-weight: 650; }
+
+/* Body settles at 15, buttons at 14.5 — Material's 14sp, allowing for Inter
+   running slightly small at the same nominal size. */
+.page-shell p,
+.page-shell li { font-size: 15px; line-height: 1.42; }
+.button { font-size: 14.5px; line-height: 1.2; letter-spacing: 0.01em; }
+
+/* Labels and captions: small, tight, and quiet. */
+.page-shell .micro-copy,
+p.micro-copy { font-size: 12px; line-height: 1.35; }
+.nav-item { font-size: 11px; line-height: 1.2; }
+.stat-grid small,
+.sv-stat small { font-size: 10.5px; line-height: 1.2; letter-spacing: .06em; }
+
+/* The numbers are the point. They were 18px under an 18px title. */
+.stat-grid strong,
+.stat-grid .stat-value,
+.sv-stat strong { font-size: 22px; line-height: 1.1; font-weight: 750; letter-spacing: -0.03em; }
+
+/* The one figure the whole shift is about. */
+.income-amount { line-height: 1.05; letter-spacing: -0.03em; }
+.goal-info strong { line-height: 1.1; letter-spacing: -0.02em; }
