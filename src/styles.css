@@ -6608,3 +6608,125 @@ html { background: var(--ground, #fbf7f4); }
   backdrop-filter: blur(6px);
   font-size: 10.5px;
 }
+
+/* ══ Community: cards, not slabs ══════════════════════════════════════
+   The feed was full-bleed white rectangles touching each other and both
+   screen edges — the shape of a social site from ten years ago, and the
+   one thing that most makes a feed look dated. Cards with an edge, a
+   radius and air between them read as objects you can act on. */
+.fb-body { padding: 12px 12px 0; }
+
+.fb-composer,
+.fb-post,
+.fb-card {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 6px 18px rgba(23, 26, 33, .045);
+  margin-bottom: 12px;
+  overflow: hidden;      /* so a photo corner cannot escape the radius */
+}
+
+/* A photo should fill the card's width and keep its corners. */
+.fb-post img { border-radius: 0; }
+
+/* Skeletons that shimmer instead of sitting there.
+   A static grey block is indistinguishable from a screen that has given up —
+   which on a slow connection is exactly when a driver is looking at one. */
+.fb-skeleton [class*="line"],
+.fb-skeleton .sk,
+.fb-skeleton-line,
+.fb-skeleton-avatar,
+.fb-skeleton-media {
+  background: linear-gradient(
+    100deg,
+    #eceef2 30%,
+    #f6f7f9 48%,
+    #eceef2 62%
+  );
+  background-size: 220% 100%;
+  animation: sk-sweep 1.35s ease-in-out infinite;
+}
+@keyframes sk-sweep {
+  from { background-position: 180% 0; }
+  to   { background-position: -60% 0; }
+}
+/* Somebody who has asked their phone not to animate should not be given a
+   moving gradient; a flat placeholder is the accessible answer. */
+@media (prefers-reduced-motion: reduce) {
+  .fb-skeleton [class*="line"],
+  .fb-skeleton .sk,
+  .fb-skeleton-line,
+  .fb-skeleton-avatar,
+  .fb-skeleton-media { animation: none; background: #eceef2; }
+}
+
+/* The tab block casts onto the feed, so the first card needs to clear it. */
+.fb-tabs + .fb-body { padding-top: 14px; }
+
+/* ══ System polish ════════════════════════════════════════════════════
+   Applied once, across every screen, rather than screen by screen. Three
+   things separate an app that feels considered from one that feels
+   assembled, and none of them is a colour. */
+
+/* 1. Touch feedback.
+   Nothing in the app responded to being pressed. On a phone that is the
+   only confirmation a tap registered — a driver over a pothole cannot tell
+   whether they hit the button or the gap beside it, and taps it twice. */
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+.nav-item,
+.wa-chat-row,
+.fb-post button {
+  transition: transform 90ms cubic-bezier(.2, .8, .2, 1),
+              opacity 120ms ease,
+              background-color 140ms ease;
+  -webkit-tap-highlight-color: transparent;   /* the grey flash is Android's, not ours */
+}
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active,
+.nav-item:active,
+.wa-chat-row:active { transform: scale(.972); }
+
+/* A large surface should not shrink like a small one — the whole card
+   moving reads as a glitch rather than a press. */
+.dashboard-card:active,
+.fb-post:active,
+.wa-chat-row:active { transform: scale(.994); }
+
+/* 2. Focus that is visible without being loud.
+   The default ring was inherited from the browser and looked accidental. */
+:where(button, a, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: inherit;
+}
+
+/* 3. Honour the system's motion setting.
+   Somebody who turned animation off did so for a reason — often motion
+   sickness, sometimes an old phone that cannot keep up. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars, where a scrollbar exists at all. The default light-grey slab
+   is the most obviously unstyled thing left on the desktop build. */
+* { scrollbar-width: thin; scrollbar-color: rgba(23, 26, 33, .22) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(23, 26, 33, .2);
+  border-radius: 999px;
+}
+*::-webkit-scrollbar-thumb:hover { background: rgba(23, 26, 33, .32); }
+
+/* Stop iOS zooming the page when a field is focused. Any input under 16px
+   triggers it, and the app never zooms back out. Sizes stay visually small
+   through the type scale; this is only the floor Safari checks. */
+@supports (-webkit-touch-callout: none) {
+  input, select, textarea { font-size: max(16px, 1em); }
+}
