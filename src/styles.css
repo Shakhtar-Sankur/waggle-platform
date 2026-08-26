@@ -5947,3 +5947,41 @@ body[data-band] { background: #fbf7f4; }
   padding: 16px;
   box-shadow: var(--shadow-card);
 }
+
+/* ── Profile: give the stack a rhythm ─────────────────────────────────
+   Measured on the live screen: the shell still carried its 18px top
+   padding, so a white strip sat above the band; and every block after the
+   first had margin-top:0, so eleven cards, buttons and link rows stacked
+   edge to edge with nothing between them. Cards touching each other is
+   what "web page" looks like — a native list has one consistent gap and
+   never varies it. */
+.profile-page.has-band {
+  padding-top: 0;   /* the band supplies its own, including the safe area */
+}
+
+/* One gap, everywhere, no exceptions.
+   The bottom margins have to go first: cards and buttons each carry their own,
+   so adding a top margin on top of them produced 12, 22, 16, 28, 26, 30, 18, 12
+   and 38px between consecutive blocks — a column with nine different gaps in it,
+   which is exactly what reads as unaligned even when every edge lines up. */
+.profile-page.has-band > * { margin-bottom: 0; }
+.profile-page.has-band > * + *:not(.screen-band) { margin-top: 12px; }
+
+/* Except the block that climbs onto the band, which keeps its overlap. */
+.profile-page.has-band > .screen-band + * { margin-top: -34px; }
+
+/* Full-width actions were the same width as the cards but a different
+   height each; give them a common one so the column has an edge. */
+.profile-page.has-band > .button { min-height: 48px; border-radius: 14px; }
+
+/* The foot of the page is the one place a larger gap earns itself: the legal
+   links and the byline are not part of the list of things you can do. */
+.profile-page.has-band > .legal-links { margin-top: 24px; }
+
+/* Delete Account is destructive and sat in the same visual weight as Log
+   Out, directly beneath it. Separate it and say what it is. */
+.profile-page.has-band > .button:last-child {
+  margin-top: 24px;
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 34%, transparent);
+}
