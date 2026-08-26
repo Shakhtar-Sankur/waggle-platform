@@ -6149,3 +6149,92 @@ p.micro-copy { font-size: 12px; line-height: 1.35; }
 /* The one figure the whole shift is about. */
 .income-amount { line-height: 1.05; letter-spacing: -0.03em; }
 .goal-info strong { line-height: 1.1; letter-spacing: -0.02em; }
+
+/* ══ Weight ═══════════════════════════════════════════════════════════
+   The complaint was "colourful and heavy like an app", three times, and
+   the colour pass only answered half of it. What was left is weight: white
+   cards, 1px borders and soft shadows floating on a light ground is the
+   visual language of a dashboard in a browser. Grocery and delivery apps
+   are heavy — filled colour blocks, deep elevation, big numbers, and very
+   little bare background showing through. */
+
+/* Overscroll shows the html element, which had no background at all — a
+   white flash at the top of a coloured band on every rubber-band pull. */
+html { background: var(--ground, #fbf7f4); }
+
+/* Cards stop being white rectangles with a hairline. */
+.home-native .dashboard-card,
+.profile-page.has-band > section:not(.screen-band),
+.profile-page.has-band > .settings-row {
+  border: 0;
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(120, 45, 12, .10), 0 2px 6px rgba(120, 45, 12, .06);
+}
+
+/* The journey card carries a tinted head, so the card has a top rather than
+   starting nowhere. */
+.home-native .journey-card {
+  padding-top: 0;
+  overflow: hidden;
+}
+.home-native .journey-card .section-heading {
+  background: linear-gradient(180deg, #fff3ec 0%, #fffaf7 100%);
+  margin: 0 -16px 14px;
+  padding: 14px 16px 12px;
+  border-bottom: 1px solid #ffe3d4;
+}
+
+/* Section icons become filled chips instead of bare strokes — the single
+   cheapest way to add colour that reads as deliberate rather than decorative. */
+.home-native .section-heading h3 svg,
+.home-native .goal-info h3 svg,
+.home-native .income-card .section-heading h3 svg,
+.profile-page .section-heading h3 svg {
+  color: #fff;
+  background: var(--primary-fill);
+  border-radius: 9px;
+  padding: 4px;
+  width: 26px;
+  height: 26px;
+  box-sizing: border-box;
+}
+
+/* Stat tiles: heavier, and the number carries its tile's colour. */
+.home-native .stat-grid > * {
+  border-width: 0;
+  border-radius: 16px;
+  padding: 14px 8px;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .04);
+}
+.home-native .stat-grid > *:nth-child(1) strong { color: #1d4ed8; }
+.home-native .stat-grid > *:nth-child(2) strong { color: #92400e; }
+
+/* The icon bubbles inside the tiles were white circles on a tinted tile,
+   which read as holes. Fill them with the tile's own ink. */
+.home-native .stat-grid > * span:first-child { background: transparent; box-shadow: none; }
+
+/* The primary action gets real presence. */
+.home-native .tracking-actions .button,
+.sv-sheet .button-primary {
+  min-height: 54px;
+  border-radius: 16px;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: .01em;
+  box-shadow: 0 10px 24px rgba(168, 47, 0, .34);
+}
+
+/* The goal card gets a solid tinted surface rather than a gradient to white. */
+.home-native .goal-card {
+  background: #fff4ee;
+  border: 0;
+}
+
+/* Bottom nav: solid, not translucent. A blurred bar over a coloured app is a
+   web affectation; the apps this is measured against use an opaque bar. */
+.bottom-nav {
+  background: #ffffff;
+  backdrop-filter: none;
+  border-top: 1px solid #f0e2d9;
+  box-shadow: 0 -8px 26px rgba(120, 45, 12, .10);
+}
