@@ -36,6 +36,7 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+    wa_today: "Today", wa_yesterday: "Yesterday", wa_privacyNote: "Messages are stored on Gigzen's servers and only people in this chat can read them. They are not end-to-end encrypted.",
     wa_filterAll: "All", wa_filterUnread: "Unread", wa_filterGroups: "Groups",
     sv_steps: "Steps", sv_start: "Start", sv_pin: "Pin",
     sv_fastest: "fastest", sv_shortest: "shortest", sv_yourAvg: "you avg {kmh} km/h here",
@@ -381,6 +382,7 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+    wa_today: "Ngayon", wa_yesterday: "Kahapon", wa_privacyNote: "Nakaimbak ang mga mensahe sa server ng Gigzen at ang nasa chat lang ang makakabasa. Hindi ito end-to-end encrypted.",
     wa_filterAll: "Lahat", wa_filterUnread: "Hindi pa nabasa", wa_filterGroups: "Mga Grupo",
     sv_steps: "Hakbang", sv_start: "Simulan", sv_pin: "I-pin",
     sv_fastest: "pinakamabilis", sv_shortest: "pinakamaikli", sv_yourAvg: "avg mo {kmh} km/h dito",
@@ -425,6 +427,7 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+    wa_today: "Hoy", wa_yesterday: "Ayer", wa_privacyNote: "Los mensajes se guardan en los servidores de Gigzen y solo quienes están en este chat pueden leerlos. No tienen cifrado de extremo a extremo.",
     wa_filterAll: "Todos", wa_filterUnread: "No leídos", wa_filterGroups: "Grupos",
     sv_steps: "Pasos", sv_start: "Iniciar", sv_pin: "Fijar",
     sv_fastest: "más rápida", sv_shortest: "más corta", sv_yourAvg: "tu promedio {kmh} km/h aquí",
@@ -469,6 +472,7 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+    wa_today: "आज", wa_yesterday: "कल", wa_privacyNote: "संदेश Gigzen के सर्वर पर रखे जाते हैं और केवल इस चैट के लोग ही पढ़ सकते हैं। ये एंड-टू-एंड एन्क्रिप्टेड नहीं हैं।",
     wa_filterAll: "सभी", wa_filterUnread: "अपठित", wa_filterGroups: "ग्रुप",
     sv_steps: "चरण", sv_start: "शुरू", sv_pin: "पिन",
     sv_fastest: "सबसे तेज़", sv_shortest: "सबसे छोटा", sv_yourAvg: "यहाँ आपका औसत {kmh} किमी/घं",
@@ -513,6 +517,7 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+    wa_today: "আজ", wa_yesterday: "গতকাল", wa_privacyNote: "বার্তা Gigzen-এর সার্ভারে থাকে এবং শুধু এই চ্যাটের লোকেরাই পড়তে পারেন। এগুলি এন্ড-টু-এন্ড এনক্রিপ্টেড নয়।",
     wa_filterAll: "সব", wa_filterUnread: "অপঠিত", wa_filterGroups: "গ্রুপ",
     sv_steps: "ধাপ", sv_start: "শুরু", sv_pin: "পিন",
     sv_fastest: "দ্রুততম", sv_shortest: "সংক্ষিপ্ততম", sv_yourAvg: "এখানে আপনার গড় {kmh} কিমি/ঘ",
@@ -557,6 +562,7 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+    wa_today: "Hari ini", wa_yesterday: "Kemarin", wa_privacyNote: "Pesan disimpan di server Gigzen dan hanya orang dalam obrolan ini yang bisa membacanya. Pesan tidak terenkripsi ujung ke ujung.",
     wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Grup",
     sv_steps: "Langkah", sv_start: "Mulai", sv_pin: "Sematkan",
     sv_fastest: "tercepat", sv_shortest: "terpendek", sv_yourAvg: "rata-rata Anda {kmh} km/j di sini",
@@ -601,6 +607,7 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+    wa_today: "Hari ini", wa_yesterday: "Semalam", wa_privacyNote: "Mesej disimpan di pelayan Gigzen dan hanya orang dalam sembang ini boleh membacanya. Ia tidak disulitkan hujung ke hujung.",
     wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Kumpulan",
     sv_steps: "Langkah", sv_start: "Mula", sv_pin: "Semat",
     sv_fastest: "terpantas", sv_shortest: "terpendek", sv_yourAvg: "purata anda {kmh} km/j di sini",
@@ -645,6 +652,7 @@ const ms: Dict = {
 };
 
 const th: Dict = {
+    wa_today: "วันนี้", wa_yesterday: "เมื่อวาน", wa_privacyNote: "ข้อความถูกเก็บบนเซิร์ฟเวอร์ของ Gigzen และมีเพียงคนในแชทนี้ที่อ่านได้ ข้อความไม่ได้เข้ารหัสแบบต้นทางถึงปลายทาง",
     wa_filterAll: "ทั้งหมด", wa_filterUnread: "ยังไม่อ่าน", wa_filterGroups: "กลุ่ม",
     sv_steps: "ขั้นตอน", sv_start: "เริ่ม", sv_pin: "ปักหมุด",
     sv_fastest: "เร็วที่สุด", sv_shortest: "สั้นที่สุด", sv_yourAvg: "เฉลี่ยของคุณ {kmh} กม./ชม. ที่นี่",
@@ -689,6 +697,7 @@ const th: Dict = {
 };
 
 const vi: Dict = {
+    wa_today: "Hôm nay", wa_yesterday: "Hôm qua", wa_privacyNote: "Tin nhắn được lưu trên máy chủ Gigzen và chỉ người trong cuộc trò chuyện này đọc được. Chúng không được mã hóa đầu cuối.",
     wa_filterAll: "Tất cả", wa_filterUnread: "Chưa đọc", wa_filterGroups: "Nhóm",
     sv_steps: "Các bước", sv_start: "Bắt đầu", sv_pin: "Ghim",
     sv_fastest: "nhanh nhất", sv_shortest: "ngắn nhất", sv_yourAvg: "bạn TB {kmh} km/h ở đây",
@@ -733,6 +742,7 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+    wa_today: "Hoje", wa_yesterday: "Ontem", wa_privacyNote: "As mensagens ficam nos servidores da Gigzen e só quem está nesta conversa pode lê-las. Não têm criptografia de ponta a ponta.",
     wa_filterAll: "Todas", wa_filterUnread: "Não lidas", wa_filterGroups: "Grupos",
     sv_steps: "Etapas", sv_start: "Iniciar", sv_pin: "Fixar",
     sv_fastest: "mais rápida", sv_shortest: "mais curta", sv_yourAvg: "sua média {kmh} km/h aqui",
@@ -777,6 +787,7 @@ const pt: Dict = {
 };
 
 const fr: Dict = {
+    wa_today: "Aujourd'hui", wa_yesterday: "Hier", wa_privacyNote: "Les messages sont stockés sur les serveurs de Gigzen et seules les personnes de cette conversation peuvent les lire. Ils ne sont pas chiffrés de bout en bout.",
     wa_filterAll: "Tous", wa_filterUnread: "Non lus", wa_filterGroups: "Groupes",
     sv_steps: "Étapes", sv_start: "Démarrer", sv_pin: "Épingler",
     sv_fastest: "plus rapide", sv_shortest: "plus courte", sv_yourAvg: "votre moyenne {kmh} km/h ici",
@@ -821,6 +832,7 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    wa_today: "Heute", wa_yesterday: "Gestern", wa_privacyNote: "Nachrichten liegen auf Gigzens Servern und nur Personen in diesem Chat können sie lesen. Sie sind nicht Ende-zu-Ende-verschlüsselt.",
     wa_filterAll: "Alle", wa_filterUnread: "Ungelesen", wa_filterGroups: "Gruppen",
     sv_steps: "Schritte", sv_start: "Start", sv_pin: "Anheften",
     sv_fastest: "schnellste", sv_shortest: "kürzeste", sv_yourAvg: "dein Schnitt {kmh} km/h hier",
@@ -865,6 +877,7 @@ const de: Dict = {
 };
 
 const zh: Dict = {
+    wa_today: "今天", wa_yesterday: "昨天", wa_privacyNote: "消息存储在 Gigzen 的服务器上，只有此聊天中的人可以阅读。消息未进行端到端加密。",
     wa_filterAll: "全部", wa_filterUnread: "未读", wa_filterGroups: "群组",
     sv_steps: "路线步骤", sv_start: "开始", sv_pin: "固定",
     sv_fastest: "最快", sv_shortest: "最短", sv_yourAvg: "你在此均速 {kmh} 公里/小时",
@@ -909,6 +922,7 @@ const zh: Dict = {
 };
 
 const ja: Dict = {
+    wa_today: "今日", wa_yesterday: "昨日", wa_privacyNote: "メッセージは Gigzen のサーバーに保存され、このチャットの参加者だけが読めます。エンドツーエンド暗号化はされていません。",
     wa_filterAll: "すべて", wa_filterUnread: "未読", wa_filterGroups: "グループ",
     sv_steps: "ルート", sv_start: "開始", sv_pin: "ピン",
     sv_fastest: "最速", sv_shortest: "最短", sv_yourAvg: "ここでの平均 {kmh} km/h",
@@ -953,6 +967,7 @@ const ja: Dict = {
 };
 
 const ko: Dict = {
+    wa_today: "오늘", wa_yesterday: "어제", wa_privacyNote: "메시지는 Gigzen 서버에 저장되며 이 대화에 있는 사람만 읽을 수 있습니다. 종단 간 암호화는 되어 있지 않습니다.",
     wa_filterAll: "전체", wa_filterUnread: "안 읽음", wa_filterGroups: "그룹",
     sv_steps: "경로", sv_start: "시작", sv_pin: "고정",
     sv_fastest: "가장 빠름", sv_shortest: "가장 짧음", sv_yourAvg: "이곳 평균 {kmh} km/h",
@@ -997,6 +1012,7 @@ const ko: Dict = {
 };
 
 const ar: Dict = {
+    wa_today: "اليوم", wa_yesterday: "أمس", wa_privacyNote: "تُخزَّن الرسائل على خوادم Gigzen ولا يمكن قراءتها إلا لمن في هذه المحادثة. وهي ليست مشفّرة طرفًا إلى طرف.",
     wa_filterAll: "الكل", wa_filterUnread: "غير المقروءة", wa_filterGroups: "المجموعات",
     sv_steps: "الخطوات", sv_start: "ابدأ", sv_pin: "تثبيت",
     sv_fastest: "الأسرع", sv_shortest: "الأقصر", sv_yourAvg: "متوسطك {kmh} كم/س هنا",

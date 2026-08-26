@@ -1,5 +1,5 @@
 import { ArrowLeft, ImagePlus, LogOut, MessageCircle, MoreVertical, Search, Send, Trash2, UsersRound } from "lucide-react";
-import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
@@ -15,6 +15,18 @@ import type { ChatThread, Worker } from "../types";
 import { initials, timeAgo } from "../utils/format";
 
 type Translator = ReturnType<typeof useT>;
+
+/** Today / Yesterday / the date, for the divider between days. */
+function dayLabel(ts: number, t: Translator): string {
+  const d = new Date(ts);
+  const today = new Date();
+  const yest = new Date(today);
+  yest.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return t("wa_today");
+  if (d.toDateString() === yest.toDateString()) return t("wa_yesterday");
+  // Anything older gets a real date, in the reader's own locale.
+  return d.toLocaleDateString([], { day: "numeric", month: "short", year: "numeric" });
+}
 
 // WhatsApp-style presence line for a 1-on-1 chat.
 function presenceLabel(worker: Worker | undefined, t: Translator): string {
@@ -119,7 +131,12 @@ export function MessagesScreen() {
   const displayTitle = (thread: ChatThread): string =>
     thread.isGroup ? thread.title : otherWorkerOf(thread)?.name ?? thread.title;
 
-  const unreadTotal = threads.reduce((n, thread) => n + (thread.unreadCount || 0), 0);
+  /* Chats with something unread, not messages.
+     This summed unreadCount across threads, so two chats holding two and five
+     messages showed "7" on a chip that then filtered the list down to two rows.
+     The number on a filter has to count the same things the filter selects. The
+     per-row badges still count messages, which is the right unit there. */
+  const unreadTotal = threads.filter((thread) => (thread.unreadCount || 0) > 0).length;
 
   const chatList = [...threads]
     .filter((thread) => displayTitle(thread).toLowerCase().includes(query.toLowerCase()))
@@ -426,18 +443,36 @@ export function MessagesScreen() {
           ) : null}
 
           <div className="wa-messages" ref={messagesRef}>
+            {/* WhatsApp opens a thread with an end-to-end encryption notice.
+                Buzz is not end-to-end encrypted — messages sit in Postgres where
+                row-level security decides who may read them, which is a real
+                protection and a different one. Writing "encrypted" here because
+                it looks reassuring would be the worst kind of lie to tell in a
+                chat app, so this says what is actually true. */}
+            <p className="wa-privacy-note">{t("wa_privacyNote")}</p>
             {openMessages.length ? (
               openMessages.map((message, index) => {
                 const isMe = message.senderId === "me" || message.senderId === user?.id;
                 const sender = workerById[message.senderId]?.name ?? "Driver";
                 const showSender =
                   openThread.isGroup && !isMe && openMessages[index - 1]?.senderId !== message.senderId;
+                // A divider whenever the day changes. Without one, a thread read
+                // the next morning shows yesterday's messages as though they had
+                // just arrived.
+                const prev = openMessages[index - 1];
+                const newDay =
+                  !prev ||
+                  new Date(prev.createdAt).toDateString() !== new Date(message.createdAt).toDateString();
                 return (
                   /* The delete control is a SIBLING of the bubble, not a child.
                      It used to be absolutely positioned inside it, so on touch —
                      where it is always visible, there being no hover — it sat on
                      top of the driver's own words. */
-                  <div className={`wa-row ${isMe ? "me" : ""}`} key={message.id}>
+                  <Fragment key={message.id}>
+                  {newDay ? (
+                    <div className="wa-daysep"><span>{dayLabel(message.createdAt, t)}</span></div>
+                  ) : null}
+                  <div className={`wa-row ${isMe ? "me" : ""}`}>
                     {/* Only your own messages can be removed (RLS enforces it too). */}
                     {isMe ? (
                       <button
@@ -474,6 +509,7 @@ export function MessagesScreen() {
                     </small>
                     </div>
                   </div>
+                  </Fragment>
                 );
               })
             ) : (
