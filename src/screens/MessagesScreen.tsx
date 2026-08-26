@@ -38,7 +38,7 @@ function presenceLabel(worker: Worker | undefined, t: Translator): string {
 }
 
 export function MessagesScreen() {
-  useBrandBand();
+  useBrandBand("messages");
   const location = useLocation();
   const t = useT();
   const user = useAuthStore((state) => state.user);

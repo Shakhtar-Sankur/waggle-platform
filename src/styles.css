@@ -6808,3 +6808,194 @@ button:not(:disabled):active,
   margin-inline-start: 5px;
   transform: none;
 }
+
+/* ══ Community header, light ══════════════════════════════════════════
+   The reference is X, whose header is white with dark text and a grey
+   search pill — and I kept putting the brand band here instead, three
+   times, because the band is what makes the other screens feel like an
+   app. On a timeline it is the wrong instinct: the feed is white, so a
+   block of orange above it is a lid, and every post below it competes
+   with it for attention.
+
+   The band stays on Home, Profile and Messages, where the screen IS the
+   chrome. Here the content is the screen. */
+.fb-topbar {
+  background: var(--card);
+  border-bottom: 0;
+}
+.fb-topbar .wordmark,
+.fb-topbar .wordmark *,
+.fb-topbar > svg { color: var(--primary); }
+
+/* The search field: a quiet grey pill, the way every timeline does it. */
+.fb-topbar .fb-search {
+  background: var(--muted);
+  border: 1px solid transparent;
+}
+.fb-topbar .fb-search svg { color: var(--muted-foreground); }
+.fb-topbar .fb-search input { color: var(--foreground); background: transparent; }
+.fb-topbar .fb-search input::placeholder { color: var(--muted-foreground); }
+.fb-topbar .fb-search:focus-within {
+  background: var(--card);
+  border-color: var(--primary);
+}
+.fb-topbar .fb-round {
+  background: var(--muted);
+  border: 0;
+  color: var(--foreground);
+}
+
+/* Tabs continue the white, with a hairline under the row and the brand
+   colour marking the active one — the only colour up here, so it reads as
+   a pointer rather than as decoration. */
+.fb-tabs {
+  background: var(--card);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+}
+.fb-tab { color: var(--muted-foreground); }
+.fb-tab.active { color: var(--foreground); }
+.fb-tab.active::after { background: var(--primary); }
+
+/* The page ground goes back to the neutral one, so white posts sit on
+   something rather than on warmth borrowed from the band. */
+.fb-page { background: var(--muted); }
+
+/* ══ One colour per destination ═══════════════════════════════════════
+   Five screens all opened on the same orange. The result was that you could
+   not tell, at a glance, whether a tap had landed — every screen was the
+   same screen with different words on it. Colour is the fastest signal a UI
+   has: it arrives before you have read anything, which matters here, because
+   this app is read at traffic lights.
+
+   So each tab owns a hue, and moving between them is legible in peripheral
+   vision. The hues are spread around the wheel rather than picked to taste
+   (orange ~20°, blue ~225°, violet ~265°, magenta ~310°, teal ~175°) so no
+   two adjacent tabs are a near-match.
+
+   Every one of these is checked against white text, because the band carries
+   white type and an untested "dark enough" colour is how you ship 3:1. The
+   lightest of the five is teal at 5.4:1; the rest are 6.4:1 and up. Teal-600
+   was the first choice and measured 3.7:1 — it is not here.
+
+   Colour is never the only cue. The tab bar still marks the active item with
+   a filled pill, a bolder label and a heavier icon, because for the ~8% of
+   men with red-green colour blindness a scheme that speaks only in hue says
+   nothing at all. */
+body[data-band="home"]      { --band-a: #b8340a; --band-b: #8f2800; --band-flat: #a82f00; }
+body[data-band="community"] { --band-a: #6d28d9; --band-b: #4c1d95; --band-flat: #5b21b6; }
+body[data-band="routes"]    { --band-a: #0f766e; --band-b: #134e4a; --band-flat: #115e59; }
+body[data-band="messages"]  { --band-a: #1d4ed8; --band-b: #1e3a8a; --band-flat: #1e40af; }
+body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat: #86198f; }
+
+/* The band itself now reads its colour from the section instead of carrying
+   a hardcoded orange. The white wash at the top-right stays: it is what keeps
+   a flat fill from looking like a swatch. */
+.screen-band,
+.home-band {
+  background:
+    radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
+    linear-gradient(160deg, var(--band-a, #b8340a) 0%, var(--band-b, #8f2800) 100%);
+}
+
+/* And the collapsed header follows it, so scrolling does not change the
+   colour of the bar halfway down the screen. */
+body[data-band] .app-header.is-collapsed { background: var(--band-flat, #a82f00); }
+
+/* The warm ground was mixed for orange. Each section gets a ground tinted
+   toward its own hue — barely-there (these are ~2% saturation), but enough
+   that white cards sit ON something instead of dissolving into it. */
+body[data-band="home"]      { background: #fbf7f4; }
+body[data-band="community"] { background: #f9f7fd; }
+body[data-band="routes"]    { background: #f4faf8; }
+body[data-band="messages"]  { background: #f5f7fd; }
+body[data-band="profile"]   { background: #fdf6fc; }
+
+/* ── Community takes the violet ───────────────────────────────────────
+   Undoing the light header I added a moment ago: the ask was a different
+   colour per section, not a white bar. The tabs and search sit on violet the
+   way the other screens sit on their own colour. */
+.fb-topbar {
+  background: linear-gradient(160deg, var(--band-a) 0%, var(--band-b) 100%);
+  border-bottom: 0;
+}
+.fb-topbar .wordmark,
+.fb-topbar .wordmark *,
+.fb-topbar > svg { color: #fff; }
+.fb-topbar .fb-search {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .22);
+}
+.fb-topbar .fb-search svg { color: rgba(255, 255, 255, .78); }
+.fb-topbar .fb-search input { color: #fff; background: transparent; }
+.fb-topbar .fb-search input::placeholder { color: rgba(255, 255, 255, .72); }
+.fb-topbar .fb-search:focus-within {
+  background: rgba(255, 255, 255, .24);
+  border-color: rgba(255, 255, 255, .55);
+}
+.fb-topbar .fb-round {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .22);
+  color: #fff;
+}
+.fb-tabs {
+  background: var(--band-b);
+  border-bottom: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.fb-tab { color: rgba(255, 255, 255, .68); }
+.fb-tab.active { color: #fff; }
+/* On violet the brand orange would be a second, unrelated colour up here.
+   White marks the active tab, and the row underneath it is what carries hue. */
+.fb-tab.active::after { background: #fff; }
+.fb-page { background: transparent; }
+
+/* The bottom nav's active pill takes the section colour too, so the tab you
+   are on and the screen you are looking at agree. */
+.nav-item.active::before { background: color-mix(in srgb, var(--band-flat, #ff4d17) 14%, transparent); }
+.nav-item.active { color: var(--band-flat, var(--primary-text)); }
+
+/* ── The accents follow the section too ───────────────────────────────
+   Colouring only the band left every screen with orange buttons under a
+   teal or violet header — the header looked themed and the content looked
+   like it belonged to a different app. Chasing each accent rule one by one
+   is how you miss four of them (`.sv-nav` had its own hardcoded gradient,
+   which is exactly how Routes stayed orange after the band went teal).
+
+   So the accent SCALE is remapped per section instead, and every existing
+   `var(--primary-*)` follows without being touched. Each set keeps the same
+   relationships as the orange original — `soft` a near-white tint, `text`
+   and `fill` dark enough to carry white or to sit on the tint — so contrast
+   travels with it. The four `text` values measure 5.5:1 (teal, the weakest),
+   6.4:1, 6.7:1 and 9:1 on white.
+
+   Home keeps the original orange values exactly: it is the brand, and the
+   screen you land on should be the one that looks like the logo. */
+body[data-band="community"] {
+  --primary: #7c3aed; --primary-strong: #6d28d9; --primary-text: #5b21b6;
+  --primary-soft: #f3eeff; --primary-fill: #5b21b6; --sv-orange: #6d28d9;
+}
+body[data-band="routes"] {
+  --primary: #0d9488; --primary-strong: #0f766e; --primary-text: #0f766e;
+  --primary-soft: #e6f5f2; --primary-fill: #115e59; --sv-orange: #0f766e;
+}
+body[data-band="messages"] {
+  --primary: #2563eb; --primary-strong: #1d4ed8; --primary-text: #1d4ed8;
+  --primary-soft: #eaf0ff; --primary-fill: #1e40af; --sv-orange: #1d4ed8;
+}
+body[data-band="profile"] {
+  --primary: #c026d3; --primary-strong: #a21caf; --primary-text: #a21caf;
+  --primary-soft: #fbeafc; --primary-fill: #86198f; --sv-orange: #a21caf;
+}
+
+/* Routes' own top bar carried the orange as a literal gradient rather than
+   reading a token, so it survived the retint. Pointed at the section. */
+.sv-nav {
+  background-image: linear-gradient(160deg, var(--band-a, #b8340a) 0%, var(--band-b, #8f2800) 100%);
+}
+
+/* The compose button is chrome, not content: it belongs to the screen it
+   floats over. */
+.fb-fab { background: var(--band-flat, var(--primary)); }

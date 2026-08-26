@@ -51,7 +51,7 @@ export function HomeScreen() {
     if (!activeApp && consented) setShowPicker(true);
   }, [activeApp, consented]);
 
-  useBrandBand();
+  useBrandBand("home");
 
   useEffect(() => {
     if (!showSplash) return;

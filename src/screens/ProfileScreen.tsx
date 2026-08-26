@@ -23,7 +23,7 @@ import { CURRENCIES, currency, initials, km } from "../utils/format";
 type EarningsTab = "day" | "week" | "month";
 
 export function ProfileScreen() {
-  useBrandBand();
+  useBrandBand("profile");
   const navigate = useNavigate();
   const t = useT();
   const [searchParams] = useSearchParams();

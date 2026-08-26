@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ChallengeIcon } from "../components/ChallengeIcon";
+import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
@@ -61,6 +62,7 @@ function handleOf(name: string): string {
 const FEELINGS = ["😊 feeling happy", "🚗 on the road", "☕ taking a break", "💪 grinding", "🎯 hitting goals"];
 
 export function CommunityScreen() {
+  useBrandBand("community");
   const navigate = useNavigate();
 
   const t = useT();

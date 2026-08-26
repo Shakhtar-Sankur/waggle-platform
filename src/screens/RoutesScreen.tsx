@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import L from "leaflet";
 import { ChallengeIcon } from "../components/ChallengeIcon";
+import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
@@ -127,6 +128,7 @@ function firstNameOf(name: string): string {
 }
 
 export function RoutesScreen() {
+  useBrandBand("routes");
   const t = useT();
   const currentLocation = useLocationStore((state) => state.currentLocation);
   const route = useLocationStore((state) => state.route);
