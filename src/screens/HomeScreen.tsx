@@ -50,6 +50,31 @@ export function HomeScreen() {
     if (!activeApp && consented) setShowPicker(true);
   }, [activeApp, consented]);
 
+  /* Tell the shared header it is sitting on the brand band.
+     The header lives outside this screen, so it cannot know. A marker on <body>
+     rather than `:has()` because this runs in an Android WebView, and a layout
+     that silently loses its contrast on an older device is not worth the
+     elegance. Cleared on unmount, so every other screen keeps its own header. */
+  useEffect(() => {
+    document.body.dataset.screen = "home";
+    // How far the band has to climb to sit behind the header. Measured rather
+    // than hardcoded: the header carries the safe-area inset, so its height is
+    // 89px on this viewport and taller on a phone with a notch. A guess would
+    // leave a coloured seam on exactly the devices nobody tests on.
+    const measure = () => {
+      const header = document.querySelector(".app-header");
+      const h = header ? Math.round(header.getBoundingClientRect().height) : 88;
+      document.documentElement.style.setProperty("--home-band-pull", `${h}px`);
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      delete document.body.dataset.screen;
+      document.documentElement.style.removeProperty("--home-band-pull");
+    };
+  }, []);
+
   useEffect(() => {
     if (!showSplash) return;
     const timer = window.setTimeout(() => {
@@ -60,7 +85,7 @@ export function HomeScreen() {
   }, [showSplash]);
 
   return (
-    <main className="page-shell" data-currency={currencyCode}>
+    <main className="page-shell home-native" data-currency={currencyCode}>
       {showSplash ? (
         <div className="splash-screen">
           <div className="splash-avatar">{initials(user?.fullName ?? APP_NAME)}</div>
@@ -70,22 +95,32 @@ export function HomeScreen() {
         </div>
       ) : null}
 
-      <section className="home-hero">
-        <div className="home-hero-text">
-          <p>{t(greetKey)}</p>
-          <h2>{t("home_hello")}, {user?.fullName ?? "Driver"}</h2>
+      {/* The brand band.
+          The screen used to open on white cards over near-white background with
+          the wordmark floating on nothing — which is what makes an app read as a
+          web page rather than an app. Every delivery app a driver already has on
+          their phone opens on a block of brand colour with the first card pulled
+          up onto it, and the eye reads that as chrome, not content. The header
+          sits over this band and turns white against it; see
+          body[data-screen="home"] in the stylesheet. */}
+      <section className="home-band">
+        <div className="home-hero">
+          <div className="home-hero-text">
+            <p>{t(greetKey)}</p>
+            <h2>{t("home_hello")}, {user?.fullName ?? "Driver"}</h2>
+          </div>
+          <div className="home-hero-avatar">{initials(user?.fullName ?? "Driver")}</div>
         </div>
-        <div className="home-hero-avatar">{initials(user?.fullName ?? "Driver")}</div>
-      </section>
 
-      <button className="working-app-card glass-card" onClick={() => setShowPicker(true)}>
-        <span>{t("home_workingApp")}</span>
-        {app ? (
-          <strong><WorkAppMark app={app} size={22} /> {app.name} <small>{t("common_change")}</small></strong>
-        ) : (
-          <strong>{t("home_selectApp")} →</strong>
-        )}
-      </button>
+        <button className="working-app-card" onClick={() => setShowPicker(true)}>
+          <span>{t("home_workingApp")}</span>
+          {app ? (
+            <strong><WorkAppMark app={app} size={20} /> {app.name} <small>{t("common_change")}</small></strong>
+          ) : (
+            <strong>{t("home_selectApp")} →</strong>
+          )}
+        </button>
+      </section>
 
       <section className="dashboard-card glass-card journey-card">
         <div className="section-heading">

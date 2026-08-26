@@ -5731,3 +5731,119 @@ body { font-weight: 400; }
    or the switch lands under the thumb that is not reaching for it. */
 [dir="rtl"] .sv-mapmode { left: auto; right: 12px; }
 [dir="rtl"] .sv-daypick { right: auto; left: 12px; }
+
+/* ══ Home, made to read as an app ═════════════════════════════════════
+   The screen opened on white cards over near-white background with the
+   wordmark floating on nothing. Nothing was broken; it simply looked like
+   a responsive web page, because that is what those choices are. The
+   delivery apps a driver already has open on a block of brand colour with
+   the first card pulled up onto it — chrome above, content below, and no
+   ambiguity about which is which. */
+
+.home-native {
+  padding-top: 0;
+  /* Tighter than the web rhythm. Native lists breathe less: the gap between
+     cards is a separator, not a margin. */
+  padding-bottom: 104px;
+}
+
+.home-band {
+  /* Full-bleed out of the shell's side padding, and up behind the sticky
+     header, which is transparent at rest. The pull is the header's measured
+     height, set by HomeScreen — hardcoding it leaves a coloured seam on any
+     phone whose safe-area inset differs from the machine it was written on. */
+  margin: calc(var(--home-band-pull, 88px) * -1) -16px 0;
+  padding: calc(var(--home-band-pull, 88px) + 14px) 16px 62px;
+  background:
+    radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
+    linear-gradient(160deg, #b8340a 0%, #a82f00 48%, #8f2800 100%);
+  border-radius: 0 0 26px 26px;
+  color: #fff;
+}
+
+.home-band .home-hero { padding: 0; }
+.home-band .home-hero p { color: rgba(255, 255, 255, .80); font-weight: 500; }
+.home-band .home-hero h2 { color: #fff; }
+
+/* The avatar was a filled orange circle. On orange it disappears. */
+.home-band .home-hero-avatar {
+  background: rgba(255, 255, 255, .18);
+  border: 1px solid rgba(255, 255, 255, .32);
+  color: #fff;
+  box-shadow: none;
+}
+
+/* The working-app row becomes a band control rather than a white card. */
+.home-band .working-app-card {
+  margin-top: 16px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, .14);
+  border: 1px solid rgba(255, 255, 255, .22);
+  box-shadow: none;
+  color: #fff;
+  cursor: pointer;
+}
+.home-band .working-app-card span {
+  color: rgba(255, 255, 255, .78);
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: .01em;
+  white-space: nowrap;   /* it wrapped to two lines, doubling the row to 73px */
+  flex: none;
+}
+.home-band .working-app-card strong {
+  display: inline-flex; align-items: center; gap: 8px; color: #fff;
+}
+.home-band .working-app-card small {
+  color: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(255, 255, 255, .34);
+  border-radius: 999px; padding: 3px 8px; font-weight: 600;
+  font-size: 11px; flex: none;
+}
+.home-band .working-app-card:active { transform: scale(.99); }
+
+/* The first card climbs onto the band. This single overlap is most of what
+   separates "app" from "page": content that begins inside the chrome. */
+.home-native > .dashboard-card:first-of-type,
+.home-native > .journey-card { margin-top: -44px; position: relative; z-index: 1; }
+
+/* Cards: less air, more edge. */
+.home-native .dashboard-card { margin-bottom: 12px; padding: 16px; }
+
+/* Stat tiles were three large boxes with one number each. Tighten them into
+   a row that reads at a glance, which is what a driver checking mid-shift
+   actually does. */
+.home-native .stat-grid { gap: 8px; }
+.home-native .stat-grid > * { padding: 12px 8px; border-radius: 14px; }
+
+/* The header, while it is over the band. */
+body[data-screen="home"] .app-header { background: transparent; border-bottom-color: transparent; box-shadow: none; }
+body[data-screen="home"] .app-header .wordmark,
+body[data-screen="home"] .app-header .wordmark * { color: #fff; fill: currentColor; }
+body[data-screen="home"] .app-header button { color: #fff; }
+/* Once the band has scrolled away, the header takes the brand colour rather
+   than turning white — a bar that changes colour mid-scroll reads as a bug. */
+body[data-screen="home"] .app-header.is-collapsed {
+  background: #a82f00;
+  border-bottom-color: rgba(0, 0, 0, .12);
+  box-shadow: 0 1px 12px rgba(0, 0, 0, .18);
+}
+
+/* Bottom nav: a real active state. A colour change alone is a link; native
+   nav items sit in a filled shape so the thumb knows where it is. */
+.nav-item.active::before {
+  content: "";
+  position: absolute;
+  inset: 4px 8px;
+  border-radius: 14px;
+  background: rgba(255, 77, 23, .13);
+}
+/* The pill is a backdrop, so the label and icon have to sit above it. */
+.nav-item.active > * { position: relative; z-index: 1; }
+.nav-item.active { color: var(--primary-text); font-weight: 700; }
