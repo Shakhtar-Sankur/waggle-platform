@@ -7517,3 +7517,23 @@ body[data-band="profile"] {
    goes white, and those rules are more specific than this one, so this
    only reaches a wordmark standing on a plain background. */
 .wordmark svg { color: #b23200; }
+
+/* ── The underline was a leftover fighting its replacement ────────────
+   The active tab's bar carried THREE horizontal constraints at once:
+   left:12px and right:12px from the rule that matches it to the label,
+   plus width:26px and translateX(-13px) from an older fixed-width
+   indicator built back when tabs were four equal columns and the bar had
+   to be centred by hand.
+
+   An absolutely positioned box cannot honour left, right and width
+   together — width wins and right is dropped — so the bar came out 26px
+   starting at left:12 and was then dragged 13px further left, landing at
+   -1 to 25 under a word running 12 to 50. Under the word, and to the
+   left of it.
+
+   The old sizing goes; left/right alone now make the bar exactly as wide
+   as the label, whatever the label says. */
+.fb-tab.active::after {
+  width: auto;
+  transform: none;
+}
