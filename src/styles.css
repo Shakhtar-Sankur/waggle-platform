@@ -6526,3 +6526,85 @@ html { background: var(--ground, #fbf7f4); }
 }
 .wa-voice.is-playing .wa-voice-wave i { opacity: .95; }
 .wa-voice small { font-variant-numeric: tabular-nums; opacity: .75; flex: none; }
+
+/* ══ Chat surface: quieter ground, softer bubbles ═════════════════════
+   Four things were dating this screen. The wallpaper was louder than the
+   messages on it — a 160px motif at .13 opacity in the brand orange, which
+   is a lot of pattern behind text somebody is trying to read on a bike.
+   Bubbles had square-ish corners and no tail, so they read as boxes rather
+   than speech. The privacy notice was a filled yellow panel competing with
+   the first real message. And a delete icon sat permanently beside every
+   bubble the driver had sent.
+
+   The pattern stays — it is Buzz's own and worth keeping — at a third of
+   the presence and a smaller repeat, so it reads as texture instead of
+   content. */
+.wa-messages {
+  background-color: #f7f3ef;
+  background-size: 116px 116px;
+  padding: 12px 12px 16px;
+  gap: 3px;
+}
+.wa-messages::before {
+  /* The motif is on a layer of its own so its weight can be tuned without
+     touching the tile itself. */
+  content: "";
+  position: absolute; inset: 0;
+  opacity: .38;
+  pointer-events: none;
+}
+
+/* Bubbles: bigger radius, a tail on the last of a run, and a shadow soft
+   enough to lift them off the pattern without announcing itself. */
+.wa-bubble {
+  border-radius: 16px 16px 16px 6px;
+  padding: 8px 11px 6px;
+  box-shadow: 0 1px 1px rgba(23, 26, 33, .07), 0 2px 8px rgba(23, 26, 33, .05);
+  max-width: 78%;
+}
+.wa-bubble.me { border-radius: 16px 16px 6px 16px; }
+
+/* Time and ticks share a line and stop crowding the words above them. */
+.wa-bubble small {
+  display: flex; align-items: center; justify-content: flex-end; gap: 4px;
+  margin-top: 2px;
+  font-size: 10.5px;
+  opacity: .62;
+  line-height: 1.2;
+}
+.wa-bubble.me small { opacity: .78; }
+
+/* The notice steps back. It is context, not a message. */
+.wa-privacy-note {
+  background: rgba(255, 255, 255, .78);
+  border: 1px solid rgba(23, 26, 33, .07);
+  color: var(--muted-foreground);
+  font-size: 11px;
+  max-width: 272px;
+  padding: 7px 11px;
+  backdrop-filter: blur(6px);
+}
+
+/* Delete stops being permanent furniture. It fades in on hover where there
+   is a pointer, and stays reachable by focus for anyone using a keyboard or
+   a screen reader — the control still exists, it simply is not shouting on
+   every message the driver ever sent. */
+.wa-del {
+  opacity: 0;
+  transition: opacity 140ms ease;
+}
+.wa-row:hover .wa-del,
+.wa-del:focus-visible { opacity: .65; }
+@media (hover: none) {
+  /* No hover on a phone, so keep it visible but quiet rather than hiding a
+     control a driver cannot otherwise reach. */
+  .wa-del { opacity: .3; }
+}
+
+/* The day separator sits on a calmer ground now, so it needs less weight. */
+.wa-daysep span {
+  background: rgba(255, 255, 255, .82);
+  border-color: rgba(23, 26, 33, .07);
+  backdrop-filter: blur(6px);
+  font-size: 10.5px;
+}
