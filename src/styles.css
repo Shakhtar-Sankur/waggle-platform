@@ -7537,3 +7537,184 @@ body[data-band="profile"] {
   width: auto;
   transform: none;
 }
+
+/* ── Challenges kept its own orange ───────────────────────────────────
+   --sv-orange was redeclared as the #fc5200 literal in three places —
+   .strava-screen, .sv-content.challenges, and .svc-modal-scrim (which is
+   portaled to <body> and so needs its own copy). All three sit on
+   elements closer to the content than <body>, so they beat the section
+   remap: the Routes header went teal and every Join button, progress bar
+   and icon underneath it stayed orange.
+
+   Pointed at the section token, with the original as the fallback so a
+   screen without a band still gets a sensible colour.
+
+   --primary-text rather than --primary-fill because this one variable is
+   used for BOTH backgrounds and text — Join buttons carry white on it,
+   the mode labels and pills are it. Teal #0f766e works either way: 5.5:1
+   as text on white, 5.5:1 as white on it. A value that only passed one
+   direction would fail silently in the other. */
+.strava-screen,
+.sv-content.challenges,
+.svc-modal-scrim {
+  --sv-orange: var(--primary-text, #fc5200);
+}
+
+/* The challenge hero banner had the ramp written out longhand. */
+.svc-hero-media {
+  background: linear-gradient(135deg, var(--band-a, #fc5200), var(--band-b, #ff8a3d));
+}
+
+/* ── The pale oranges ─────────────────────────────────────────────────
+   Not buttons — tints. Easy to miss in a scan that looks for saturated
+   colour, because at 250-ish red with only 10-20 points between the
+   channels they read as "off-white" until they sit next to a teal or
+   magenta band, and then they are visibly warm.
+
+   Four sources:
+
+   1. <html> itself. Its cream shows wherever the body's own ground does
+      not cover — under short pages, which is exactly the strip below the
+      Edit Profile button. Neutral now: the section owns the colour, and
+      the surround should not argue with it.
+
+   2. The bottom nav's top hairline, warm grey. */
+html { background: #f3f4f6; }
+.bottom-nav { border-top-color: #e5e7eb; }
+
+/* 3. The Maps/Challenges pill, a hardcoded #fff2ec. It already takes
+      --primary-text for its label; the fill should come from the same
+      place rather than being written out in orange. */
+.sv-nav-tabs button.active { background: var(--primary-soft); }
+
+/* 4. The stat tiles, on both the Home grid and the record sheet. These
+      are colour-CODED on purpose — distance, time and money are three
+      different questions and used to be three identical grey boxes —
+      so the coding stays. Only the two warm members of the set change.
+
+      Amber for time and brand-orange for pace were picked when every
+      screen was orange and they blended in. Under teal they were the
+      loudest thing in the sheet. Slate reads as neutral against every
+      one of the five bands, which is what a supporting tile should do,
+      and blue/slate/green stay clearly three colours rather than three
+      shades of one. */
+.home-native .stat-grid > *:nth-child(2),
+.sv-stats .sv-stat:nth-child(2) {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+}
+.home-native .stat-grid > *:nth-child(2) svg,
+.sv-stats .sv-stat:nth-child(2) svg { color: #475569; }
+
+.sv-stats .sv-stat:nth-child(3) {
+  background: #e9faf2;
+  border: 1px solid #c9f0dd;
+}
+.sv-stats .sv-stat:nth-child(3) svg { color: #047857; }
+
+/* ── Home goes indigo ─────────────────────────────────────────────────
+   Home was the last screen carrying the brand rust. It is indigo now,
+   which also takes the last warmth out of the app: the cream ground that
+   was mixed to sit under orange goes cool with it.
+
+   Contrast checked at both ends, as with the other four. --primary-text
+   #4338ca is 7.9:1 on white, and the gradient's lightest stop #4f46e5 is
+   6.3:1 under a white label — the highest-contrast section of the five.
+
+   One honest caveat, recorded here because it is a property of the
+   palette rather than of this rule: indigo sits at roughly 245 degrees,
+   between Messages at 225 and Community at 265. Those three are now ~20
+   degrees apart where the original set was never closer than 45. They
+   are still three different colours side by side, but Home and Messages
+   are no longer distinguishable at a glance the way Home and Routes are.
+   The tab bar's filled pill, bolder label and heavier icon carry the
+   active state regardless — colour was never the only cue — but if the
+   three start reading as one, the fix is to push Messages toward cyan
+   and Community toward purple rather than to move Home again. */
+body[data-band="home"] {
+  --band-a: #4338ca; --band-b: #312e81; --band-flat: #3730a3;
+  --primary: #4f46e5;
+  --primary-strong: #4338ca;
+  --primary-text: #4338ca;
+  --primary-soft: #eef2ff;
+  --primary-fill: #3730a3;
+  --sv-orange: #4338ca;
+  --accent-grad: linear-gradient(135deg, #312e81 0%, #3730a3 55%, #4338ca 100%);
+  background: #f5f6fb;
+}
+
+/* ── Home's warm card washes ──────────────────────────────────────────
+   Four more literals, all of them tints rather than fills, all written
+   when the brand was the only colour the app had:
+
+     .goal-card      a flat #fff4ee
+     .journey-card   the brand orange at 10% fading to white
+     .income-empty   #fff7ef fading to white
+     .section-heading a #fff3ec → #fffaf7 ramp
+
+   Each now mixes from the section instead of naming a colour, so they
+   are a wash OF the screen they sit on rather than a warm cast across
+   an indigo one. */
+.goal-card { background: var(--primary-soft); }
+
+.journey-card {
+  background-image: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--primary) 10%, transparent),
+    var(--card) 42%
+  );
+}
+
+[class*="income-e"] {
+  background-image: linear-gradient(135deg, var(--primary-soft) 0%, var(--card) 60%);
+}
+
+.section-heading {
+  background-image: linear-gradient(
+    var(--primary-soft) 0%,
+    color-mix(in srgb, var(--primary-soft) 35%, var(--card)) 100%
+  );
+}
+
+/* The middle stat's VALUE was still amber-800 — I retinted the tile and
+   its icon and left the number, which is the largest thing in the box. */
+.home-native .stat-grid > *:nth-child(2) strong { color: #475569; }
+
+/* ── The three washes that lost on specificity ────────────────────────
+   My first pass at these used single-class selectors and was outranked
+   by `.home-native .goal-card` and friends (0,2,0 beats 0,1,0), so the
+   rules were live and did nothing. Matched now. */
+.home-native .goal-card { background: var(--primary-soft); }
+
+.home-native .income-empty {
+  background-image: linear-gradient(135deg, var(--primary-soft) 0%, var(--card) 60%);
+}
+
+.home-native .journey-card .section-heading {
+  background-image: linear-gradient(
+    var(--primary-soft) 0%,
+    color-mix(in srgb, var(--primary-soft) 35%, var(--card)) 100%
+  );
+}
+
+/* ── "Change" was set in 11px ─────────────────────────────────────────
+   Under the 12px floor this app holds everywhere else, on a translucent
+   pill, on a coloured band, read at arm's length in daylight — the four
+   things that each make small type harder, stacked.
+
+   The card around it is the button (343x66), so this was never a touch
+   problem; it was a legibility one, and the pill looked like a label
+   rather than the control it is. 13px on a taller pill.
+
+   It stays a pill rather than becoming a real button: making it one
+   inside a card that is ITSELF a button would nest two controls, and a
+   tap landing on the difference between them is a bug waiting to be
+   filed. */
+/* `.home-band .working-app-card small` (0,3,1) sets these, so the override
+   has to match it — my first attempt was a single class and a tag and
+   never applied. */
+.home-band .working-app-card small {
+  font-size: 13px;
+  padding: 6px 12px;
+  background: rgba(255, 255, 255, .22);
+}
