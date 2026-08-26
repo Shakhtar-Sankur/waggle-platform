@@ -124,6 +124,10 @@ export interface ChatMessage {
   status: MessageStatus;
   attachmentUrl?: string;
   attachmentThumbUrl?: string;
+  /** The message this one is a reply to, if any. */
+  replyToId?: string;
+  /** emoji -> the ids of everyone who reacted with it. */
+  reactions?: Record<string, string[]>;
 }
 
 export interface ChatThread {

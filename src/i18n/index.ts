@@ -36,6 +36,7 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+    wa_filterAll: "All", wa_filterUnread: "Unread", wa_filterGroups: "Groups",
     sv_steps: "Steps", sv_start: "Start", sv_pin: "Pin",
     sv_fastest: "fastest", sv_shortest: "shortest", sv_yourAvg: "you avg {kmh} km/h here",
     sv_modeEarnings: "Earnings", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "no traffic data", sv_clearRoute: "Clear route", sv_noRoute: "No road route found", sv_earnedHere: "{amount} here", sv_heatEmpty: "No movement recorded on this day",
@@ -380,6 +381,7 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+    wa_filterAll: "Lahat", wa_filterUnread: "Hindi pa nabasa", wa_filterGroups: "Mga Grupo",
     sv_steps: "Hakbang", sv_start: "Simulan", sv_pin: "I-pin",
     sv_fastest: "pinakamabilis", sv_shortest: "pinakamaikli", sv_yourAvg: "avg mo {kmh} km/h dito",
     sv_modeEarnings: "Kita", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "walang datos ng trapiko", sv_clearRoute: "I-clear ang ruta", sv_noRoute: "Walang nahanap na ruta", sv_earnedHere: "{amount} dito", sv_heatEmpty: "Walang naitalang galaw sa araw na ito",
@@ -423,6 +425,7 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+    wa_filterAll: "Todos", wa_filterUnread: "No leídos", wa_filterGroups: "Grupos",
     sv_steps: "Pasos", sv_start: "Iniciar", sv_pin: "Fijar",
     sv_fastest: "más rápida", sv_shortest: "más corta", sv_yourAvg: "tu promedio {kmh} km/h aquí",
     sv_modeEarnings: "Ingresos", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sin datos de tráfico", sv_clearRoute: "Borrar ruta", sv_noRoute: "No se encontró ruta", sv_earnedHere: "{amount} aquí", sv_heatEmpty: "Sin movimiento registrado ese día",
@@ -466,6 +469,7 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+    wa_filterAll: "सभी", wa_filterUnread: "अपठित", wa_filterGroups: "ग्रुप",
     sv_steps: "चरण", sv_start: "शुरू", sv_pin: "पिन",
     sv_fastest: "सबसे तेज़", sv_shortest: "सबसे छोटा", sv_yourAvg: "यहाँ आपका औसत {kmh} किमी/घं",
     sv_modeEarnings: "कमाई", sv_routeTo: "{km} किमी · {min} मिनट", sv_freeFlow: "ट्रैफ़िक डेटा नहीं", sv_clearRoute: "रास्ता हटाएँ", sv_noRoute: "कोई रास्ता नहीं मिला", sv_earnedHere: "यहाँ {amount}", sv_heatEmpty: "इस दिन कोई गतिविधि दर्ज नहीं",
@@ -509,6 +513,7 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+    wa_filterAll: "সব", wa_filterUnread: "অপঠিত", wa_filterGroups: "গ্রুপ",
     sv_steps: "ধাপ", sv_start: "শুরু", sv_pin: "পিন",
     sv_fastest: "দ্রুততম", sv_shortest: "সংক্ষিপ্ততম", sv_yourAvg: "এখানে আপনার গড় {kmh} কিমি/ঘ",
     sv_modeEarnings: "আয়", sv_routeTo: "{km} কিমি · {min} মিনিট", sv_freeFlow: "ট্রাফিক তথ্য নেই", sv_clearRoute: "পথ মুছুন", sv_noRoute: "কোনো পথ পাওয়া যায়নি", sv_earnedHere: "এখানে {amount}", sv_heatEmpty: "এই দিনে কোনো চলাচল রেকর্ড হয়নি",
@@ -552,6 +557,7 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+    wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Grup",
     sv_steps: "Langkah", sv_start: "Mulai", sv_pin: "Sematkan",
     sv_fastest: "tercepat", sv_shortest: "terpendek", sv_yourAvg: "rata-rata Anda {kmh} km/j di sini",
     sv_modeEarnings: "Pendapatan", sv_routeTo: "{km} km · {min} mnt", sv_freeFlow: "tanpa data lalu lintas", sv_clearRoute: "Hapus rute", sv_noRoute: "Rute tidak ditemukan", sv_earnedHere: "{amount} di sini", sv_heatEmpty: "Tidak ada pergerakan pada hari ini",
@@ -595,6 +601,7 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+    wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Kumpulan",
     sv_steps: "Langkah", sv_start: "Mula", sv_pin: "Semat",
     sv_fastest: "terpantas", sv_shortest: "terpendek", sv_yourAvg: "purata anda {kmh} km/j di sini",
     sv_modeEarnings: "Pendapatan", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "tiada data trafik", sv_clearRoute: "Kosongkan laluan", sv_noRoute: "Laluan tidak dijumpai", sv_earnedHere: "{amount} di sini", sv_heatEmpty: "Tiada pergerakan direkod pada hari ini",
@@ -638,6 +645,7 @@ const ms: Dict = {
 };
 
 const th: Dict = {
+    wa_filterAll: "ทั้งหมด", wa_filterUnread: "ยังไม่อ่าน", wa_filterGroups: "กลุ่ม",
     sv_steps: "ขั้นตอน", sv_start: "เริ่ม", sv_pin: "ปักหมุด",
     sv_fastest: "เร็วที่สุด", sv_shortest: "สั้นที่สุด", sv_yourAvg: "เฉลี่ยของคุณ {kmh} กม./ชม. ที่นี่",
     sv_modeEarnings: "รายได้", sv_routeTo: "{km} กม. · {min} นาที", sv_freeFlow: "ไม่มีข้อมูลจราจร", sv_clearRoute: "ล้างเส้นทาง", sv_noRoute: "ไม่พบเส้นทาง", sv_earnedHere: "{amount} ที่นี่", sv_heatEmpty: "ไม่มีการเคลื่อนไหวในวันนี้",
@@ -681,6 +689,7 @@ const th: Dict = {
 };
 
 const vi: Dict = {
+    wa_filterAll: "Tất cả", wa_filterUnread: "Chưa đọc", wa_filterGroups: "Nhóm",
     sv_steps: "Các bước", sv_start: "Bắt đầu", sv_pin: "Ghim",
     sv_fastest: "nhanh nhất", sv_shortest: "ngắn nhất", sv_yourAvg: "bạn TB {kmh} km/h ở đây",
     sv_modeEarnings: "Thu nhập", sv_routeTo: "{km} km · {min} phút", sv_freeFlow: "không có dữ liệu giao thông", sv_clearRoute: "Xóa lộ trình", sv_noRoute: "Không tìm thấy tuyến đường", sv_earnedHere: "{amount} ở đây", sv_heatEmpty: "Không ghi nhận di chuyển trong ngày này",
@@ -724,6 +733,7 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+    wa_filterAll: "Todas", wa_filterUnread: "Não lidas", wa_filterGroups: "Grupos",
     sv_steps: "Etapas", sv_start: "Iniciar", sv_pin: "Fixar",
     sv_fastest: "mais rápida", sv_shortest: "mais curta", sv_yourAvg: "sua média {kmh} km/h aqui",
     sv_modeEarnings: "Ganhos", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sem dados de trânsito", sv_clearRoute: "Limpar rota", sv_noRoute: "Nenhuma rota encontrada", sv_earnedHere: "{amount} aqui", sv_heatEmpty: "Nenhum movimento registrado neste dia",
@@ -767,6 +777,7 @@ const pt: Dict = {
 };
 
 const fr: Dict = {
+    wa_filterAll: "Tous", wa_filterUnread: "Non lus", wa_filterGroups: "Groupes",
     sv_steps: "Étapes", sv_start: "Démarrer", sv_pin: "Épingler",
     sv_fastest: "plus rapide", sv_shortest: "plus courte", sv_yourAvg: "votre moyenne {kmh} km/h ici",
     sv_modeEarnings: "Revenus", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sans données de trafic", sv_clearRoute: "Effacer l'itinéraire", sv_noRoute: "Aucun itinéraire trouvé", sv_earnedHere: "{amount} ici", sv_heatEmpty: "Aucun déplacement enregistré ce jour-là",
@@ -810,6 +821,7 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    wa_filterAll: "Alle", wa_filterUnread: "Ungelesen", wa_filterGroups: "Gruppen",
     sv_steps: "Schritte", sv_start: "Start", sv_pin: "Anheften",
     sv_fastest: "schnellste", sv_shortest: "kürzeste", sv_yourAvg: "dein Schnitt {kmh} km/h hier",
     sv_modeEarnings: "Einnahmen", sv_routeTo: "{km} km · {min} Min", sv_freeFlow: "ohne Verkehrsdaten", sv_clearRoute: "Route löschen", sv_noRoute: "Keine Route gefunden", sv_earnedHere: "{amount} hier", sv_heatEmpty: "An diesem Tag keine Bewegung aufgezeichnet",
@@ -853,6 +865,7 @@ const de: Dict = {
 };
 
 const zh: Dict = {
+    wa_filterAll: "全部", wa_filterUnread: "未读", wa_filterGroups: "群组",
     sv_steps: "路线步骤", sv_start: "开始", sv_pin: "固定",
     sv_fastest: "最快", sv_shortest: "最短", sv_yourAvg: "你在此均速 {kmh} 公里/小时",
     sv_modeEarnings: "收入", sv_routeTo: "{km} 公里 · {min} 分钟", sv_freeFlow: "无路况数据", sv_clearRoute: "清除路线", sv_noRoute: "未找到路线", sv_earnedHere: "此处 {amount}", sv_heatEmpty: "这一天没有记录到移动",
@@ -896,6 +909,7 @@ const zh: Dict = {
 };
 
 const ja: Dict = {
+    wa_filterAll: "すべて", wa_filterUnread: "未読", wa_filterGroups: "グループ",
     sv_steps: "ルート", sv_start: "開始", sv_pin: "ピン",
     sv_fastest: "最速", sv_shortest: "最短", sv_yourAvg: "ここでの平均 {kmh} km/h",
     sv_modeEarnings: "収入", sv_routeTo: "{km} km・{min} 分", sv_freeFlow: "交通情報なし", sv_clearRoute: "ルートを消去", sv_noRoute: "ルートが見つかりません", sv_earnedHere: "ここで {amount}", sv_heatEmpty: "この日は移動の記録がありません",
@@ -939,6 +953,7 @@ const ja: Dict = {
 };
 
 const ko: Dict = {
+    wa_filterAll: "전체", wa_filterUnread: "안 읽음", wa_filterGroups: "그룹",
     sv_steps: "경로", sv_start: "시작", sv_pin: "고정",
     sv_fastest: "가장 빠름", sv_shortest: "가장 짧음", sv_yourAvg: "이곳 평균 {kmh} km/h",
     sv_modeEarnings: "수입", sv_routeTo: "{km} km · {min} 분", sv_freeFlow: "교통 정보 없음", sv_clearRoute: "경로 지우기", sv_noRoute: "경로를 찾을 수 없습니다", sv_earnedHere: "여기서 {amount}", sv_heatEmpty: "이 날 기록된 이동이 없습니다",
@@ -982,6 +997,7 @@ const ko: Dict = {
 };
 
 const ar: Dict = {
+    wa_filterAll: "الكل", wa_filterUnread: "غير المقروءة", wa_filterGroups: "المجموعات",
     sv_steps: "الخطوات", sv_start: "ابدأ", sv_pin: "تثبيت",
     sv_fastest: "الأسرع", sv_shortest: "الأقصر", sv_yourAvg: "متوسطك {kmh} كم/س هنا",
     sv_modeEarnings: "الأرباح", sv_routeTo: "{km} كم · {min} د", sv_freeFlow: "بدون بيانات مرور", sv_clearRoute: "مسح المسار", sv_noRoute: "لم يتم العثور على مسار", sv_earnedHere: "{amount} هنا", sv_heatEmpty: "لا توجد حركة مسجّلة في هذا اليوم",

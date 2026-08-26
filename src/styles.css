@@ -6405,3 +6405,33 @@ html { background: var(--ground, #fbf7f4); }
 .sv-content.has-route .sv-mapmode { top: auto; bottom: 24px; }
 .sv-content.has-route .sv-speedkey { display: none; }
 .sv-content.has-route .sv-daypick { top: auto; bottom: 24px; }
+
+/* ── Chat list filters ────────────────────────────────────────────────
+   All / Unread / Groups, sitting on the band under the search field. A
+   driver with thirty chats and two unread ones should not have to scroll
+   to find them. */
+.wa-filters { display: flex; gap: 6px; margin-top: 10px; }
+.wa-filters button {
+  display: inline-flex; align-items: center; gap: 5px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  background: rgba(255, 255, 255, .12);
+  color: rgba(255, 255, 255, .88);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font: 700 12px/1 var(--font-display, inherit);
+  cursor: pointer;
+}
+.wa-filters button.is-on { background: #fff; color: var(--primary-text); border-color: #fff; }
+.wa-filters em {
+  font-style: normal; font-size: 10px; font-weight: 800;
+  background: var(--primary-fill); color: #fff;
+  border-radius: 999px; padding: 1px 6px;
+}
+.wa-filters button.is-on em { background: var(--primary-fill); }
+
+/* The preview line carries the state of the last message, the way the app
+   this is modelled on does: ticks for yours, a glyph for a photo. */
+.wa-preview { display: flex; align-items: center; gap: 4px; min-width: 0; }
+.wa-preview-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.wa-preview-icon { flex: none; color: var(--muted-foreground); }
+.wa-preview .wa-ticks { flex: none; }

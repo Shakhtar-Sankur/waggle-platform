@@ -45,6 +45,7 @@ export function MessagesScreen() {
     (location.state as { openThreadId?: string } | null)?.openThreadId ?? null,
   );
   const [query, setQuery] = useState("");
+  const [chatFilter, setChatFilter] = useState<"all" | "unread" | "groups">("all");
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<PickedPhoto | undefined>();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -118,8 +119,15 @@ export function MessagesScreen() {
   const displayTitle = (thread: ChatThread): string =>
     thread.isGroup ? thread.title : otherWorkerOf(thread)?.name ?? thread.title;
 
+  const unreadTotal = threads.reduce((n, thread) => n + (thread.unreadCount || 0), 0);
+
   const chatList = [...threads]
     .filter((thread) => displayTitle(thread).toLowerCase().includes(query.toLowerCase()))
+    .filter((thread) =>
+      chatFilter === "unread" ? thread.unreadCount > 0
+      : chatFilter === "groups" ? thread.isGroup
+      : true,
+    )
     .sort((a, b) => (lastOf(b.id)?.createdAt ?? b.updatedAt) - (lastOf(a.id)?.createdAt ?? a.updatedAt));
 
   const openThread = threads.find((thread) => thread.id === openId) ?? null;
@@ -176,6 +184,22 @@ export function MessagesScreen() {
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("wa_searchChats")}
           />
+        </div>
+
+        {/* All / Unread / Groups. A driver with thirty chats and two unread ones
+            should not have to scroll to find them, which is the whole reason
+            these exist in the app this is modelled on. */}
+        <div className="wa-filters">
+          {(["all", "unread", "groups"] as const).map((f) => (
+            <button
+              key={f}
+              className={chatFilter === f ? "is-on" : ""}
+              onClick={() => setChatFilter(f)}
+            >
+              {t(f === "all" ? "wa_filterAll" : f === "unread" ? "wa_filterUnread" : "wa_filterGroups")}
+              {f === "unread" && unreadTotal ? <em>{unreadTotal}</em> : null}
+            </button>
+          ))}
         </div>
       </section>
 
@@ -269,7 +293,25 @@ export function MessagesScreen() {
                     <strong>{displayTitle(thread)}</strong>
                     <small>{last ? timeAgo(last.createdAt) : ""}</small>
                   </div>
-                  <p>{last ? `${mine ? `${t("wa_you")}: ` : ""}${last.body}` : t("wa_tapToStart")}</p>
+                  <p className="wa-preview">
+                    {/* The ticks belong in the preview, not only inside the
+                        thread. Whether the last thing you said has been read is
+                        the question this list gets asked most often. */}
+                    {last && mine ? (
+                      <span className={`wa-ticks ${last.status === "read" ? "read" : ""}`}>
+                        {last.status === "sent" ? "✓" : "✓✓"}
+                      </span>
+                    ) : null}
+                    {/* Only when there is text beside the photo. The fallback
+                        label already carries its own 📷, and rendering both put
+                        two picture glyphs in a row. */}
+                    {last?.attachmentUrl && last.body ? (
+                      <ImagePlus size={13} className="wa-preview-icon" />
+                    ) : null}
+                    <span className="wa-preview-text">
+                      {last ? last.body || t("wa_photoMsg") : t("wa_tapToStart")}
+                    </span>
+                  </p>
                 </div>
                 {thread.unreadCount ? <em className="wa-unread">{thread.unreadCount}</em> : null}
               </button>
