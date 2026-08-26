@@ -6410,22 +6410,27 @@ html { background: var(--ground, #fbf7f4); }
    All / Unread / Groups, sitting on the band under the search field. A
    driver with thirty chats and two unread ones should not have to scroll
    to find them. */
-.wa-filters { display: flex; gap: 6px; margin-top: 10px; }
+.wa-filters { display: flex; gap: 8px; margin-top: 12px; }
 .wa-filters button {
-  display: inline-flex; align-items: center; gap: 5px;
+  display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid rgba(255, 255, 255, .28);
   background: rgba(255, 255, 255, .12);
-  color: rgba(255, 255, 255, .88);
+  color: rgba(255, 255, 255, .90);
   border-radius: 999px;
-  padding: 5px 12px;
-  font: 700 12px/1 var(--font-display, inherit);
+  /* These were 24px tall — barely half the 44px a thumb needs, and Android's
+     own guidance is 48dp. Next to a 48px search field and 68px chat rows they
+     were out of scale as well as hard to hit, which is what a driver tapping
+     on a moving bike notices first. */
+  min-height: 40px;
+  padding: 0 16px;
+  font: 700 13.5px/1 var(--font-display, inherit);
   cursor: pointer;
 }
 .wa-filters button.is-on { background: #fff; color: var(--primary-text); border-color: #fff; }
 .wa-filters em {
-  font-style: normal; font-size: 10px; font-weight: 800;
+  font-style: normal; font-size: 11px; font-weight: 800;
   background: var(--primary-fill); color: #fff;
-  border-radius: 999px; padding: 1px 6px;
+  border-radius: 999px; padding: 2px 7px; line-height: 1.2;
 }
 .wa-filters button.is-on em { background: var(--primary-fill); }
 
