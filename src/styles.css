@@ -5649,7 +5649,10 @@ body { font-weight: 400; }
 .sv-mapmode {
   position: absolute;
   left: 12px;
-  bottom: 108px;
+  /* Below the search bar, not above the sheet. The sheet is absolute at
+     z-index 500 and comes later in the DOM, so anchoring these to the bottom
+     put them underneath it — the switch was on screen and untappable. */
+  top: 118px;
   z-index: 500;
   display: inline-flex;
   align-items: center;
@@ -5679,7 +5682,7 @@ body { font-weight: 400; }
   position: absolute;
   left: 12px;
   right: 12px;
-  bottom: 84px;
+  top: 162px;
   z-index: 500;
   font: 500 12px/1.35 var(--font-display, inherit);
   color: var(--foreground);
@@ -5701,7 +5704,7 @@ body { font-weight: 400; }
 .sv-daypick {
   position: absolute;
   right: 12px;
-  bottom: 108px;
+  top: 118px;
   z-index: 500;
   display: flex;
   align-items: center;
@@ -6034,3 +6037,76 @@ body[data-band] { background: #fbf7f4; }
   padding: 28px 20px;
 }
 .wa-page.has-band .empty-state svg { color: var(--primary); }
+
+/* ── Community: the bar and the tabs become one brand block ───────────
+   Both were white on a grey page, stacked sticky, which is the layout of a
+   desktop social site shrunk to a phone. Making them one coloured block
+   gives the screen a head — and makes the feed underneath read as content
+   rather than as more of the same surface. No markup change: they are
+   already the first two children and already sticky at 0 and 58px. */
+.fb-page { --shell-pad: 12px; background: #f4efe9; }
+
+.fb-topbar {
+  background: linear-gradient(160deg, #b8340a 0%, #a82f00 100%);
+  border-bottom: 0;
+}
+.fb-topbar .wordmark, .fb-topbar .wordmark * { color: #fff; }
+.fb-topbar > svg { color: #fff; }
+
+/* The search field was the same grey as the page it sat on. On colour it
+   needs its own surface. */
+.fb-topbar .fb-search {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .26);
+}
+.fb-topbar .fb-search svg { color: rgba(255, 255, 255, .85); }
+.fb-topbar .fb-search input { color: #fff; background: transparent; }
+.fb-topbar .fb-search input::placeholder { color: rgba(255, 255, 255, .70); }
+.fb-topbar .fb-round {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .26);
+  color: #fff;
+}
+
+/* The tabs continue the block, and round off its bottom edge. */
+.fb-tabs {
+  background: #a82f00;
+  border-bottom: 0;
+  border-radius: 0 0 20px 20px;
+  box-shadow: 0 6px 18px rgba(168, 47, 0, .22);
+}
+.fb-tab { color: rgba(255, 255, 255, .72); }
+.fb-tab.active { color: #fff; }
+.fb-tab.active .fb-tab-icon svg { color: #fff; }
+/* The active underline was brand-orange on white; on the band it has to be
+   the light thing against the dark one. */
+.fb-tab.active::after,
+.fb-tab.active::before { background: #fff !important; }
+
+/* The feed sits under a rounded block, so give it room to clear the curve. */
+.fb-page > .fb-tabs + * { margin-top: 12px; }
+
+/* ── Routes: brand the top bar, colour the stats ──────────────────────
+   The Maps/Challenges bar was white above a full-bleed map, so the screen
+   had a web-style chrome strip on top of an app-style body. */
+.sv-nav {
+  background: linear-gradient(160deg, #b8340a 0%, #a82f00 100%);
+  border-bottom: 0;
+}
+.sv-nav .sv-nav-brand, .sv-nav .sv-nav-brand * { color: #fff; }
+.sv-nav-tabs button { color: rgba(255, 255, 255, .70); }
+/* The active tab keeps its light pill, so its text must be the dark thing on
+   it. Setting it white gave white-on-#fff2ec — about 1.05:1, which is not low
+   contrast, it is no contrast. */
+.sv-nav-tabs button.active { color: var(--primary-text); }
+.sv-nav-tabs button.active::after { background: var(--primary-text) !important; }
+
+/* The three sheet stats were identical grey boxes. Same colour language as
+   Home: distance blue, time amber, and pace — the one that is about how the
+   shift is going — in the brand colour. */
+.sv-stats .sv-stat:nth-child(1) { background: #eef4ff; border: 1px solid #dbe7ff; }
+.sv-stats .sv-stat:nth-child(1) svg { color: #2563eb; }
+.sv-stats .sv-stat:nth-child(2) { background: #fff5e6; border: 1px solid #ffe6bf; }
+.sv-stats .sv-stat:nth-child(2) svg { color: #b45309; }
+.sv-stats .sv-stat:nth-child(3) { background: #fff1ea; border: 1px solid #ffdcc9; }
+.sv-stats .sv-stat:nth-child(3) svg { color: var(--primary-text); }
