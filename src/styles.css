@@ -5795,16 +5795,26 @@ body { font-weight: 400; }
   font-size: 12px;
   letter-spacing: .01em;
   white-space: nowrap;   /* it wrapped to two lines, doubling the row to 73px */
-  flex: none;
+  /* Shrinks and truncates before anything else does. At 320px this row used to
+     overflow and push Change off its own right edge - the caption is the part
+     nobody taps, so it is the part that gives way. */
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
+.home-band .working-app-card strong { flex: 1 1 auto; min-width: 0; }
 .home-band .working-app-card strong {
   display: inline-flex; align-items: center; gap: 8px; color: #fff;
 }
 .home-band .working-app-card small {
-  color: rgba(255, 255, 255, .78);
-  border: 1px solid rgba(255, 255, 255, .34);
-  border-radius: 999px; padding: 3px 8px; font-weight: 600;
-  font-size: 11px; flex: none;
+  color: #fff;
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .40);
+  border-radius: 999px; padding: 4px 10px; font-weight: 700;
+  font-size: 11px;
+  /* Never shrinks and never scrolls away: it is the only action on the row. */
+  flex: none;
 }
 .home-band .working-app-card:active { transform: scale(.99); }
 
@@ -5847,3 +5857,60 @@ body[data-screen="home"] .app-header.is-collapsed {
 /* The pill is a backdrop, so the label and icon have to sit above it. */
 .nav-item.active > * { position: relative; z-index: 1; }
 .nav-item.active { color: var(--primary-text); font-weight: 700; }
+
+/* ── Home: colour, not just a coloured band ───────────────────────────
+   The band fixed the top and left the rest white on near-white. Delivery
+   apps carry colour the whole way down: every tile is a different job, and
+   colour is how you tell them apart at a glance from a motorbike. */
+
+/* A warm ground instead of the cold near-white. Small change, whole-screen
+   effect: white cards now sit ON something rather than nearly vanishing. */
+body[data-screen="home"] { background: #fbf7f4; }
+
+/* Stat tiles, colour-coded by what they measure. Distance, time and money
+   are three different questions and used to be three identical grey boxes. */
+.home-native .stat-grid > *:nth-child(1) {
+  background: #eef4ff;
+  border: 1px solid #dbe7ff;
+}
+.home-native .stat-grid > *:nth-child(1) svg { color: #2563eb; }
+.home-native .stat-grid > *:nth-child(2) {
+  background: #fff5e6;
+  border: 1px solid #ffe6bf;
+}
+.home-native .stat-grid > *:nth-child(2) svg { color: #b45309; }
+.home-native .stat-grid > *:nth-child(3) {
+  background: #e9faf2;
+  border: 1px solid #c9f0dd;
+}
+.home-native .stat-grid > *:nth-child(3) svg { color: #067a52; }
+/* Earnings keeps its own weight — it is the number the shift is for. */
+.home-native .stat-grid > *:nth-child(3) strong,
+.home-native .stat-grid > *:nth-child(3) .stat-value { color: #067a52; }
+
+/* Section headings get a coloured icon rather than a grey one. */
+.home-native .section-heading h3 svg { color: var(--primary); }
+
+/* The goal card was white on white with a grey ring. Give it a surface and
+   let the ring read as progress rather than decoration. */
+.home-native .goal-card {
+  background: linear-gradient(135deg, #fff6f1 0%, #ffffff 62%);
+  border: 1px solid #ffe0d0;
+}
+.home-native .goal-ring-fg { stroke: var(--primary); }
+
+/* Live earnings: the one card that means money is moving right now. */
+.home-native .income-card {
+  background: linear-gradient(135deg, #f2fbf6 0%, #ffffff 60%);
+  border: 1px solid #cdefdd;
+}
+.home-native .income-amount { color: #067a52; }
+.home-native .live-pill { background: #067a52; color: #fff; }
+.home-native .income-metric span svg { color: #067a52; }
+
+/* The empty state should look like an invitation, not a disabled card. */
+.home-native .income-empty {
+  background: linear-gradient(135deg, #fff7ef 0%, #ffffff 60%);
+  border: 1px solid #ffe2cc;
+}
+.home-native .income-empty-icon { color: var(--primary); }
