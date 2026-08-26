@@ -16,6 +16,13 @@ export interface PickedPhoto {
   full: Blob;
   thumb: Blob;
   preview: string;
+  /** Pixel size AFTER downscaling — what will actually be sent, not what came
+   *  off the camera. Shown in the composer so the driver can see what they are
+   *  about to spend data on. */
+  width: number;
+  height: number;
+  /** Encoded size of `full`, in bytes. */
+  bytes: number;
 }
 
 const FULL_WIDTH = 1280;
@@ -50,9 +57,17 @@ async function encodeBoth(src: string): Promise<PickedPhoto> {
     el.onerror = () => reject(new Error("Could not read that image."));
     el.src = src;
   });
-  const full = await toBlob(drawScaled(img, FULL_WIDTH), FULL_QUALITY);
+  const scaled = drawScaled(img, FULL_WIDTH);
+  const full = await toBlob(scaled, FULL_QUALITY);
   const thumb = await toBlob(drawScaled(img, THUMB_WIDTH), THUMB_QUALITY);
-  return { full, thumb, preview: URL.createObjectURL(full) };
+  return {
+    full,
+    thumb,
+    preview: URL.createObjectURL(full),
+    width: scaled.width,
+    height: scaled.height,
+    bytes: full.size,
+  };
 }
 
 // Web / iPhone-Safari picker: a file input, which on mobile offers both the

@@ -1,4 +1,4 @@
-import { ArrowLeft, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, Trash2, UsersRound } from "lucide-react";
+import { ArrowLeft, CornerUpLeft, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -16,6 +16,10 @@ import type { ChatThread, Worker } from "../types";
 import { initials, timeAgo } from "../utils/format";
 
 type Translator = ReturnType<typeof useT>;
+
+/** The six on the picker. Deliberately short: a grid of thirty is a search
+ *  task, and this is meant to be a single tap while stopped at a light. */
+const REACTIONS = ["\u{1F44D}", "\u2764\uFE0F", "\u{1F602}", "\u{1F62E}", "\u{1F622}", "\u{1F64F}"];
 
 /** Today / Yesterday / the date, for the divider between days. */
 function dayLabel(ts: number, t: Translator): string {
@@ -48,6 +52,7 @@ export function MessagesScreen() {
   const selectThread = useChatStore((state) => state.selectThread);
   const sendMessage = useChatStore((state) => state.sendMessage);
   const deleteMessage = useChatStore((state) => state.deleteMessage);
+  const toggleReaction = useChatStore((state) => state.toggleReaction);
   const leaveThread = useChatStore((state) => state.leaveThread);
   const createGroup = useChatStore((state) => state.createGroup);
   const loadCloudChats = useChatStore((state) => state.loadCloudChats);
@@ -75,6 +80,11 @@ export function MessagesScreen() {
   const [voiceOk] = useState(() => voiceSupported());
   /** Which note is playing, so only one sounds at a time. */
   const [playingId, setPlayingId] = useState<string | null>(null);
+  /** The message being replied to, or null. Held by id rather than by value so
+   *  it cannot go stale if the original is edited or deleted mid-compose. */
+  const [replyTo, setReplyTo] = useState<string | null>(null);
+  /** Which message has its emoji picker open. */
+  const [pickerFor, setPickerFor] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const beginRecording = async () => {
@@ -260,10 +270,15 @@ export function MessagesScreen() {
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     if (!draft.trim() && !attachment) return;
-    await sendMessage(draft.trim() || t("wa_photoMsg"), attachment);
+    await sendMessage(draft.trim() || t("wa_photoMsg"), attachment, undefined, replyTo ?? undefined);
     setDraft("");
     setAttachment(undefined);
+    setReplyTo(null);
   };
+
+  /** Whichever id this device writes as. The store uses the same rule, so a
+   *  chip knows it is yours in both cloud and local modes. */
+  const meId = SupabaseService.enabled ? user?.id ?? "me" : "me";
 
   const clock = (ts: number) =>
     new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
@@ -534,6 +549,17 @@ export function MessagesScreen() {
               openMessages.map((message, index) => {
                 const isMe = message.senderId === "me" || message.senderId === user?.id;
                 const sender = workerById[message.senderId]?.name ?? "Driver";
+                // In a one-to-one chat the other person's id is often not in
+                // workerById — they are a contact, not a nearby driver — and the
+                // quote said "Driver" above their own words. The thread title is
+                // their name, and in a DM there is only one other person it can
+                // belong to, so it is the right fallback. Groups keep "Driver",
+                // where the title is the group's name and would be a lie.
+                const nameFor = (id: string) =>
+                  id === "me" || id === user?.id
+                    ? t("wa_you")
+                    : workerById[id]?.name ??
+                      (openThread.isGroup ? "Driver" : openThread.title);
                 const showSender =
                   openThread.isGroup && !isMe && openMessages[index - 1]?.senderId !== message.senderId;
                 // A divider whenever the day changes. Without one, a thread read
@@ -552,19 +578,69 @@ export function MessagesScreen() {
                   {newDay ? (
                     <div className="wa-daysep"><span>{dayLabel(message.createdAt, t)}</span></div>
                   ) : null}
-                  <div className={`wa-row ${isMe ? "me" : ""}`}>
-                    {/* Only your own messages can be removed (RLS enforces it too). */}
-                    {isMe ? (
+                  <div className={`wa-row ${isMe ? "me" : ""}`} id={`msg-${message.id}`}>
+                    {/* Siblings of the bubble, for the same reason the delete
+                        button is: on touch there is no hover, so anything
+                        positioned inside the bubble sits on top of the words. */}
+                    <div className="wa-acts">
                       <button
                         type="button"
-                        className="wa-del"
-                        aria-label={t("wa_deleteMessage")}
-                        onClick={() => setConfirmDelete(message.id)}
+                        className="wa-act"
+                        aria-label={t("wa_reply")}
+                        onClick={() => setReplyTo(message.id)}
                       >
-                        <Trash2 size={15} />
+                        <CornerUpLeft size={15} />
                       </button>
-                    ) : null}
+                      <button
+                        type="button"
+                        className="wa-act"
+                        aria-label={t("wa_react")}
+                        aria-expanded={pickerFor === message.id}
+                        onClick={() =>
+                          setPickerFor((open) => (open === message.id ? null : message.id))
+                        }
+                      >
+                        <SmilePlus size={15} />
+                      </button>
+                      {/* Only your own messages can be removed (RLS enforces it too). */}
+                      {isMe ? (
+                        <button
+                          type="button"
+                          className="wa-act"
+                          aria-label={t("wa_deleteMessage")}
+                          onClick={() => setConfirmDelete(message.id)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      ) : null}
+                    </div>
                     <div className={`wa-bubble ${isMe ? "me" : ""}`}>
+                    {/* The quote is resolved from the live message list rather
+                        than copied at send time, so an edit shows through and a
+                        delete degrades to a line of text instead of a bubble
+                        quoting something that no longer exists. */}
+                    {message.replyToId ? (
+                      (() => {
+                        const q = messages.find((m) => m.id === message.replyToId);
+                        if (!q) return <div className="wa-quote is-gone">{t("wa_originalGone")}</div>;
+                        return (
+                          <button
+                            type="button"
+                            className="wa-quote"
+                            onClick={() => {
+                              document
+                                .getElementById(`msg-${q.id}`)
+                                ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                            }}
+                          >
+                            <span className="wa-quote-who">{nameFor(q.senderId)}</span>
+                            <span className="wa-quote-body">
+                              {q.voiceUrl ? t("wa_voiceNote") : q.body || t("wa_photoMsg")}
+                            </span>
+                          </button>
+                        );
+                      })()
+                    ) : null}
                     {showSender ? <span className="wa-sender">{sender}</span> : null}
                     {message.attachmentUrl ? (
                       /* Thumbnail in the bubble; the full file is only fetched
@@ -609,6 +685,41 @@ export function MessagesScreen() {
                       ) : null}
                     </small>
                     </div>
+                    {/* Chips hang under the bubble, one per emoji with a count.
+                        Yours is outlined so you can see at a glance which one
+                        you gave without counting. */}
+                    {message.reactions && Object.keys(message.reactions).length ? (
+                      <div className="wa-reacts">
+                        {Object.entries(message.reactions).map(([emoji, ids]) => (
+                          <button
+                            type="button"
+                            key={emoji}
+                            className={`wa-react-chip${ids.includes(meId) ? " is-mine" : ""}`}
+                            onClick={() => void toggleReaction(message.id, emoji)}
+                          >
+                            <span aria-hidden>{emoji}</span>
+                            {ids.length > 1 ? <small>{ids.length}</small> : null}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
+                    {pickerFor === message.id ? (
+                      <div className="wa-picker" role="group" aria-label={t("wa_reactions")}>
+                        {REACTIONS.map((emoji) => (
+                          <button
+                            type="button"
+                            key={emoji}
+                            aria-label={emoji}
+                            onClick={() => {
+                              void toggleReaction(message.id, emoji);
+                              setPickerFor(null);
+                            }}
+                          >
+                            {emoji}
+                          </button>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                   </Fragment>
                 );
@@ -617,6 +728,67 @@ export function MessagesScreen() {
               <div className="wa-empty">{t("wa_noMessages")}</div>
             )}
           </div>
+
+          {/* The photo you are about to send. It used to be invisible — the
+              attach button turned orange and that was the whole feedback, so
+              you could not tell WHICH photo was staged, or that one still was
+              after typing a caption. The card shows the thumbnail, what it
+              will be sent as after downscaling, and how much data that costs,
+              which is not a detail to a driver on a prepaid plan. */}
+          {attachment ? (
+            <div className="wa-attach-card">
+              <img src={attachment.preview} alt="" />
+              <div>
+                <strong>{t("wa_photoReady")}</strong>
+                <span>
+                  {attachment.width}&times;{attachment.height} &middot;{" "}
+                  {attachment.bytes < 1024 * 1024
+                    ? `${Math.max(1, Math.round(attachment.bytes / 1024))} KB`
+                    : `${(attachment.bytes / (1024 * 1024)).toFixed(1)} MB`}
+                </span>
+              </div>
+              <button
+                type="button"
+                aria-label={t("wa_removePhoto")}
+                onClick={() => {
+                  MediaService.releasePreview(attachment.preview);
+                  setAttachment(undefined);
+                }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : null}
+
+          {/* What you are replying to, above the composer — the one place you
+              are already looking while typing. Resolved live, so if the
+              original is deleted mid-compose the banner closes itself rather
+              than sending a reply pointing at nothing. */}
+          {replyTo ? (
+            (() => {
+              const q = messages.find((m) => m.id === replyTo);
+              if (!q) return null;
+              const who = q.senderId === "me" || q.senderId === user?.id
+                ? t("wa_you")
+                : workerById[q.senderId]?.name ??
+                  (openThread.isGroup ? "Driver" : openThread.title);
+              return (
+                <div className="wa-replybar">
+                  <div>
+                    <strong>{t("wa_replyingTo", { name: who })}</strong>
+                    <span>{q.voiceUrl ? t("wa_voiceNote") : q.body || t("wa_photoMsg")}</span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label={t("wa_cancelReply")}
+                    onClick={() => setReplyTo(null)}
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+              );
+            })()
+          ) : null}
 
           <form className="wa-input" onSubmit={submit}>
             <button

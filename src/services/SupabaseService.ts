@@ -952,11 +952,36 @@ export const SupabaseService = {
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw error;
+
+    // Reactions come from their own table, in one query for the whole page of
+    // messages rather than one per message — 200 messages would otherwise be
+    // 200 round trips on opening a chat.
+    //
+    // A failure here is swallowed on purpose. A project that has not run
+    // chat_reply_reactions.sql has no such table, and a chat that refuses to
+    // open because nobody can put a thumbs-up on anything is a worse outcome
+    // than a chat with no reactions in it.
+    const ids = (data ?? []).map((m) => m.id);
+    const byMessage = new Map<string, Record<string, string[]>>();
+    if (ids.length) {
+      const { data: reactions } = await supabase
+        .from("message_reactions")
+        .select("message_id, user_id, emoji")
+        .in("message_id", ids);
+      for (const r of reactions ?? []) {
+        const group = byMessage.get(r.message_id) ?? {};
+        (group[r.emoji] ??= []).push(r.user_id);
+        byMessage.set(r.message_id, group);
+      }
+    }
+
     return (data ?? []).map((message) => ({
       id: message.id,
       threadId: message.thread_id,
       senderId: message.sender_id,
       body: message.body,
+      replyToId: message.reply_to ?? undefined,
+      reactions: byMessage.get(message.id),
       attachmentUrl: message.attachment_url ?? undefined,
       attachmentThumbUrl: message.attachment_thumb_url ?? undefined,
       voiceUrl: message.voice_url ?? undefined,
@@ -1059,6 +1084,9 @@ export const SupabaseService = {
             voice_levels: message.voiceLevels ?? null,
           }
         : {}),
+      // Same guard, same reason: only sent when there is a reply, so a plain
+      // message still inserts against a schema without the column.
+      ...(message.replyToId ? { reply_to: message.replyToId } : {}),
       status: message.status,
       created_at: new Date(message.createdAt).toISOString(),
     });
@@ -1069,6 +1097,39 @@ export const SupabaseService = {
       .update({ updated_at: new Date(message.createdAt).toISOString() })
       .eq("id", message.threadId);
     if (updateError) throw updateError;
+  },
+
+  /**
+   * Put the caller's reaction on a message, or take it off.
+   *
+   * One row per person per message, so choosing a different emoji REPLACES
+   * theirs instead of adding a second — an upsert on the primary key, which is
+   * (message_id, user_id). Passing null removes it, which is also what the UI
+   * sends when you tap the emoji you already picked.
+   *
+   * RLS does the enforcing: the policy checks `auth.uid() = user_id` and that
+   * the caller is a member of the message's thread, so neither reacting as
+   * somebody else nor reacting to a stranger's message by guessing an id is
+   * possible from here.
+   */
+  async setReaction(messageId: string, userId: string, emoji: string | null): Promise<void> {
+    assertSupabase();
+    if (emoji === null) {
+      const { error } = await supabase!
+        .from("message_reactions")
+        .delete()
+        .eq("message_id", messageId)
+        .eq("user_id", userId);
+      if (error) throw error;
+      return;
+    }
+    const { error } = await supabase!
+      .from("message_reactions")
+      .upsert(
+        { message_id: messageId, user_id: userId, emoji },
+        { onConflict: "message_id,user_id" },
+      );
+    if (error) throw error;
   },
 
   // Real cloud groups: true member counts + whether the current user has joined.

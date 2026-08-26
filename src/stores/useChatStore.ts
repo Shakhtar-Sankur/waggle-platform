@@ -27,7 +27,14 @@ interface ChatState {
   chatsLoaded: boolean;
   loadCloudChats: (userId: string) => Promise<void>;
   selectThread: (id: string) => void;
-  sendMessage: (body: string, photo?: PickedPhoto, voice?: OutgoingVoice) => Promise<void>;
+  sendMessage: (
+    body: string,
+    photo?: PickedPhoto,
+    voice?: OutgoingVoice,
+    replyToId?: string,
+  ) => Promise<void>;
+  /** Put the signed-in driver's reaction on a message, or take it off. */
+  toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: (title: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
@@ -93,6 +100,55 @@ export const useChatStore = create<ChatState>()(
             thread.id === id ? { ...thread, unreadCount: 0 } : thread,
           ),
         })),
+      toggleReaction: async (messageId, emoji) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        const me = SupabaseService.enabled ? user.id : "me";
+
+        // Worked out from what is on screen, so the rules live in one place:
+        // tapping the emoji you already chose removes it, tapping a different
+        // one replaces it. One reaction per person, which is the primary key
+        // the table is built on and the way WhatsApp behaves.
+        const current = get().messages.find((m) => m.id === messageId);
+        const mine = Object.entries(current?.reactions ?? {}).find(([, ids]) =>
+          ids.includes(me),
+        )?.[0];
+        const next = mine === emoji ? null : emoji;
+
+        // Applied locally first. A reaction is a tap that should register at
+        // once; waiting for a round trip makes it feel like it did not land,
+        // and people tap again.
+        const apply = (value: string | null) =>
+          set((state) => ({
+            messages: state.messages.map((m) => {
+              if (m.id !== messageId) return m;
+              const groups: Record<string, string[]> = {};
+              for (const [key, ids] of Object.entries(m.reactions ?? {})) {
+                const kept = ids.filter((id) => id !== me);
+                if (kept.length) groups[key] = kept;
+              }
+              if (value) groups[value] = [...(groups[value] ?? []), me];
+              return { ...m, reactions: Object.keys(groups).length ? groups : undefined };
+            }),
+          }));
+
+        const before = current?.reactions;
+        apply(next);
+
+        if (!SupabaseService.enabled) return;
+        try {
+          await SupabaseService.setReaction(messageId, user.id, next);
+        } catch {
+          // Put back exactly what was there. A reaction is not worth the
+          // outbox — it is not something the driver said, and one that
+          // silently reappears an hour later is worse than one that failed.
+          set((state) => ({
+            messages: state.messages.map((m) =>
+              m.id === messageId ? { ...m, reactions: before } : m,
+            ),
+          }));
+        }
+      },
       deleteMessage: async (messageId) => {
         const user = useAuthStore.getState().user;
         const previous = get().messages;
@@ -106,7 +162,7 @@ export const useChatStore = create<ChatState>()(
           console.warn("Could not delete message:", error);
         }
       },
-      sendMessage: async (body, photo, voice) => {
+      sendMessage: async (body, photo, voice, replyToId) => {
         const threadId = get().selectedThreadId;
         const user = useAuthStore.getState().user;
         if (!user) return;
@@ -133,7 +189,21 @@ export const useChatStore = create<ChatState>()(
             image = undefined;
           }
         }
-        const outgoing = ChatService.makeMessage(threadId, senderId, body, image?.url, image?.thumbUrl);
+        // The voice fields and the reply are attached here rather than being
+        // more parameters on makeMessage, which already takes five positional
+        // arguments and does not need eight.
+        //
+        // The voice half was a real bug: the upload happened, the URL was
+        // assigned to a local, and the message went out without it. The audio
+        // reached storage and then nothing pointed at it, so a voice note sent
+        // as an empty message.
+        const outgoing: ChatMessage = {
+          ...ChatService.makeMessage(threadId, senderId, body, image?.url, image?.thumbUrl),
+          ...(voiceUrl
+            ? { voiceUrl, voiceSeconds: voice?.seconds, voiceLevels: voice?.levels }
+            : {}),
+          ...(replyToId ? { replyToId } : {}),
+        };
         set((state) => ({
           messages: [...state.messages, outgoing],
           threads: bumpThread(state.threads, threadId),

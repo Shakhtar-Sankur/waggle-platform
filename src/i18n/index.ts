@@ -36,6 +36,8 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+  wa_photoReady: "Photo ready to send", wa_removePhoto: "Remove photo",
+  wa_reply: "Reply", wa_react: "React", wa_replyingTo: "Replying to {name}", wa_cancelReply: "Cancel reply", wa_originalGone: "Original message deleted", wa_reactions: "Reactions",
     fb_compose: "Write a post",
     wa_holdToTalk: "Hold to record a voice note", wa_micDenied: "Buzz could not use the microphone. Check the app's permissions.", wa_voiceNote: "Voice note",
     wa_today: "Today", wa_yesterday: "Yesterday", wa_privacyNote: "Messages are stored on Gigzen's servers and only people in this chat can read them. They are not end-to-end encrypted.",
@@ -384,6 +386,8 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+  wa_photoReady: "Handa nang ipadala ang larawan", wa_removePhoto: "Alisin ang larawan",
+  wa_reply: "Sagutin", wa_react: "Mag-react", wa_replyingTo: "Sinasagot si {name}", wa_cancelReply: "Kanselahin ang pagsagot", wa_originalGone: "Binura ang orihinal na mensahe", wa_reactions: "Mga reaction",
     fb_compose: "Sumulat ng post",
     wa_holdToTalk: "Pindutin nang matagal para mag-record", wa_micDenied: "Hindi magamit ng Buzz ang mikropono. Tingnan ang mga pahintulot.", wa_voiceNote: "Voice note",
     wa_today: "Ngayon", wa_yesterday: "Kahapon", wa_privacyNote: "Nakaimbak ang mga mensahe sa server ng Gigzen at ang nasa chat lang ang makakabasa. Hindi ito end-to-end encrypted.",
@@ -431,6 +435,8 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+  wa_photoReady: "Foto lista para enviar", wa_removePhoto: "Quitar foto",
+  wa_reply: "Responder", wa_react: "Reaccionar", wa_replyingTo: "Respondiendo a {name}", wa_cancelReply: "Cancelar respuesta", wa_originalGone: "Mensaje original eliminado", wa_reactions: "Reacciones",
     fb_compose: "Escribir una publicación",
     wa_holdToTalk: "Mantén pulsado para grabar", wa_micDenied: "Buzz no pudo usar el micrófono. Revisa los permisos de la app.", wa_voiceNote: "Nota de voz",
     wa_today: "Hoy", wa_yesterday: "Ayer", wa_privacyNote: "Los mensajes se guardan en los servidores de Gigzen y solo quienes están en este chat pueden leerlos. No tienen cifrado de extremo a extremo.",
@@ -478,6 +484,8 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+  wa_photoReady: "फ़ोटो भेजने के लिए तैयार", wa_removePhoto: "फ़ोटो हटाएँ",
+  wa_reply: "जवाब दें", wa_react: "रिएक्ट करें", wa_replyingTo: "{name} को जवाब", wa_cancelReply: "जवाब रद्द करें", wa_originalGone: "मूल संदेश हटा दिया गया", wa_reactions: "रिएक्शन",
     fb_compose: "पोस्ट लिखें",
     wa_holdToTalk: "वॉइस नोट रिकॉर्ड करने के लिए दबाए रखें", wa_micDenied: "Buzz माइक्रोफ़ोन का उपयोग नहीं कर सका। ऐप की अनुमतियाँ जाँचें।", wa_voiceNote: "वॉइस नोट",
     wa_today: "आज", wa_yesterday: "कल", wa_privacyNote: "संदेश Gigzen के सर्वर पर रखे जाते हैं और केवल इस चैट के लोग ही पढ़ सकते हैं। ये एंड-टू-एंड एन्क्रिप्टेड नहीं हैं।",
@@ -525,6 +533,8 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+  wa_photoReady: "ছবি পাঠানোর জন্য প্রস্তুত", wa_removePhoto: "ছবি সরান",
+  wa_reply: "উত্তর দিন", wa_react: "রিঅ্যাক্ট করুন", wa_replyingTo: "{name}-কে উত্তর", wa_cancelReply: "উত্তর বাতিল করুন", wa_originalGone: "মূল বার্তাটি মুছে ফেলা হয়েছে", wa_reactions: "রিঅ্যাকশন",
     fb_compose: "পোস্ট লিখুন",
     wa_holdToTalk: "ভয়েস নোট রেকর্ড করতে চেপে ধরুন", wa_micDenied: "Buzz মাইক্রোফোন ব্যবহার করতে পারেনি। অ্যাপের অনুমতি দেখুন।", wa_voiceNote: "ভয়েস নোট",
     wa_today: "আজ", wa_yesterday: "গতকাল", wa_privacyNote: "বার্তা Gigzen-এর সার্ভারে থাকে এবং শুধু এই চ্যাটের লোকেরাই পড়তে পারেন। এগুলি এন্ড-টু-এন্ড এনক্রিপ্টেড নয়।",
@@ -572,6 +582,8 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+  wa_photoReady: "Foto siap dikirim", wa_removePhoto: "Hapus foto",
+  wa_reply: "Balas", wa_react: "Beri reaksi", wa_replyingTo: "Membalas {name}", wa_cancelReply: "Batalkan balasan", wa_originalGone: "Pesan asli dihapus", wa_reactions: "Reaksi",
     fb_compose: "Tulis postingan",
     wa_holdToTalk: "Tahan untuk merekam pesan suara", wa_micDenied: "Buzz tidak dapat menggunakan mikrofon. Periksa izin aplikasi.", wa_voiceNote: "Pesan suara",
     wa_today: "Hari ini", wa_yesterday: "Kemarin", wa_privacyNote: "Pesan disimpan di server Gigzen dan hanya orang dalam obrolan ini yang bisa membacanya. Pesan tidak terenkripsi ujung ke ujung.",
@@ -619,6 +631,8 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+  wa_photoReady: "Foto sedia dihantar", wa_removePhoto: "Buang foto",
+  wa_reply: "Balas", wa_react: "Beri reaksi", wa_replyingTo: "Membalas {name}", wa_cancelReply: "Batal balas", wa_originalGone: "Mesej asal dipadam", wa_reactions: "Reaksi",
     fb_compose: "Tulis hantaran",
     wa_holdToTalk: "Tahan untuk merakam nota suara", wa_micDenied: "Buzz tidak dapat menggunakan mikrofon. Semak kebenaran apl.", wa_voiceNote: "Nota suara",
     wa_today: "Hari ini", wa_yesterday: "Semalam", wa_privacyNote: "Mesej disimpan di pelayan Gigzen dan hanya orang dalam sembang ini boleh membacanya. Ia tidak disulitkan hujung ke hujung.",
@@ -760,6 +774,8 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+  wa_photoReady: "Foto pronta para enviar", wa_removePhoto: "Remover foto",
+  wa_reply: "Responder", wa_react: "Reagir", wa_replyingTo: "Respondendo a {name}", wa_cancelReply: "Cancelar resposta", wa_originalGone: "Mensagem original apagada", wa_reactions: "Reações",
     fb_compose: "Escrever publicação",
     wa_holdToTalk: "Segure para gravar um áudio", wa_micDenied: "O Buzz não conseguiu usar o microfone. Verifique as permissões do app.", wa_voiceNote: "Mensagem de voz",
     wa_today: "Hoje", wa_yesterday: "Ontem", wa_privacyNote: "As mensagens ficam nos servidores da Gigzen e só quem está nesta conversa pode lê-las. Não têm criptografia de ponta a ponta.",

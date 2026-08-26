@@ -6999,3 +6999,356 @@ body[data-band="profile"] {
 /* The compose button is chrome, not content: it belongs to the screen it
    floats over. */
 .fb-fab { background: var(--band-flat, var(--primary)); }
+
+/* ══ Reply and reactions ══════════════════════════════════════════════ */
+
+/* The per-message controls. Siblings of the bubble rather than children,
+   for the same reason the delete button already was: on a touch screen
+   there is no hover, so anything positioned inside sits permanently on
+   top of the words. They stay dim until the row is touched or hovered. */
+.wa-acts {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity .15s ease;
+}
+.wa-row:hover .wa-acts,
+.wa-row:focus-within .wa-acts { opacity: 1; }
+/* No hover on touch, so the controls are simply always there. Dim enough
+   not to compete with the message. */
+@media (hover: none) { .wa-acts { opacity: .55; } }
+.wa-act {
+  display: grid;
+  place-items: center;
+  /* 32px visible, but the tap target is padded out to 44 — below that the
+     miss rate on a moving vehicle is bad enough to matter. */
+  width: 32px; height: 32px;
+  margin: -6px;
+  padding: 6px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.wa-act:hover { background: var(--muted); color: var(--foreground); }
+
+/* The quote inside a bubble. A left rail in the accent colour, the way
+   every chat app marks one, and two lines that never grow: the quote is a
+   pointer to a message, not a second copy of it. */
+.wa-quote {
+  display: block;
+  width: 100%;
+  margin: 0 0 6px;
+  padding: 6px 10px;
+  border: 0;
+  border-left: 3px solid var(--primary);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, .05);
+  text-align: left;
+  cursor: pointer;
+  font: inherit;
+}
+.wa-bubble.me .wa-quote {
+  border-left-color: rgba(255, 255, 255, .85);
+  background: rgba(255, 255, 255, .16);
+}
+.wa-quote-who {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary-text);
+  margin-bottom: 1px;
+}
+.wa-bubble.me .wa-quote-who { color: #fff; }
+.wa-quote-body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 13px;
+  line-height: 1.35;
+  color: var(--muted-foreground);
+}
+.wa-bubble.me .wa-quote-body { color: rgba(255, 255, 255, .85); }
+/* The original is gone. Says so plainly instead of quoting emptiness. */
+.wa-quote.is-gone {
+  font-size: 12.5px;
+  font-style: italic;
+  color: var(--muted-foreground);
+  border-left-color: var(--border);
+  cursor: default;
+}
+
+/* Reaction chips, hanging off the bottom edge of the bubble. The negative
+   margin pulls them up so they overlap it slightly — attached to the
+   message rather than floating below it as a separate row. */
+.wa-reacts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: -8px 0 4px;
+  padding-inline: 6px;
+}
+.wa-row.me .wa-reacts { justify-content: flex-end; }
+.wa-react-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  min-height: 24px;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .10);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+}
+/* Yours is outlined, so you can see which one you gave without counting. */
+.wa-react-chip.is-mine {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+}
+.wa-react-chip small { font-size: 11px; font-weight: 700; color: var(--muted-foreground); }
+.wa-react-chip.is-mine small { color: var(--primary-text); }
+
+/* The picker: six emoji in a row, one tap each. */
+.wa-picker {
+  display: flex;
+  gap: 2px;
+  align-self: flex-start;
+  margin: 2px 0 6px;
+  padding: 4px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, .16);
+}
+.wa-row.me .wa-picker { align-self: flex-end; }
+.wa-picker button {
+  width: 40px; height: 40px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 21px;
+  line-height: 1;
+  cursor: pointer;
+}
+.wa-picker button:hover { background: var(--muted); transform: scale(1.12); }
+
+/* The banner above the composer. Same rail and the same two-line clamp as
+   the in-bubble quote, so they read as the same object. */
+.wa-replybar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--primary);
+  background: var(--muted);
+}
+.wa-replybar > div { flex: 1; min-width: 0; }
+.wa-replybar strong {
+  display: block;
+  font-size: 12px;
+  color: var(--primary-text);
+}
+.wa-replybar span {
+  display: block;
+  font-size: 13px;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.wa-replybar button {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.wa-replybar button:hover { background: var(--border); }
+
+/* ── Community: one left edge ─────────────────────────────────────────
+   The screen had four of them. Measured, not guessed:
+
+     search bar        52px   (fine — it sits right of the logo)
+     composer avatar   14px
+     post avatar       30px
+     post text column  80px
+
+   The two avatars are the same object drawn twice, 16px apart, and that
+   is the misalignment you see: nothing in the feed lines up with the box
+   you type into.
+
+   The cause is a double gutter I introduced when I turned the cards back
+   into rows. `.fb-post-head` carries its own 14px from when it lived
+   inside an unpadded card; once `.fb-post` became a padded row, the two
+   stacked — 16 + 14 = 30. The composer never had an outer pad, so it
+   stayed at 14.
+
+   One gutter now, declared once on the row, with the children flush. The
+   token exists so the next thing added here inherits the edge instead of
+   picking its own. */
+.fb-page { --fb-gutter: 16px; }
+
+.fb-post { padding-inline: var(--fb-gutter); }
+/* Children of a padded row do not pad again. */
+.fb-post > * { padding-inline: 0; }
+
+.fb-composer { padding-inline: var(--fb-gutter); }
+
+/* The tab row and the composer's action strip share it too, so the whole
+   column reads as one edge from the header down. */
+.fb-tabs { padding-inline: calc(var(--fb-gutter) - 4px); }
+
+/* ── The literals the retint could not reach ──────────────────────────
+   Remapping --primary and friends per section only moves what actually
+   READS those tokens. Six rules in the chat and one in Community had the
+   orange written in as a hex literal, so they stayed orange under a blue
+   header: the New group icon, the sender name over a message, the
+   conversation header, the send and attach buttons.
+
+   Pointed at tokens now, so they follow the section like everything else
+   and there is one fewer literal to miss next time. */
+
+/* White-on-colour, so the darkest step: --primary-fill is the one mixed
+   to carry white text. */
+.wa-avatar-accent,
+.wa-convo-header,
+.wa-attach.active,
+.wa-send { background: var(--primary-fill); }
+.wa-convo-header .wa-online-dot { border-color: var(--primary-fill); }
+
+/* The sender name is 12.5px bold on the bubble's own ground, which is why
+   it takes --primary-text (the step mixed for text) and not --primary.
+   The brand orange is 3.32:1 on white and would fail here — it is the
+   same trap that put --primary-text in the palette to begin with. */
+.wa-sender { color: var(--primary-text); }
+
+/* Community's accent alias was a second name for the same orange. */
+.fb-page { --fb-blue: var(--primary-text); }
+
+/* ── The active nav pill, anchored to the icon ────────────────────────
+   It was positioned from the top edge of the link box with a fixed inset.
+   That works only while every item is the same height — and Routes is not:
+   it carries a live distance under its label, which makes its box taller
+   and lifted its icon 10px above where the pill sat. Four tabs looked
+   right and the fifth was visibly off.
+
+   The icon now has a wrapper of its own and the pill is that wrapper's
+   background, so it is centred on the icon in every item no matter how
+   many lines of label sit beneath it. */
+.nav-item.active::before { content: none; }
+
+.nav-ico {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 30px;
+}
+.nav-item.active .nav-ico::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--band-flat, var(--primary)) 14%, transparent);
+}
+/* The icon has to sit above its own pill. */
+.nav-ico svg { position: relative; z-index: 1; }
+
+/* ── Chat wallpaper: an actual doodle ─────────────────────────────────
+   I over-corrected this one. The first version was too loud, so I cut it
+   to a third of its presence and shrank the tile — and what came out the
+   other side was a scattering of faint specks that reads as noise on a
+   dirty screen rather than as a pattern somebody drew.
+
+   Denser and more definite now: fourteen motifs per tile instead of six,
+   a heavier stroke, and enough of them that the eye joins them up into a
+   wallpaper. Still ours — bees, honeycomb, pins, dashed routes, wheels,
+   buzz arcs — and still behind the text rather than in front of it: the
+   ink is a warm brown at .42 in the tile, which lands around 8% contrast
+   against the honey ground. Bubbles are opaque and sit on a shadow, so
+   the words stay on a plain surface no matter what is underneath them.
+
+   The doodle keeps its own warm colour rather than following the section
+   tint. A wallpaper is the room, not the furniture — WhatsApp's does not
+   change either — and a blue-line doodle under blue bubbles was busier
+   than the neutral. */
+.wa-messages {
+  background-color: #f6efe6;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27150%27%20height%3D%27150%27%20viewBox%3D%270%200%20150%20150%27%3E%3Cg%20stroke%3D%27%238a4a1e%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20opacity%3D%27.42%27%3E%3Cg%20transform%3D%27translate%2826%2030%29%20rotate%28-16%29%20scale%281.0%29%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%270%27%20rx%3D%276%27%20ry%3D%278.5%27%2F%3E%3Cpath%20d%3D%27M-6%20-3h12M-6%202h12M-5%207h10%27%2F%3E%3Cellipse%20cx%3D%27-7%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%28-38%20-7%20-8%29%27%2F%3E%3Cellipse%20cx%3D%277%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%2838%207%20-8%29%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M115.5%2016.5L115.5%2027.5L106.0%2033.0L96.5%2027.5L96.5%2016.5L106.0%2011.0z%27%2F%3E%3Cg%20transform%3D%27translate%2858%2062%29%20scale%281.0%29%27%3E%3Cpath%20d%3D%27M-10%200q10-8%2020%200%27%2F%3E%3Cpath%20d%3D%27M-6%206q6-5%2012%200%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2822%2092%29%20scale%281.0%29%27%3E%3Cpath%20d%3D%27M-7%20-6a7%207%200%200%201%2014%200c0%206-7%2013-7%2013S-7%200-7-6z%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%27-6%27%20r%3D%272.6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28120%20104%29%20rotate%2822%29%20scale%280.85%29%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%270%27%20rx%3D%276%27%20ry%3D%278.5%27%2F%3E%3Cpath%20d%3D%27M-6%20-3h12M-6%202h12M-5%207h10%27%2F%3E%3Cellipse%20cx%3D%27-7%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%28-38%20-7%20-8%29%27%2F%3E%3Cellipse%20cx%3D%277%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%2838%207%20-8%29%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M81.8%20117.5L81.8%20126.5L74.0%20131.0L66.2%20126.5L66.2%20117.5L74.0%20113.0z%27%2F%3E%3Cg%20transform%3D%27translate%28134%2060%29%20rotate%2810%29%27%3E%3Cpath%20d%3D%27M-9%20-10q-8%2010%200%2020%27%20stroke-dasharray%3D%273%204.5%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M148.1%20134.5L148.1%20141.5L142.0%20145.0L135.9%20141.5L135.9%20134.5L142.0%20131.0z%27%2F%3E%3Cg%20transform%3D%27translate%2842%20142%29%20rotate%28-20%29%27%3E%3Cpath%20d%3D%27M-9%20-10q-8%2010%200%2020%27%20stroke-dasharray%3D%273%204.5%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2898%2078%29%27%3E%3Ccircle%20cx%3D%270%27%20cy%3D%270%27%20r%3D%278%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%270%27%20r%3D%272.8%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28146%2096%29%20scale%280.8%29%27%3E%3Cpath%20d%3D%27M0%20-6v12M-6%200h12M-4%20-4l8%208M4%20-4l-8%208%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2862%2016%29%20scale%280.72%29%27%3E%3Cpath%20d%3D%27M-7%20-6a7%207%200%200%201%2014%200c0%206-7%2013-7%2013S-7%200-7-6z%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%27-6%27%20r%3D%272.6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2814%20128%29%20scale%280.8%29%27%3E%3Cpath%20d%3D%27M-10%200q10-8%2020%200%27%2F%3E%3Cpath%20d%3D%27M-6%206q6-5%2012%200%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2888%2044%29%20scale%280.6%29%27%3E%3Cpath%20d%3D%27M0%20-6v12M-6%200h12M-4%20-4l8%208M4%20-4l-8%208%27%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: 150px 150px;
+  background-repeat: repeat;
+}
+/* The empty ::before layer this replaces did nothing: it carried an
+   opacity and no background, so it tinted nothing at all. */
+.wa-messages::before { content: none; }
+
+/* ── The quote inside your own bubble ─────────────────────────────────
+   I wrote this assuming an own-bubble is dark, the way WhatsApp's green
+   one is, and put white text on it. Buzz's own-bubble is pale amber —
+   rgb(255,233,201) — so the quote measured 1.18:1 against it. Not "a bit
+   low": invisible. The name and the quoted line were both there and
+   neither could be read.
+
+   Dark ink instead, on a faint dark wash rather than a white one, which
+   is what actually shows up on amber. 5.7:1 for the name and 7.1:1 for
+   the quoted text. */
+.wa-bubble.me .wa-quote {
+  border-left-color: var(--primary);
+  background: rgba(0, 0, 0, .06);
+}
+.wa-bubble.me .wa-quote-who { color: var(--primary-text); }
+.wa-bubble.me .wa-quote-body { color: #5b4a33; }
+
+/* ── The staged photo ─────────────────────────────────────────────────
+   Sits directly above the composer, same width, so it reads as part of
+   what is about to be sent rather than as a notification about it. */
+.wa-attach-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--card);
+  border-top: 1px solid var(--border);
+}
+.wa-attach-card img {
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--muted);
+}
+.wa-attach-card > div { flex: 1; min-width: 0; }
+.wa-attach-card strong {
+  display: block;
+  font-size: 13px;
+  color: var(--foreground);
+}
+.wa-attach-card span {
+  display: block;
+  font-size: 12px;
+  color: var(--muted-foreground);
+  font-variant-numeric: tabular-nums;
+}
+.wa-attach-card button {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 32px; height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--muted);
+  color: var(--muted-foreground);
+  cursor: pointer;
+}
+.wa-attach-card button:hover { background: var(--border); color: var(--foreground); }

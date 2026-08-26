@@ -49,7 +49,11 @@ function NavItem({
 }) {
   return (
     <NavLink to={to} className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
-      {icon}
+      {/* The icon is wrapped so the active pill can be anchored to IT rather
+          than to the link box. Routes carries a second line under its label,
+          which makes its box taller and pushed its icon 10px above where a
+          pill positioned from the top edge landed. */}
+      <span className="nav-ico">{icon}</span>
       <span>{label}</span>
       {subLabel ? <em>{subLabel}</em> : null}
     </NavLink>
