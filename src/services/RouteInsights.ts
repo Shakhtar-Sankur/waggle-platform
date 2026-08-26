@@ -162,3 +162,75 @@ export const BAND_COLOUR: Record<SpeedBand, string> = {
   moving: "#fc5200",
   fast: "#16a34a",
 };
+
+/* ── where the money came from ─────────────────────────────────────────
+   Earnings in this app accrue from distance genuinely travelled, so the
+   distance covered inside an area IS the earnings from that area. That is
+   the one thing Google's map can never show a driver: it does not know
+   they were working.
+
+   No new data. route_points has been recorded since the first release. */
+
+export interface EarningsCell {
+  lat: number;
+  lng: number;
+  km: number;
+  earnings: number;
+  /** 0..1 against the busiest cell, for colour and radius. */
+  weight: number;
+}
+
+/**
+ * Bucket a day's movement into a grid and total the distance in each cell.
+ *
+ * The cell size is in degrees of latitude, which is a constant ~111 km; the
+ * longitude span is corrected by the cosine of the latitude, or cells would be
+ * a third as wide in Manila as they look and twice as wide near the poles.
+ */
+export function earningsGrid(
+  points: LocationPoint[],
+  ratePerKm: number,
+  cellMetres = 250,
+): EarningsCell[] {
+  if (points.length < 2) return [];
+  const dLat = cellMetres / 111_320;
+  const cells = new Map<string, { lat: number; lng: number; metres: number }>();
+
+  for (let i = 1; i < points.length; i++) {
+    const m = metresBetween(points[i - 1], points[i]);
+    if (!Number.isFinite(m) || m <= 0 || m > 2000) continue;   // a jump is a bad fix, not a drive
+    const p = points[i];
+    const cos = Math.max(0.2, Math.cos((p.lat * Math.PI) / 180));
+    const dLng = dLat / cos;
+    const gy = Math.round(p.lat / dLat);
+    const gx = Math.round(p.lng / dLng);
+    const key = `${gx}:${gy}`;
+    const cell = cells.get(key) ?? { lat: gy * dLat, lng: gx * dLng, metres: 0 };
+    cell.metres += m;
+    cells.set(key, cell);
+  }
+
+  const list = [...cells.values()];
+  const busiest = Math.max(...list.map((c) => c.metres), 1);
+  return list
+    .map((c) => ({
+      lat: c.lat,
+      lng: c.lng,
+      km: Math.round((c.metres / 1000) * 100) / 100,
+      earnings: (c.metres / 1000) * ratePerKm,
+      weight: c.metres / busiest,
+    }))
+    // A cell holding a few metres is a rounding artefact, not a place worth colouring.
+    .filter((c) => c.km >= 0.05)
+    .sort((a, b) => a.weight - b.weight);
+}
+
+/** Green through amber to red as a cell earns more — the usual heat ramp,
+ *  with red meaning "most", not "worst". */
+export function heatColour(weight: number): string {
+  if (weight > 0.75) return "#dc2626";
+  if (weight > 0.5) return "#f97316";
+  if (weight > 0.28) return "#f59e0b";
+  if (weight > 0.12) return "#84cc16";
+  return "#22c55e";
+}

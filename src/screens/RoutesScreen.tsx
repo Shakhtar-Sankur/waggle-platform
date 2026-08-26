@@ -23,12 +23,13 @@ import L from "leaflet";
 import { ChallengeIcon } from "../components/ChallengeIcon";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
+import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
 import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
 import { LocationService } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
-import { BAND_COLOUR, findStops, speedSegments } from "../services/RouteInsights";
+import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
+import { describeStep, directionsBetween, type Directions } from "../services/DirectionsService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -52,6 +53,13 @@ const TILES = {
     subdomains: "",
     attribution: "&copy; Esri",
   },
+} as const;
+
+/* One label per map mode, so the switch and its aria-label cannot drift. */
+const MODE_KEY = {
+  me: "sv_modeMe",
+  friends: "sv_modeFriends",
+  earnings: "sv_modeEarnings",
 } as const;
 
 type MapStyle = keyof typeof TILES;
@@ -115,6 +123,7 @@ export function RoutesScreen() {
   const activeApp = useProfileStore((state) => state.activeApp);
   const currencyCode = useProfileStore((state) => state.currencyCode);
   const dailyGoal = useProfileStore((state) => state.dailyGoal);
+  const baseRate = useProfileStore((state) => state.baseRate);
   const app = getWorkApp(activeApp);
   const user = useAuthStore((state) => state.user);
   const weekDistanceKm = useLocationStore((state) => state.weekDistanceKm);
@@ -342,7 +351,7 @@ export function RoutesScreen() {
      their pins, whether you wanted either or not. Separating them is not
      only tidier: your history and other people's live positions answer
      completely different questions, and only one of them is about today. */
-  const [mapMode, setMapMode] = useState<"me" | "friends">("me");
+  const [mapMode, setMapMode] = useState<"me" | "friends" | "earnings">("me");
 
   /** Which day "Me" is showing. Local midnight, so it means the driver's day. */
   const [pathDay, setPathDay] = useState<Date>(() => {
@@ -407,6 +416,40 @@ export function RoutesScreen() {
   }, [pathDay, isToday, route.length]);
 
   const routePositions = mapMode === "me" ? drawnPath : livePositions;
+
+  /* Three modes now, so the switch names where the next tap goes rather
+     than "the other one". */
+  const nextMode = mapMode === "me" ? "friends" : mapMode === "friends" ? "earnings" : "me";
+
+  /* Where the money came from. Earnings accrue from distance travelled, so
+     distance inside a cell is earnings from that cell — no new data, and the
+     one thing a general-purpose map cannot show, because it does not know
+     the driver was working. */
+  const heat = useMemo(
+    () => (mapMode === "earnings" ? earningsGrid(dayPoints, baseRate) : []),
+    [mapMode, dayPoints, baseRate],
+  );
+
+  /* Directions to whatever the driver searched for. */
+  const [directions, setDirections] = useState<Directions | null>(null);
+  const [routing, setRouting] = useState(false);
+
+  useEffect(() => {
+    if (!searchPin) { setDirections(null); return; }
+    let cancelled = false;
+    setRouting(true);
+    directionsBetween(currentLocation, searchPin).then((d) => {
+      if (cancelled) return;
+      setDirections(d);
+      setRouting(false);
+    });
+    return () => { cancelled = true; };
+    // Only the destination should retrigger this. currentLocation changes on
+    // every GPS fix, and re-routing every few seconds would hammer a free
+    // service for a line that moved by ten metres.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchPin]);
+
 
   /* Speed runs and stops for whatever day is on screen. Recomputed only
      when the drawn path or the underlying points change — walking a few
@@ -572,12 +615,12 @@ export function RoutesScreen() {
               tapping takes you, and the note underneath says where you are. */}
           <button
             className={"sv-mapmode is-" + mapMode}
-            onClick={() => setMapMode(mapMode === "me" ? "friends" : "me")}
-            aria-label={t(mapMode === "me" ? "sv_switchToFriends" : "sv_switchToMe")}
+            onClick={() => setMapMode(nextMode)}
+            aria-label={t(MODE_KEY[nextMode])}
           >
-            <span className="sv-mapmode-now">{t(mapMode === "me" ? "sv_modeMe" : "sv_modeFriends")}</span>
+            <span className="sv-mapmode-now">{t(MODE_KEY[mapMode])}</span>
             <ArrowLeftRight size={14} />
-            <span className="sv-mapmode-next">{t(mapMode === "me" ? "sv_modeFriends" : "sv_modeMe")}</span>
+            <span className="sv-mapmode-next">{t(MODE_KEY[nextMode])}</span>
           </button>
 
           {/* One line saying what is on screen, and how much to trust it. The
@@ -597,6 +640,19 @@ export function RoutesScreen() {
               ) : (
                 <span>{t("sv_noPathDay")}</span>
               )
+            ) : mapMode === "earnings" ? (
+              // The note branched on "me" versus everything else, so the
+              // earnings map inherited the friends message and told a driver
+              // looking at their own heat map that they had no friends.
+              heat.length ? (
+                <span>
+                  {t("sv_earnedHere", {
+                    amount: currency(heat.reduce((sum, c) => sum + c.earnings, 0)),
+                  })}
+                </span>
+              ) : (
+                <span>{t("sv_heatEmpty")}</span>
+              )
             ) : friendWorkers.length ? (
               <span>{t("sv_friendsOn", { count: String(friendWorkers.length) })}</span>
             ) : acceptedFriendCount === 0 ? (
@@ -614,6 +670,41 @@ export function RoutesScreen() {
           {/* Which day, in "Me" only. Native date input: it is localised,
               keyboard-accessible and already familiar on every phone, which no
               hand-rolled calendar in this codebase would be. */}
+          {/* Directions, when the driver has searched for somewhere. The
+              free-flow caveat is not small print: these timings have never seen
+              a traffic jam, and a driver planning a delivery around an ETA that
+              silently assumes empty roads is the dangerous kind of wrong. */}
+          {searchPin && mapMode !== "earnings" ? (
+            <div className="sv-directions">
+              <div className="sv-directions-head">
+                <strong>{searchPin.label}</strong>
+                <button aria-label={t("sv_clearRoute")} onClick={() => { setSearchPin(null); setDirections(null); }}>
+                  <X size={15} />
+                </button>
+              </div>
+              {routing ? (
+                <p className="sv-directions-meta"><Loader2 size={13} className="spin" /> …</p>
+              ) : directions ? (
+                <>
+                  <p className="sv-directions-meta">
+                    <b>{t("sv_routeTo", { km: String(directions.km), min: String(directions.minutes) })}</b>
+                    <em>{t("sv_freeFlow")}</em>
+                  </p>
+                  <ol className="sv-steps">
+                    {directions.steps.slice(0, 6).map((step, i) => (
+                      <li key={i}>
+                        <span>{describeStep(step)}</span>
+                        <small>{step.metres >= 1000 ? (step.metres / 1000).toFixed(1) + " km" : step.metres + " m"}</small>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              ) : (
+                <p className="sv-directions-meta">{t("sv_noRoute")}</p>
+              )}
+            </div>
+          ) : null}
+
           {/* What the colours mean. Without this the route is decorative;
               with it a driver can see where the day was spent crawling. */}
           {mapMode === "me" && speedRuns.length ? (
@@ -715,6 +806,36 @@ export function RoutesScreen() {
                 ))}
               </>
             ) : null}
+            {/* The earnings heatmap. Each cell is 250 m of ground, weighted by
+                the distance driven inside it — which in this app is the money
+                earned there. A general-purpose map cannot draw this, because it
+                does not know the person was working. */}
+            {mapMode === "earnings" && heat.map((cell, i) => (
+              <CircleMarker
+                key={`heat-${i}`}
+                center={[cell.lat, cell.lng]}
+                radius={9 + cell.weight * 16}
+                pathOptions={{
+                  color: heatColour(cell.weight),
+                  fillColor: heatColour(cell.weight),
+                  // Deliberately translucent: overlapping cells build up, which
+                  // is what makes a heat map read as heat rather than as dots.
+                  fillOpacity: 0.18 + cell.weight * 0.34,
+                  weight: 0,
+                }}
+              />
+            ))}
+
+            {/* Directions to a searched place. Drawn under nothing else, and in
+                a colour no other line on this map uses, so it cannot be mistaken
+                for where the driver has already been. */}
+            {directions ? (
+              <>
+                <Polyline positions={directions.positions} pathOptions={{ color: "#0b3d91", weight: 10, opacity: 0.22 }} />
+                <Polyline positions={directions.positions} pathOptions={{ color: "#1d4ed8", weight: 5, opacity: 0.95, dashArray: "1 9", lineCap: "round" }} />
+              </>
+            ) : null}
+
             {mapMode === "friends" && friendWorkers.map((worker) => (
               <Marker
                 key={worker.id}
