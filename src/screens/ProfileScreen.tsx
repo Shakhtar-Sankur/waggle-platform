@@ -10,6 +10,7 @@ import { Wordmark } from "../components/Wordmark";
 import { COMPANY_SITE } from "../config/constants";
 import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
 import { detectCountry } from "../i18n/region";
+import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { localAppCount, workAppsForCountry } from "../utils/workApps";
@@ -22,6 +23,7 @@ import { CURRENCIES, currency, initials, km } from "../utils/format";
 type EarningsTab = "day" | "week" | "month";
 
 export function ProfileScreen() {
+  useBrandBand();
   const navigate = useNavigate();
   const t = useT();
   const [searchParams] = useSearchParams();
@@ -89,7 +91,11 @@ export function ProfileScreen() {
   }, [searchParams]);
 
   return (
-    <main className="page-shell profile-page">
+    <main className="page-shell profile-page has-band">
+      {/* Same band as Home. The avatar used to float on near-white with the
+          title above it on nothing; on colour it reads as a profile header
+          rather than a lone circle. */}
+      <section className="screen-band profile-band">
       <section className="profile-hero">
         <button
           type="button"
@@ -106,6 +112,7 @@ export function ProfileScreen() {
           <span className="pf-avatar-edit"><Camera size={15} /></span>
         </button>
         <h2>{user?.fullName}</h2>
+      </section>
       </section>
 
       <section>

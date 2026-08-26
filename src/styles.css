@@ -5747,13 +5747,14 @@ body { font-weight: 400; }
   padding-bottom: 104px;
 }
 
+.screen-band,
 .home-band {
   /* Full-bleed out of the shell's side padding, and up behind the sticky
      header, which is transparent at rest. The pull is the header's measured
      height, set by HomeScreen — hardcoding it leaves a coloured seam on any
      phone whose safe-area inset differs from the machine it was written on. */
-  margin: calc(var(--home-band-pull, 88px) * -1) -16px 0;
-  padding: calc(var(--home-band-pull, 88px) + 14px) 16px 62px;
+  margin: calc(var(--band-pull, 88px) * -1) -16px 0;
+  padding: calc(var(--band-pull, 88px) + 14px) 16px 62px;
   background:
     radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
     linear-gradient(160deg, #b8340a 0%, #a82f00 48%, #8f2800 100%);
@@ -5833,13 +5834,17 @@ body { font-weight: 400; }
 .home-native .stat-grid > * { padding: 12px 8px; border-radius: 14px; }
 
 /* The header, while it is over the band. */
-body[data-screen="home"] .app-header { background: transparent; border-bottom-color: transparent; box-shadow: none; }
-body[data-screen="home"] .app-header .wordmark,
-body[data-screen="home"] .app-header .wordmark * { color: #fff; fill: currentColor; }
-body[data-screen="home"] .app-header button { color: #fff; }
+body[data-band] .app-header { background: transparent; border-bottom-color: transparent; box-shadow: none; }
+body[data-band] .app-header .wordmark,
+body[data-band] .app-header .wordmark * { color: #fff; fill: currentColor; }
+body[data-band] .app-header button { color: #fff; }
+/* Screens that show a text title rather than the wordmark — Profile, Messages —
+   left it at the default near-black, which is unreadable on the band. The icons
+   were already covered; the title was not. */
+body[data-band] .app-header h1 { color: #fff; }
 /* Once the band has scrolled away, the header takes the brand colour rather
    than turning white — a bar that changes colour mid-scroll reads as a bug. */
-body[data-screen="home"] .app-header.is-collapsed {
+body[data-band] .app-header.is-collapsed {
   background: #a82f00;
   border-bottom-color: rgba(0, 0, 0, .12);
   box-shadow: 0 1px 12px rgba(0, 0, 0, .18);
@@ -5865,7 +5870,9 @@ body[data-screen="home"] .app-header.is-collapsed {
 
 /* A warm ground instead of the cold near-white. Small change, whole-screen
    effect: white cards now sit ON something rather than nearly vanishing. */
-body[data-screen="home"] { background: #fbf7f4; }
+/* Warm ground under every banded screen, so white cards sit ON something
+   rather than nearly vanishing into the background. */
+body[data-band] { background: #fbf7f4; }
 
 /* Stat tiles, colour-coded by what they measure. Distance, time and money
    are three different questions and used to be three identical grey boxes. */
@@ -5914,3 +5921,29 @@ body[data-screen="home"] { background: #fbf7f4; }
   border: 1px solid #ffe2cc;
 }
 .home-native .income-empty-icon { color: var(--primary); }
+
+/* Profile opens on the band too. The avatar used to float on near-white with
+   the screen title above it on nothing at all. */
+.profile-band {
+  text-align: center;
+  padding-bottom: 54px;
+}
+.profile-band .profile-hero { padding: 0; }
+.profile-band .profile-hero h2 { color: #fff; margin-top: 12px; }
+/* The ring around the avatar was a pale orange outline, invisible on orange. */
+.profile-band .avatar.huge {
+  border-color: rgba(255, 255, 255, .5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .22);
+}
+/* First block climbs onto the band, exactly as on Home. */
+.profile-page.has-band > section:not(.screen-band):first-of-type,
+.profile-page.has-band > .screen-band + section {
+  margin-top: -34px;
+  position: relative;
+  z-index: 1;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: var(--shadow-card);
+}

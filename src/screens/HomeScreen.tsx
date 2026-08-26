@@ -2,6 +2,7 @@ import { Clock3, MapPin, Settings, Target, TrendingUp, Wallet } from "lucide-rea
 import { WorkAppMark } from "../components/WorkAppMark";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
+import { useBrandBand } from "../hooks/useBrandBand";
 import { WorkAppPicker } from "../components/WorkAppPicker";
 import { Button } from "../components/ui/Button";
 import { APP_NAME } from "../config/constants";
@@ -50,30 +51,7 @@ export function HomeScreen() {
     if (!activeApp && consented) setShowPicker(true);
   }, [activeApp, consented]);
 
-  /* Tell the shared header it is sitting on the brand band.
-     The header lives outside this screen, so it cannot know. A marker on <body>
-     rather than `:has()` because this runs in an Android WebView, and a layout
-     that silently loses its contrast on an older device is not worth the
-     elegance. Cleared on unmount, so every other screen keeps its own header. */
-  useEffect(() => {
-    document.body.dataset.screen = "home";
-    // How far the band has to climb to sit behind the header. Measured rather
-    // than hardcoded: the header carries the safe-area inset, so its height is
-    // 89px on this viewport and taller on a phone with a notch. A guess would
-    // leave a coloured seam on exactly the devices nobody tests on.
-    const measure = () => {
-      const header = document.querySelector(".app-header");
-      const h = header ? Math.round(header.getBoundingClientRect().height) : 88;
-      document.documentElement.style.setProperty("--home-band-pull", `${h}px`);
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => {
-      window.removeEventListener("resize", measure);
-      delete document.body.dataset.screen;
-      document.documentElement.style.removeProperty("--home-band-pull");
-    };
-  }, []);
+  useBrandBand();
 
   useEffect(() => {
     if (!showSplash) return;
@@ -101,8 +79,8 @@ export function HomeScreen() {
           web page rather than an app. Every delivery app a driver already has on
           their phone opens on a block of brand colour with the first card pulled
           up onto it, and the eye reads that as chrome, not content. The header
-          sits over this band and turns white against it; see
-          body[data-screen="home"] in the stylesheet. */}
+          sits over this band and turns white against it; see useBrandBand and
+          body[data-band] in the stylesheet. */}
       <section className="home-band">
         <div className="home-hero">
           <div className="home-hero-text">
