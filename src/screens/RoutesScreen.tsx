@@ -42,11 +42,32 @@ import type { Challenge, ChallengeMetric, LocationPoint } from "../types";
 import { currency, duration, initials, km, weeklyGoalFrom } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
 
+/*
+ * Tiles.
+ *
+ * This shipped pointing at CARTO's basemap CDN with no key, and CARTO stamps a
+ * sample of tiles with "API KEY REQUIRED · carto.com/basemaps/apikey" baked
+ * into the image. Not a rate limit and not an error — a working map with an
+ * advert printed across it, which every driver would have seen.
+ *
+ * OpenStreetMap's own tiles need no key and carry no watermark, so the map is
+ * clean today. That is not the end of it: OSM's tile usage policy is for
+ * development and light use, and explicitly not for a product with real users.
+ * Before this app has any, VITE_TILE_URL must point at a provider with a key —
+ * MapTiler and Stadia both have free tiers, and a self-hosted Protomaps file
+ * removes the per-request cost entirely and is the right answer if offline maps
+ * are wanted later.
+ *
+ * It reads from the environment so that swap is a config change, not a code
+ * change, and so the key never lands in the repository.
+ */
 const TILES = {
   standard: {
-    url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",
-    subdomains: "abcd",
-    attribution: "&copy; OpenStreetMap &copy; CARTO",
+    url: import.meta.env.VITE_TILE_URL ||
+      "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+    subdomains: (import.meta.env.VITE_TILE_SUBDOMAINS as string) || "",
+    attribution: (import.meta.env.VITE_TILE_ATTRIBUTION as string) ||
+      "&copy; OpenStreetMap contributors",
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
