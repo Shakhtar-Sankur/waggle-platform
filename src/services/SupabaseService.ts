@@ -809,6 +809,69 @@ export const SupabaseService = {
     });
   },
 
+  /**
+   * Every point recorded on one local day, oldest first.
+   *
+   * The app has written to route_points since the beginning and has never once
+   * read it back: the map drew the copy in the phone's own store, which
+   * `ensureToday()` clears at midnight. So a driver's history existed, was
+   * indexed for exactly this query, and was invisible to them.
+   *
+   * The day is bounded in the caller's timezone rather than UTC, because "where
+   * did I go on Tuesday" means the driver's Tuesday. Row-level security already
+   * restricts this table to `auth.uid() = user_id`, so no filter here is what
+   * keeps another driver's history private — the database is.
+   */
+  async routePointsForDay(dayStart: Date): Promise<LocationPoint[]> {
+    if (!supabase) return [];
+    const from = new Date(dayStart);
+    from.setHours(0, 0, 0, 0);
+    const to = new Date(from);
+    to.setDate(to.getDate() + 1);
+
+    const { data, error } = await supabase
+      .from("route_points")
+      .select("lat, lng, accuracy, recorded_at")
+      .gte("recorded_at", from.toISOString())
+      .lt("recorded_at", to.toISOString())
+      .order("recorded_at", { ascending: true })
+      // A long shift at a few seconds per fix is thousands of rows. This is the
+      // ceiling the matcher and the phone can both take; thinning happens after.
+      .limit(5000);
+
+    if (error || !Array.isArray(data)) return [];
+    return data.map((r) => ({
+      lat: Number(r.lat),
+      lng: Number(r.lng),
+      accuracy: r.accuracy == null ? undefined : Number(r.accuracy),
+      timestamp: new Date(r.recorded_at).getTime(),
+    })) as LocationPoint[];
+  },
+
+  /** Which local days have any recorded movement, newest first — for the picker. */
+  async routeDaysAvailable(limitDays = 60): Promise<string[]> {
+    if (!supabase) return [];
+    const since = new Date();
+    since.setDate(since.getDate() - limitDays);
+    since.setHours(0, 0, 0, 0);
+
+    const { data, error } = await supabase
+      .from("route_points")
+      .select("recorded_at")
+      .gte("recorded_at", since.toISOString())
+      .order("recorded_at", { ascending: false })
+      .limit(20000);
+
+    if (error || !Array.isArray(data)) return [];
+    const days = new Set<string>();
+    for (const r of data) {
+      const d = new Date(r.recorded_at);
+      // Local date key, matching how the day is bounded above.
+      days.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
+    }
+    return [...days];
+  },
+
   async loadThreads(userId: string): Promise<ChatThread[]> {
     if (!supabase) return [];
     const { data, error } = await supabase

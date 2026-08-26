@@ -26,6 +26,7 @@ import { MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from 
 import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
 import { LocationService } from "../services/LocationService";
+import { snapToRoads } from "../services/MapMatchService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -331,7 +332,74 @@ export function RoutesScreen() {
     setCreating(false);
   };
 
-  const routePositions = route.map((point) => [point.lat, point.lng] as [number, number]);
+  /* ── the two map modes ────────────────────────────────────────────────
+     "Me" is your own movement: the roads you drove, on the day you pick.
+     "Friends" is everyone you are connected to, where they are now.
+
+     They used to be drawn on top of each other, always — your line under
+     their pins, whether you wanted either or not. Separating them is not
+     only tidier: your history and other people's live positions answer
+     completely different questions, and only one of them is about today. */
+  const [mapMode, setMapMode] = useState<"me" | "friends">("me");
+
+  /** Which day "Me" is showing. Local midnight, so it means the driver's day. */
+  const [pathDay, setPathDay] = useState<Date>(() => {
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    return d;
+  });
+  const isToday = useMemo(() => {
+    const t = new Date();
+    t.setHours(0, 0, 0, 0);
+    return pathDay.getTime() === t.getTime();
+  }, [pathDay]);
+
+  /** Road-matched geometry for whichever day is showing. */
+  const [drawnPath, setDrawnPath] = useState<[number, number][]>([]);
+  const [pathSnapped, setPathSnapped] = useState(false);
+  const [pathLoading, setPathLoading] = useState(false);
+
+  const livePositions = route.map((point) => [point.lat, point.lng] as [number, number]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPathLoading(true);
+
+    (async () => {
+      // Today comes from the store — it is already in memory and still being
+      // appended to as the driver moves. Any other day has to be read back from
+      // route_points, which the app has written to since the beginning and never
+      // once read.
+      const points = isToday ? route : await SupabaseService.routePointsForDay(pathDay);
+      if (cancelled) return;
+
+      if (points.length < 2) {
+        setDrawnPath([]);
+        setPathSnapped(false);
+        setPathLoading(false);
+        return;
+      }
+
+      // Draw the raw line immediately, then replace it if the matcher answers.
+      // Waiting for the network before showing anything would mean an empty map
+      // on every journey through a tunnel.
+      setDrawnPath(points.map((p) => [p.lat, p.lng] as [number, number]));
+      setPathSnapped(false);
+
+      const matched = await snapToRoads(points);
+      if (cancelled) return;
+      setDrawnPath(matched.positions);
+      setPathSnapped(matched.snapped);
+      setPathLoading(false);
+    })();
+
+    return () => { cancelled = true; };
+    // `route.length` rather than `route`: the array identity changes on every
+    // GPS fix, and re-matching the whole day every few seconds would hammer a
+    // public service for a line that moved by ten metres.
+  }, [pathDay, isToday, route.length]);
+
+  const routePositions = mapMode === "me" ? drawnPath : livePositions;
   const onlineWorkers = workers.filter((worker) => worker.isOnline);
 
   // Only drivers you are connected with appear on the map. Showing every
@@ -420,6 +488,19 @@ export function RoutesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
+  /* Move to the day you picked.
+     Without this, choosing a past date loaded that day's path and left the map
+     where it was — which for a driver who has moved city, or simply driven
+     across town, is a screen that says "following roads" above empty streets.
+     Today is deliberately excluded: it has live follow, and yanking the view
+     while someone is driving is worse than not moving at all. */
+  useEffect(() => {
+    if (!map || mapMode !== "me" || isToday) return;
+    if (drawnPath.length > 1) {
+      map.fitBounds(drawnPath, { padding: [60, 60], animate: true });
+    }
+  }, [map, mapMode, isToday, drawnPath]);
+
   const recenter = () => {
     if (!map) return;
     // Re-centring on yourself resumes live follow after a location search.
@@ -451,6 +532,88 @@ export function RoutesScreen() {
 
       {view === "maps" ? (
         <div className="sv-content maps">
+          {/* Me / Friends. Sits over the map rather than above it, because the
+              map is the screen and a bar pushing it down costs more than the
+              switch is worth. */}
+          <div className="sv-mapmode" role="tablist">
+            <button
+              role="tab"
+              aria-selected={mapMode === "me"}
+              className={mapMode === "me" ? "on" : ""}
+              onClick={() => setMapMode("me")}
+            >
+              {t("sv_modeMe")}
+            </button>
+            <button
+              role="tab"
+              aria-selected={mapMode === "friends"}
+              className={mapMode === "friends" ? "on" : ""}
+              onClick={() => setMapMode("friends")}
+            >
+              {t("sv_modeFriends")}
+            </button>
+          </div>
+
+          {/* One line saying what is on screen, and how much to trust it. The
+              path is either matched to roads or it is a straight line between
+              fixes, and those are different claims. */}
+          <div className="sv-mapnote">
+            {mapMode === "me" ? (
+              pathLoading && !drawnPath.length ? (
+                <span>{t("sv_loadingPath")}</span>
+              ) : drawnPath.length > 1 ? (
+                <span>
+                  {t("sv_myPath")} ·{" "}
+                  <em className={pathSnapped ? "ok" : "raw"}>
+                    {pathSnapped ? t("sv_snapped") : t("sv_notSnapped")}
+                  </em>
+                </span>
+              ) : (
+                <span>{t("sv_noPathDay")}</span>
+              )
+            ) : friendWorkers.length ? (
+              <span>{t("sv_friendsOn", { count: String(friendWorkers.length) })}</span>
+            ) : (
+              <span>{t("sv_noFriends")}</span>
+            )}
+          </div>
+
+          {/* Which day, in "Me" only. Native date input: it is localised,
+              keyboard-accessible and already familiar on every phone, which no
+              hand-rolled calendar in this codebase would be. */}
+          {mapMode === "me" ? (
+            <div className="sv-daypick">
+              <label>
+                <span className="sr-only">{t("sv_pickDay")}</span>
+                <input
+                  type="date"
+                  max={new Date().toISOString().slice(0, 10)}
+                  value={`${pathDay.getFullYear()}-${String(pathDay.getMonth() + 1).padStart(2, "0")}-${String(pathDay.getDate()).padStart(2, "0")}`}
+                  onChange={(e) => {
+                    if (!e.target.value) return;
+                    // Split rather than new Date(string): the bare form is
+                    // parsed as UTC, which lands on the previous day for anyone
+                    // west of Greenwich.
+                    const [y, m, d] = e.target.value.split("-").map(Number);
+                    setPathDay(new Date(y, m - 1, d, 0, 0, 0, 0));
+                  }}
+                />
+              </label>
+              {!isToday ? (
+                <button
+                  className="sv-today"
+                  onClick={() => {
+                    const d = new Date();
+                    d.setHours(0, 0, 0, 0);
+                    setPathDay(d);
+                  }}
+                >
+                  {t("sv_today")}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+
           <MapContainer
             center={[currentLocation.lat, currentLocation.lng]}
             zoom={13}
@@ -462,13 +625,25 @@ export function RoutesScreen() {
             <TileLayer key={tile.url} attribution={tile.attribution} url={tile.url} subdomains={tile.subdomains as never} />
             <MapFollow lat={currentLocation.lat} lng={currentLocation.lng} follow={isTracking && !followPaused} />
             <Marker position={[currentLocation.lat, currentLocation.lng]} icon={meIcon} />
-            {routePositions.length > 1 ? (
+            {/* Your path belongs to "Me". In Friends mode it would just be
+                clutter under other people's pins. Dashed while it is a raw
+                trace, solid once it is sitting on real roads — so the map says
+                which of the two it is rather than implying the better one. */}
+            {mapMode === "me" && routePositions.length > 1 ? (
               <>
                 <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 10, opacity: 0.28 }} />
-                <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 4, opacity: 0.95 }} />
+                <Polyline
+                  positions={routePositions}
+                  pathOptions={{
+                    color: "#fc5200",
+                    weight: 4,
+                    opacity: 0.95,
+                    dashArray: pathSnapped ? undefined : "6 7",
+                  }}
+                />
               </>
             ) : null}
-            {friendWorkers.map((worker) => (
+            {mapMode === "friends" && friendWorkers.map((worker) => (
               <Marker
                 key={worker.id}
                 position={[worker.location.lat, worker.location.lng]}

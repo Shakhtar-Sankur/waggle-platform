@@ -5639,3 +5639,100 @@ body { font-weight: 400; }
 .leaflet-control-attribution a {
   color: #0a5878;
 }
+
+/* ── map modes: Me / Friends ──────────────────────────────────────────
+   Both used to be drawn at once — your line under other people's pins.
+   The switch floats over the map because the map is the screen, and a bar
+   above it would cost height on a phone for the sake of two words.
+   Bottom-left, clear of the search bar in .sv-top and of the recording
+   controls on the right. */
+.sv-mapmode {
+  position: absolute;
+  left: 12px;
+  bottom: 108px;
+  z-index: 500;
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 999px;
+  background: var(--background, #fff);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.14);
+}
+.sv-mapmode button {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 7px 15px;
+  font: 600 13px/1 var(--font-display, inherit);
+  color: var(--muted-foreground);
+}
+.sv-mapmode button.on {
+  background: var(--sv-orange, #fc5200);
+  color: #fff;
+}
+/* Focus must stay visible: this is the one control that changes what the
+   whole screen means. */
+.sv-mapmode button:focus-visible {
+  outline: 2px solid var(--sv-orange, #fc5200);
+  outline-offset: 2px;
+}
+
+/* One line naming what is on screen, sitting directly under the switch. */
+.sv-mapnote {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 84px;
+  z-index: 500;
+  font: 500 12px/1.35 var(--font-display, inherit);
+  color: var(--foreground);
+  background: var(--background, #fff);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 6px 10px;
+  width: fit-content;
+  max-width: calc(100% - 24px);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.12);
+}
+/* Snapped to roads is a stronger claim than a straight line between fixes,
+   so the two are not allowed to look the same. */
+.sv-mapnote em { font-style: normal; font-weight: 600; }
+.sv-mapnote em.ok { color: var(--sv-orange, #fc5200); }
+.sv-mapnote em.raw { color: var(--muted-foreground); }
+
+/* Day picker, "Me" only. */
+.sv-daypick {
+  position: absolute;
+  right: 12px;
+  bottom: 108px;
+  z-index: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sv-daypick input[type="date"] {
+  font: 600 13px/1 var(--font-display, inherit);
+  color: var(--foreground);
+  background: var(--background, #fff);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 7px 12px;
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.14);
+}
+.sv-today {
+  border: 1px solid var(--border);
+  background: var(--background, #fff);
+  color: var(--sv-orange, #fc5200);
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 7px 13px;
+  font: 600 13px/1 var(--font-display, inherit);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.14);
+}
+
+/* Arabic and any other right-to-left locale: the two controls swap sides,
+   or the switch lands under the thumb that is not reaching for it. */
+[dir="rtl"] .sv-mapmode { left: auto; right: 12px; }
+[dir="rtl"] .sv-daypick { right: auto; left: 12px; }
