@@ -36,6 +36,8 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+    sv_steps: "Steps", sv_start: "Start", sv_pin: "Pin",
+    sv_fastest: "fastest", sv_shortest: "shortest", sv_yourAvg: "you avg {kmh} km/h here",
     sv_modeEarnings: "Earnings", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "no traffic data", sv_clearRoute: "Clear route", sv_noRoute: "No road route found", sv_earnedHere: "{amount} here", sv_heatEmpty: "No movement recorded on this day",
     sv_bandStopped: "Stopped", sv_bandSlow: "Slow", sv_bandMoving: "Moving", sv_bandFast: "Fast",
     sv_noFriendsYet: "No friends yet — connect with drivers in Community", sv_switchToFriends: "Show friends", sv_switchToMe: "Show my path",
@@ -378,6 +380,8 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+    sv_steps: "Hakbang", sv_start: "Simulan", sv_pin: "I-pin",
+    sv_fastest: "pinakamabilis", sv_shortest: "pinakamaikli", sv_yourAvg: "avg mo {kmh} km/h dito",
     sv_modeEarnings: "Kita", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "walang datos ng trapiko", sv_clearRoute: "I-clear ang ruta", sv_noRoute: "Walang nahanap na ruta", sv_earnedHere: "{amount} dito", sv_heatEmpty: "Walang naitalang galaw sa araw na ito",
     sv_bandStopped: "Tigil", sv_bandSlow: "Mabagal", sv_bandMoving: "Umaandar", sv_bandFast: "Mabilis",
     sv_noFriendsYet: "Wala pang kaibigan — kumonekta sa mga driver sa Komunidad", sv_switchToFriends: "Ipakita ang mga kaibigan", sv_switchToMe: "Ipakita ang ruta ko",
@@ -419,6 +423,8 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+    sv_steps: "Pasos", sv_start: "Iniciar", sv_pin: "Fijar",
+    sv_fastest: "más rápida", sv_shortest: "más corta", sv_yourAvg: "tu promedio {kmh} km/h aquí",
     sv_modeEarnings: "Ingresos", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sin datos de tráfico", sv_clearRoute: "Borrar ruta", sv_noRoute: "No se encontró ruta", sv_earnedHere: "{amount} aquí", sv_heatEmpty: "Sin movimiento registrado ese día",
     sv_bandStopped: "Parado", sv_bandSlow: "Lento", sv_bandMoving: "En marcha", sv_bandFast: "Rápido",
     sv_noFriendsYet: "Aún no tienes amigos — conéctate con conductores en Comunidad", sv_switchToFriends: "Ver amigos", sv_switchToMe: "Ver mi ruta",
@@ -460,6 +466,8 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+    sv_steps: "चरण", sv_start: "शुरू", sv_pin: "पिन",
+    sv_fastest: "सबसे तेज़", sv_shortest: "सबसे छोटा", sv_yourAvg: "यहाँ आपका औसत {kmh} किमी/घं",
     sv_modeEarnings: "कमाई", sv_routeTo: "{km} किमी · {min} मिनट", sv_freeFlow: "ट्रैफ़िक डेटा नहीं", sv_clearRoute: "रास्ता हटाएँ", sv_noRoute: "कोई रास्ता नहीं मिला", sv_earnedHere: "यहाँ {amount}", sv_heatEmpty: "इस दिन कोई गतिविधि दर्ज नहीं",
     sv_bandStopped: "रुका", sv_bandSlow: "धीमा", sv_bandMoving: "चालू", sv_bandFast: "तेज़",
     sv_noFriendsYet: "अभी कोई दोस्त नहीं — कम्युनिटी में ड्राइवरों से जुड़ें", sv_switchToFriends: "दोस्त दिखाएँ", sv_switchToMe: "मेरा रास्ता दिखाएँ",
@@ -501,6 +509,8 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+    sv_steps: "ধাপ", sv_start: "শুরু", sv_pin: "পিন",
+    sv_fastest: "দ্রুততম", sv_shortest: "সংক্ষিপ্ততম", sv_yourAvg: "এখানে আপনার গড় {kmh} কিমি/ঘ",
     sv_modeEarnings: "আয়", sv_routeTo: "{km} কিমি · {min} মিনিট", sv_freeFlow: "ট্রাফিক তথ্য নেই", sv_clearRoute: "পথ মুছুন", sv_noRoute: "কোনো পথ পাওয়া যায়নি", sv_earnedHere: "এখানে {amount}", sv_heatEmpty: "এই দিনে কোনো চলাচল রেকর্ড হয়নি",
     sv_bandStopped: "থেমে", sv_bandSlow: "ধীর", sv_bandMoving: "চলছে", sv_bandFast: "দ্রুত",
     sv_noFriendsYet: "এখনও কোনো বন্ধু নেই — কমিউনিটিতে চালকদের সঙ্গে যুক্ত হন", sv_switchToFriends: "বন্ধুদের দেখান", sv_switchToMe: "আমার পথ দেখান",
@@ -542,6 +552,8 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+    sv_steps: "Langkah", sv_start: "Mulai", sv_pin: "Sematkan",
+    sv_fastest: "tercepat", sv_shortest: "terpendek", sv_yourAvg: "rata-rata Anda {kmh} km/j di sini",
     sv_modeEarnings: "Pendapatan", sv_routeTo: "{km} km · {min} mnt", sv_freeFlow: "tanpa data lalu lintas", sv_clearRoute: "Hapus rute", sv_noRoute: "Rute tidak ditemukan", sv_earnedHere: "{amount} di sini", sv_heatEmpty: "Tidak ada pergerakan pada hari ini",
     sv_bandStopped: "Berhenti", sv_bandSlow: "Lambat", sv_bandMoving: "Jalan", sv_bandFast: "Cepat",
     sv_noFriendsYet: "Belum ada teman — hubungkan dengan pengemudi di Komunitas", sv_switchToFriends: "Tampilkan teman", sv_switchToMe: "Tampilkan rute saya",
@@ -583,6 +595,8 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+    sv_steps: "Langkah", sv_start: "Mula", sv_pin: "Semat",
+    sv_fastest: "terpantas", sv_shortest: "terpendek", sv_yourAvg: "purata anda {kmh} km/j di sini",
     sv_modeEarnings: "Pendapatan", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "tiada data trafik", sv_clearRoute: "Kosongkan laluan", sv_noRoute: "Laluan tidak dijumpai", sv_earnedHere: "{amount} di sini", sv_heatEmpty: "Tiada pergerakan direkod pada hari ini",
     sv_bandStopped: "Berhenti", sv_bandSlow: "Perlahan", sv_bandMoving: "Bergerak", sv_bandFast: "Laju",
     sv_noFriendsYet: "Belum ada rakan — berhubung dengan pemandu di Komuniti", sv_switchToFriends: "Tunjukkan rakan", sv_switchToMe: "Tunjukkan laluan saya",
@@ -624,6 +638,8 @@ const ms: Dict = {
 };
 
 const th: Dict = {
+    sv_steps: "ขั้นตอน", sv_start: "เริ่ม", sv_pin: "ปักหมุด",
+    sv_fastest: "เร็วที่สุด", sv_shortest: "สั้นที่สุด", sv_yourAvg: "เฉลี่ยของคุณ {kmh} กม./ชม. ที่นี่",
     sv_modeEarnings: "รายได้", sv_routeTo: "{km} กม. · {min} นาที", sv_freeFlow: "ไม่มีข้อมูลจราจร", sv_clearRoute: "ล้างเส้นทาง", sv_noRoute: "ไม่พบเส้นทาง", sv_earnedHere: "{amount} ที่นี่", sv_heatEmpty: "ไม่มีการเคลื่อนไหวในวันนี้",
     sv_bandStopped: "หยุด", sv_bandSlow: "ช้า", sv_bandMoving: "กำลังไป", sv_bandFast: "เร็ว",
     sv_noFriendsYet: "ยังไม่มีเพื่อน — เชื่อมต่อกับคนขับในชุมชน", sv_switchToFriends: "แสดงเพื่อน", sv_switchToMe: "แสดงเส้นทางของฉัน",
@@ -665,6 +681,8 @@ const th: Dict = {
 };
 
 const vi: Dict = {
+    sv_steps: "Các bước", sv_start: "Bắt đầu", sv_pin: "Ghim",
+    sv_fastest: "nhanh nhất", sv_shortest: "ngắn nhất", sv_yourAvg: "bạn TB {kmh} km/h ở đây",
     sv_modeEarnings: "Thu nhập", sv_routeTo: "{km} km · {min} phút", sv_freeFlow: "không có dữ liệu giao thông", sv_clearRoute: "Xóa lộ trình", sv_noRoute: "Không tìm thấy tuyến đường", sv_earnedHere: "{amount} ở đây", sv_heatEmpty: "Không ghi nhận di chuyển trong ngày này",
     sv_bandStopped: "Dừng", sv_bandSlow: "Chậm", sv_bandMoving: "Đang chạy", sv_bandFast: "Nhanh",
     sv_noFriendsYet: "Chưa có bạn nào — hãy kết nối với tài xế trong Cộng đồng", sv_switchToFriends: "Xem bạn bè", sv_switchToMe: "Xem lộ trình của tôi",
@@ -706,6 +724,8 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+    sv_steps: "Etapas", sv_start: "Iniciar", sv_pin: "Fixar",
+    sv_fastest: "mais rápida", sv_shortest: "mais curta", sv_yourAvg: "sua média {kmh} km/h aqui",
     sv_modeEarnings: "Ganhos", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sem dados de trânsito", sv_clearRoute: "Limpar rota", sv_noRoute: "Nenhuma rota encontrada", sv_earnedHere: "{amount} aqui", sv_heatEmpty: "Nenhum movimento registrado neste dia",
     sv_bandStopped: "Parado", sv_bandSlow: "Lento", sv_bandMoving: "Em movimento", sv_bandFast: "Rápido",
     sv_noFriendsYet: "Ainda sem amigos — conecte-se com motoristas na Comunidade", sv_switchToFriends: "Ver amigos", sv_switchToMe: "Ver meu trajeto",
@@ -747,6 +767,8 @@ const pt: Dict = {
 };
 
 const fr: Dict = {
+    sv_steps: "Étapes", sv_start: "Démarrer", sv_pin: "Épingler",
+    sv_fastest: "plus rapide", sv_shortest: "plus courte", sv_yourAvg: "votre moyenne {kmh} km/h ici",
     sv_modeEarnings: "Revenus", sv_routeTo: "{km} km · {min} min", sv_freeFlow: "sans données de trafic", sv_clearRoute: "Effacer l'itinéraire", sv_noRoute: "Aucun itinéraire trouvé", sv_earnedHere: "{amount} ici", sv_heatEmpty: "Aucun déplacement enregistré ce jour-là",
     sv_bandStopped: "Arrêté", sv_bandSlow: "Lent", sv_bandMoving: "En route", sv_bandFast: "Rapide",
     sv_noFriendsYet: "Aucun ami pour l'instant — connectez-vous avec des chauffeurs dans Communauté", sv_switchToFriends: "Voir les amis", sv_switchToMe: "Voir mon trajet",
@@ -788,6 +810,8 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    sv_steps: "Schritte", sv_start: "Start", sv_pin: "Anheften",
+    sv_fastest: "schnellste", sv_shortest: "kürzeste", sv_yourAvg: "dein Schnitt {kmh} km/h hier",
     sv_modeEarnings: "Einnahmen", sv_routeTo: "{km} km · {min} Min", sv_freeFlow: "ohne Verkehrsdaten", sv_clearRoute: "Route löschen", sv_noRoute: "Keine Route gefunden", sv_earnedHere: "{amount} hier", sv_heatEmpty: "An diesem Tag keine Bewegung aufgezeichnet",
     sv_bandStopped: "Steht", sv_bandSlow: "Langsam", sv_bandMoving: "Unterwegs", sv_bandFast: "Schnell",
     sv_noFriendsYet: "Noch keine Freunde — verbinde dich mit Fahrern in der Community", sv_switchToFriends: "Freunde anzeigen", sv_switchToMe: "Meine Route anzeigen",
@@ -829,6 +853,8 @@ const de: Dict = {
 };
 
 const zh: Dict = {
+    sv_steps: "路线步骤", sv_start: "开始", sv_pin: "固定",
+    sv_fastest: "最快", sv_shortest: "最短", sv_yourAvg: "你在此均速 {kmh} 公里/小时",
     sv_modeEarnings: "收入", sv_routeTo: "{km} 公里 · {min} 分钟", sv_freeFlow: "无路况数据", sv_clearRoute: "清除路线", sv_noRoute: "未找到路线", sv_earnedHere: "此处 {amount}", sv_heatEmpty: "这一天没有记录到移动",
     sv_bandStopped: "停止", sv_bandSlow: "缓慢", sv_bandMoving: "行驶中", sv_bandFast: "快速",
     sv_noFriendsYet: "还没有好友 — 去社区与司机建立联系", sv_switchToFriends: "显示好友", sv_switchToMe: "显示我的路线",
@@ -870,6 +896,8 @@ const zh: Dict = {
 };
 
 const ja: Dict = {
+    sv_steps: "ルート", sv_start: "開始", sv_pin: "ピン",
+    sv_fastest: "最速", sv_shortest: "最短", sv_yourAvg: "ここでの平均 {kmh} km/h",
     sv_modeEarnings: "収入", sv_routeTo: "{km} km・{min} 分", sv_freeFlow: "交通情報なし", sv_clearRoute: "ルートを消去", sv_noRoute: "ルートが見つかりません", sv_earnedHere: "ここで {amount}", sv_heatEmpty: "この日は移動の記録がありません",
     sv_bandStopped: "停止", sv_bandSlow: "低速", sv_bandMoving: "走行中", sv_bandFast: "高速",
     sv_noFriendsYet: "友だちがまだいません — コミュニティでドライバーとつながりましょう", sv_switchToFriends: "友だちを表示", sv_switchToMe: "自分のルートを表示",
@@ -911,6 +939,8 @@ const ja: Dict = {
 };
 
 const ko: Dict = {
+    sv_steps: "경로", sv_start: "시작", sv_pin: "고정",
+    sv_fastest: "가장 빠름", sv_shortest: "가장 짧음", sv_yourAvg: "이곳 평균 {kmh} km/h",
     sv_modeEarnings: "수입", sv_routeTo: "{km} km · {min} 분", sv_freeFlow: "교통 정보 없음", sv_clearRoute: "경로 지우기", sv_noRoute: "경로를 찾을 수 없습니다", sv_earnedHere: "여기서 {amount}", sv_heatEmpty: "이 날 기록된 이동이 없습니다",
     sv_bandStopped: "정지", sv_bandSlow: "느림", sv_bandMoving: "주행 중", sv_bandFast: "빠름",
     sv_noFriendsYet: "아직 친구가 없습니다 — 커뮤니티에서 기사님들과 연결하세요", sv_switchToFriends: "친구 보기", sv_switchToMe: "내 경로 보기",
@@ -952,6 +982,8 @@ const ko: Dict = {
 };
 
 const ar: Dict = {
+    sv_steps: "الخطوات", sv_start: "ابدأ", sv_pin: "تثبيت",
+    sv_fastest: "الأسرع", sv_shortest: "الأقصر", sv_yourAvg: "متوسطك {kmh} كم/س هنا",
     sv_modeEarnings: "الأرباح", sv_routeTo: "{km} كم · {min} د", sv_freeFlow: "بدون بيانات مرور", sv_clearRoute: "مسح المسار", sv_noRoute: "لم يتم العثور على مسار", sv_earnedHere: "{amount} هنا", sv_heatEmpty: "لا توجد حركة مسجّلة في هذا اليوم",
     sv_bandStopped: "متوقف", sv_bandSlow: "بطيء", sv_bandMoving: "يتحرك", sv_bandFast: "سريع",
     sv_noFriendsYet: "لا أصدقاء بعد — تواصل مع السائقين في المجتمع", sv_switchToFriends: "عرض الأصدقاء", sv_switchToMe: "عرض مساري",

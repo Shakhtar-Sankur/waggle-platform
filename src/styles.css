@@ -6319,3 +6319,89 @@ html { background: var(--ground, #fbf7f4); }
 /* When directions are open the mode switch would sit under them. */
 .sv-directions ~ .sv-mapmode { top: auto; bottom: 118px; }
 .sv-directions ~ .sv-speedkey { top: auto; bottom: 86px; }
+
+/* Route alternatives. Shortest and fastest are usually different roads, and
+   which one matters depends on fuel, tolls, and what the driver knows — so the
+   app presents them and does not choose. */
+.sv-routeopts { display: flex; gap: 6px; margin-top: 8px; overflow-x: auto; padding-bottom: 2px; }
+.sv-routeopts button {
+  flex: none;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: 12px;
+  padding: 7px 10px;
+  cursor: pointer;
+  min-width: 92px;
+}
+.sv-routeopts button.is-on { border-color: #1d4ed8; background: #eff4ff; }
+.sv-routeopts b { font-size: 14px; font-weight: 750; color: var(--foreground); line-height: 1.1; }
+.sv-routeopts small { font-size: 11px; color: var(--muted-foreground); }
+.sv-routeopts em { font-style: normal; font-size: 10px; font-weight: 700; letter-spacing: .02em; }
+.tag-fast { color: #067a52; }
+.tag-short { color: #b45309; }
+/* The driver's own recorded speed on these roads — the one signal here that
+   comes from Buzz and not from a public routing server. */
+.tag-seen { color: #1d4ed8; }
+
+/* ── ETA bubbles on the routes ────────────────────────────────────────
+   The time attached to the road it belongs to. Every maps app does this
+   because it answers "which one" at a glance; the style here is Buzz's —
+   the brand orange rather than a borrowed blue, heavier weight, and the
+   unchosen routes as outlines rather than fills. */
+.eta-wrap { background: none; border: 0; }
+.eta {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 4px 9px;
+  border-radius: 999px;
+  font: 750 11.5px/1 var(--font-display, inherit);
+  white-space: nowrap;
+  background: var(--card);
+  color: var(--muted-foreground);
+  border: 1.5px solid var(--border);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, .22);
+}
+.eta.is-on {
+  background: var(--primary-fill);
+  color: #fff;
+  border-color: rgba(255, 255, 255, .85);
+  box-shadow: 0 4px 14px rgba(168, 47, 0, .45);
+}
+
+/* Steps · Start · Pin */
+.sv-routeacts { display: flex; gap: 6px; margin-top: 10px; }
+.sv-routeacts button {
+  flex: 1;
+  display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  border-radius: 12px;
+  padding: 9px 6px;
+  font: 700 12.5px/1 var(--font-display, inherit);
+  cursor: pointer;
+}
+.sv-routeacts button.is-on { background: var(--primary-soft); border-color: #ffd0b8; color: var(--primary-text); }
+.sv-routeacts button.primary {
+  background: var(--primary-fill); border-color: transparent; color: #fff;
+  box-shadow: 0 6px 16px rgba(168, 47, 0, .34);
+}
+.sv-routeacts button:active { transform: scale(.98); }
+
+/* While directions are open, the record sheet gets out of the way.
+   Measured on screen: the panel runs to ~448px and the sheet begins at ~430px,
+   so the last turn was overlapping "Ready to record" and being cut mid-word.
+   Two panels fighting for the lower half is not a layering problem to solve
+   with z-index — one of them is not wanted right now. */
+.sv-content.has-route .sv-sheet {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), opacity 160ms ease;
+}
+/* With the sheet gone the panel can use the room, and the map controls move
+   back down to where a thumb reaches them. */
+.sv-content.has-route .sv-directions { max-height: 62vh; }
+.sv-content.has-route .sv-mapmode { top: auto; bottom: 24px; }
+.sv-content.has-route .sv-speedkey { display: none; }
+.sv-content.has-route .sv-daypick { top: auto; bottom: 24px; }

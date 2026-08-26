@@ -29,7 +29,7 @@ import { MANILA_CENTER } from "../config/constants";
 import { LocationService } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
 import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
-import { describeStep, directionsBetween, type Directions } from "../services/DirectionsService";
+import { describeStep, directionsBetween, scoreAgainstHistory, type Directions } from "../services/DirectionsService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -431,16 +431,25 @@ export function RoutesScreen() {
   );
 
   /* Directions to whatever the driver searched for. */
-  const [directions, setDirections] = useState<Directions | null>(null);
+  /* Every alternative OSRM found, and which one the driver has chosen. */
+  const [routeOptions, setRouteOptions] = useState<Directions[]>([]);
+  const [chosenRoute, setChosenRoute] = useState(0);
+  const [stepsOpen, setStepsOpen] = useState(true);
+  const [pinnedHere, setPinnedHere] = useState(false);
   const [routing, setRouting] = useState(false);
+  const directions = routeOptions[chosenRoute] ?? null;
 
   useEffect(() => {
-    if (!searchPin) { setDirections(null); return; }
+    if (!searchPin) { setRouteOptions([]); return; }
     let cancelled = false;
     setRouting(true);
-    directionsBetween(currentLocation, searchPin).then((d) => {
+    directionsBetween(currentLocation, searchPin).then((found) => {
       if (cancelled) return;
-      setDirections(d);
+      // Score what came back against roads this driver has actually driven.
+      // Nobody sells live traffic; their own recorded speed is the one signal
+      // Buzz owns that a general-purpose map does not.
+      setRouteOptions(found ? scoreAgainstHistory(found, dayPoints) : []);
+      setChosenRoute(0);
       setRouting(false);
     });
     return () => { cancelled = true; };
@@ -605,7 +614,7 @@ export function RoutesScreen() {
       </div>
 
       {view === "maps" ? (
-        <div className="sv-content maps">
+        <div className={"sv-content maps" + (searchPin ? " has-route" : "")}>
           {/* Me / Friends. Sits over the map rather than above it, because the
               map is the screen and a bar pushing it down costs more than the
               switch is worth. */}
@@ -678,7 +687,7 @@ export function RoutesScreen() {
             <div className="sv-directions">
               <div className="sv-directions-head">
                 <strong>{searchPin.label}</strong>
-                <button aria-label={t("sv_clearRoute")} onClick={() => { setSearchPin(null); setDirections(null); }}>
+                <button aria-label={t("sv_clearRoute")} onClick={() => { setSearchPin(null); setRouteOptions([]); }}>
                   <X size={15} />
                 </button>
               </div>
@@ -686,11 +695,57 @@ export function RoutesScreen() {
                 <p className="sv-directions-meta"><Loader2 size={13} className="spin" /> …</p>
               ) : directions ? (
                 <>
+                  {/* Every alternative, so the choice is the driver's. Shortest
+                      and fastest are usually different roads, and which matters
+                      depends on fuel, on tolls, and on what they know. */}
+                  {routeOptions.length > 1 ? (
+                    <div className="sv-routeopts">
+                      {routeOptions.map((r, i) => {
+                        const fastest = r.minutes === Math.min(...routeOptions.map((x) => x.minutes));
+                        const shortest = r.km === Math.min(...routeOptions.map((x) => x.km));
+                        return (
+                          <button
+                            key={i}
+                            className={i === chosenRoute ? "is-on" : ""}
+                            onClick={() => setChosenRoute(i)}
+                          >
+                            <b>{r.minutes} min</b>
+                            <small>{r.km} km</small>
+                            {fastest ? <em className="tag-fast">{t("sv_fastest")}</em>
+                              : shortest ? <em className="tag-short">{t("sv_shortest")}</em> : null}
+                            {/* Their own recorded speed on these roads. Shown as
+                                a note, never used to reorder — ranking routes on
+                                two data points is worse than not ranking. */}
+                            {r.observedKmh ? (
+                              <em className="tag-seen">{t("sv_yourAvg", { kmh: String(r.observedKmh) })}</em>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : null}
                   <p className="sv-directions-meta">
                     <b>{t("sv_routeTo", { km: String(directions.km), min: String(directions.minutes) })}</b>
                     <em>{t("sv_freeFlow")}</em>
                   </p>
-                  <ol className="sv-steps">
+                  {/* Steps, Start, Pin — the three things a driver does with a
+                      route. Steps folds the list away, because six turns is a
+                      lot of panel on a phone held at a junction. */}
+                  <div className="sv-routeacts">
+                    <button className={stepsOpen ? "is-on" : ""} onClick={() => setStepsOpen((v) => !v)}>
+                      <RouteIcon size={14} /> {t("sv_steps")}
+                    </button>
+                    <button className="primary" onClick={() => { if (!isTracking) void startTracking(); }}>
+                      <Flag size={14} /> {t("sv_start")}
+                    </button>
+                    <button
+                      className={pinnedHere ? "is-on" : ""}
+                      onClick={() => setPinnedHere((v) => !v)}
+                    >
+                      <MapPin size={14} /> {t("sv_pin")}
+                    </button>
+                  </div>
+                  <ol className="sv-steps" hidden={!stepsOpen}>
                     {directions.steps.slice(0, 6).map((step, i) => (
                       <li key={i}>
                         <span>{describeStep(step)}</span>
@@ -829,6 +884,44 @@ export function RoutesScreen() {
             {/* Directions to a searched place. Drawn under nothing else, and in
                 a colour no other line on this map uses, so it cannot be mistaken
                 for where the driver has already been. */}
+            {routeOptions.map((r, i) =>
+              i === chosenRoute ? null : (
+                // The roads not taken, faint, so the choice is visible on the
+                // map and not only in the list.
+                <Polyline
+                  key={`alt-${i}`}
+                  positions={r.positions}
+                  pathOptions={{ color: "#64748b", weight: 4, opacity: 0.45, dashArray: "2 8" }}
+                  eventHandlers={{ click: () => setChosenRoute(i) }}
+                />
+              ),
+            )}
+            {/* The time sits on the road it belongs to. This is the single
+                element that makes a screen read as a maps app rather than as a
+                map with a panel over it — the number is attached to the line,
+                so a glance answers "which one" without reading a list.
+                Buzz's own language: brand fill for the chosen route, outline
+                for the ones not taken, and the bee's orange rather than a
+                borrowed blue. */}
+            {routeOptions.map((r, i) => {
+              const mid = r.positions[Math.floor(r.positions.length / 2)];
+              if (!mid) return null;
+              const on = i === chosenRoute;
+              return (
+                <Marker
+                  key={`eta-${i}`}
+                  position={mid}
+                  zIndexOffset={on ? 1000 : 0}
+                  icon={L.divIcon({
+                    className: "eta-wrap",
+                    html: `<div class="eta${on ? " is-on" : ""}">${r.minutes} min</div>`,
+                    iconSize: [58, 26],
+                    iconAnchor: [29, 13],
+                  })}
+                  eventHandlers={{ click: () => setChosenRoute(i) }}
+                />
+              );
+            })}
             {directions ? (
               <>
                 <Polyline positions={directions.positions} pathOptions={{ color: "#0b3d91", weight: 10, opacity: 0.22 }} />

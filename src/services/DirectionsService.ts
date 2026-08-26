@@ -32,6 +32,15 @@ export interface Directions {
   /** Free-flow minutes. No traffic model exists behind this number. */
   minutes: number;
   steps: DirectionStep[];
+  /**
+   * Average speed the driver has actually achieved on roads near this route,
+   * from their own recorded history. Undefined when they have never driven any
+   * of it — which is most routes, most of the time, and is why this is shown as
+   * a bonus rather than relied on for ranking.
+   */
+  observedKmh?: number;
+  /** How much of this route the driver has driven before, 0..1. */
+  familiarity?: number;
 }
 
 /**
@@ -41,21 +50,21 @@ export interface Directions {
 export async function directionsBetween(
   from: { lat: number; lng: number },
   to: { lat: number; lng: number },
-): Promise<Directions | null> {
+): Promise<Directions[] | null> {
   const coords = `${from.lng.toFixed(6)},${from.lat.toFixed(6)};${to.lng.toFixed(6)},${to.lat.toFixed(6)}`;
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
     const res = await fetch(
-      `${OSRM}${coords}?overview=full&geometries=geojson&steps=true&alternatives=false`,
+      `${OSRM}${coords}?overview=full&geometries=geojson&steps=true&alternatives=3`,
       { signal: controller.signal },
     );
     if (!res.ok) return null;
     const body = await res.json();
     if (body?.code !== "Ok" || !body.routes?.length) return null;
 
-    const route = body.routes[0];
+    const parse = (route: any): Directions | null => {
     // GeoJSON is [lng, lat]; Leaflet wants [lat, lng].
     const positions: [number, number][] = (route.geometry?.coordinates ?? []).map(
       ([lng, lat]: [number, number]) => [lat, lng] as [number, number],
@@ -74,12 +83,19 @@ export async function directionsBetween(
         s.metres > 0 || i === 0 || i === all.length - 1,
       );
 
-    return {
-      positions,
-      km: Math.round((route.distance ?? 0) / 100) / 10,
-      minutes: Math.max(1, Math.round((route.duration ?? 0) / 60)),
-      steps,
+      return {
+        positions,
+        km: Math.round((route.distance ?? 0) / 100) / 10,
+        minutes: Math.max(1, Math.round((route.duration ?? 0) / 60)),
+        steps,
+      };
     };
+
+    // OSRM returns the alternatives it found, which is often one and sometimes
+    // three. Shortest and fastest are frequently different roads, and which one
+    // a driver wants is theirs to decide, not the app's.
+    const routes = body.routes.map(parse).filter(Boolean) as Directions[];
+    return routes.length ? routes : null;
   } catch {
     // Offline, aborted, blocked, malformed — all the same answer to the caller.
     return null;
@@ -102,4 +118,72 @@ export function describeStep(step: DirectionStep): string {
     case "new name": return `Continue${on}`;
     default: return dir ? `${dir}${on}` : `Continue${on}`;
   }
+}
+
+/**
+ * Score each alternative against roads this driver has actually driven.
+ *
+ * This is the part a general-purpose map cannot do. Nobody gives away live
+ * traffic — not OSRM, not anyone free — so "the route with less traffic" is not
+ * available to buy. But Buzz records every driver's real position and time, so
+ * the speed actually achieved on a given road is data it already owns.
+ *
+ * What comes back is honest about its own thinness: `familiarity` says how much
+ * of the route the driver has been on before, and `observedKmh` is the average
+ * they managed there. With one day of history that covers almost nothing, which
+ * is why the UI shows it as a note beside a route rather than reordering the
+ * list by it. Ranking routes on two data points would be worse than not
+ * ranking them.
+ */
+export function scoreAgainstHistory(
+  routes: Directions[],
+  history: { lat: number; lng: number; timestamp: number }[],
+  /** How close a recorded point must be to count as "on this road". */
+  nearMetres = 45,
+): Directions[] {
+  if (history.length < 3) return routes;
+
+  // Speed at each historical point, and a coarse spatial bucket to look it up
+  // by. A full spatial index would be the right answer at city scale; at a few
+  // thousand points a grid keyed to ~50 m is simpler and fast enough.
+  const CELL = nearMetres / 111_320;
+  const grid = new Map<string, { sum: number; n: number }>();
+  for (let i = 1; i < history.length; i++) {
+    const a = history[i - 1], b = history[i];
+    const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+    const dLng = ((b.lng - a.lng) * Math.PI) / 180;
+    const lat1 = (a.lat * Math.PI) / 180, lat2 = (b.lat * Math.PI) / 180;
+    const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLng / 2) ** 2;
+    const metres = 2 * 6_371_000 * Math.asin(Math.sqrt(h));
+    const secs = Math.max(1, (b.timestamp - a.timestamp) / 1000);
+    const kmh = (metres / secs) * 3.6;
+    // Stationary time is not a speed on a road. Without this the average
+    // includes every minute spent parked at a restaurant, and a route the
+    // driver knows well reports "you avg 0.4 km/h here" — which reads as the
+    // road being impassable rather than as the driver having waited on it.
+    // Stops are already shown as their own markers; this number is about
+    // moving.
+    if (!Number.isFinite(kmh) || kmh > 200 || kmh < 3) continue;
+    const key = `${Math.round(b.lng / CELL)}:${Math.round(b.lat / CELL)}`;
+    const cell = grid.get(key) ?? { sum: 0, n: 0 };
+    cell.sum += kmh; cell.n += 1;
+    grid.set(key, cell);
+  }
+  if (!grid.size) return routes;
+
+  return routes.map((route) => {
+    let hits = 0, sum = 0, n = 0;
+    for (const [lat, lng] of route.positions) {
+      const key = `${Math.round(lng / CELL)}:${Math.round(lat / CELL)}`;
+      const cell = grid.get(key);
+      if (!cell) continue;
+      hits += 1; sum += cell.sum; n += cell.n;
+    }
+    if (!hits || !n) return route;
+    return {
+      ...route,
+      familiarity: hits / route.positions.length,
+      observedKmh: Math.round((sum / n) * 10) / 10,
+    };
+  });
 }
