@@ -4,6 +4,7 @@ import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { useBrandBand } from "../hooks/useBrandBand";
 import { useT } from "../i18n";
 import { MediaService, type PickedPhoto } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
@@ -24,6 +25,7 @@ function presenceLabel(worker: Worker | undefined, t: Translator): string {
 }
 
 export function MessagesScreen() {
+  useBrandBand();
   const location = useLocation();
   const t = useT();
   const user = useAuthStore((state) => state.user);
@@ -162,15 +164,20 @@ export function MessagesScreen() {
     new Date(ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 
   return (
-    <main className="page-shell wa-page">
-      <div className="wa-search input-shell">
-        <Search size={18} />
-        <input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder={t("wa_searchChats")}
-        />
-      </div>
+    <main className="page-shell wa-page has-band">
+      {/* Search sits on the band, where every messaging app a driver already
+          uses puts it — in the coloured header, not floating on a white page
+          under a black title. */}
+      <section className="screen-band wa-band">
+        <div className="wa-search input-shell">
+          <Search size={18} />
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("wa_searchChats")}
+          />
+        </div>
+      </section>
 
       <button className="wa-newgroup" onClick={() => { setGroupPicks([]); setGroupName(""); setGroupOpen(true); }}>
         <span className="wa-avatar wa-avatar-accent"><UsersRound size={20} /></span>

@@ -5753,8 +5753,11 @@ body { font-weight: 400; }
      header, which is transparent at rest. The pull is the header's measured
      height, set by HomeScreen — hardcoding it leaves a coloured seam on any
      phone whose safe-area inset differs from the machine it was written on. */
-  margin: calc(var(--band-pull, 88px) * -1) -16px 0;
-  padding: calc(var(--band-pull, 88px) + 14px) 16px 62px;
+  /* The horizontal pull is the shell's own padding, not a guess. Hardcoding
+     -16px overhung Messages by 4px each side — its shell pads 12px — and the
+     whole document scrolled sideways. */
+  margin: calc(var(--band-pull, 88px) * -1) calc(-1 * var(--shell-pad, 16px)) 0;
+  padding: calc(var(--band-pull, 88px) + 14px) var(--shell-pad, 16px) 62px;
   background:
     radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
     linear-gradient(160deg, #b8340a 0%, #a82f00 48%, #8f2800 100%);
@@ -5985,3 +5988,49 @@ body[data-band] { background: #fbf7f4; }
   color: var(--danger);
   border-color: color-mix(in srgb, var(--danger) 34%, transparent);
 }
+
+/* ── Messages: search on the band ─────────────────────────────────────
+   The screen opened on a black title over white with a white search field
+   floating beneath it. Every messaging app a driver already has puts search
+   inside the coloured header. */
+.wa-page.has-band { padding-top: 0; --shell-pad: 12px; }
+.wa-band { padding-bottom: 20px; }
+
+/* The field sits on colour now, so it needs its own surface rather than a
+   border that disappears against the band. */
+.wa-band .wa-search {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 14px;
+}
+.wa-band .wa-search svg { color: rgba(255, 255, 255, .85); }
+.wa-band .wa-search input { color: #fff; background: transparent; }
+.wa-band .wa-search input::placeholder { color: rgba(255, 255, 255, .72); }
+
+/* New group climbs onto the band as its own row, the way the first card does
+   on Home and Profile. */
+.wa-page.has-band > .wa-newgroup {
+  margin: -12px 0 0;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 12px 14px;
+  box-shadow: var(--shadow-card);
+}
+
+/* One rhythm below, the same 12px as Profile. */
+.wa-page.has-band > * { margin-bottom: 0; }
+.wa-page.has-band > * + *:not(.screen-band) { margin-top: 12px; }
+
+/* The empty state was centred in the remaining space and read as an error.
+   Give it a surface so it reads as a state, and colour its icon. */
+.wa-page.has-band .empty-state {
+  background: linear-gradient(135deg, #fff7ef 0%, #ffffff 62%);
+  border: 1px solid #ffe2cc;
+  border-radius: 18px;
+  padding: 28px 20px;
+}
+.wa-page.has-band .empty-state svg { color: var(--primary); }
