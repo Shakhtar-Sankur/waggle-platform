@@ -6617,40 +6617,49 @@ html { background: var(--ground, #fbf7f4); }
   font-size: 10.5px;
 }
 
-/* ══ Community: cards, not slabs ══════════════════════════════════════
-   The feed was full-bleed white rectangles touching each other and both
-   screen edges — the shape of a social site from ten years ago, and the
-   one thing that most makes a feed look dated. Cards with an edge, a
-   radius and air between them read as objects you can act on. */
-.fb-body { padding: 12px 12px 0; }
+/* ══ Community: a timeline, not a feed of cards ══════════════════════
+   I made these cards with radius, shadow and margins — and that was the
+   wrong call, because .tw-post is deliberately a flat row with a hairline
+   between posts, which its own comment explains is most of what separates
+   a timeline from a feed of cards. The result was worse than either
+   choice: the skeleton was a card and the post that replaced it was a row,
+   so the feed visibly changed shape the moment it finished loading.
 
-.fb-composer,
-.fb-post,
-.fb-card {
-  border-radius: 16px;
-  border: 1px solid var(--border);
-  box-shadow: 0 1px 2px rgba(23, 26, 33, .05), 0 6px 18px rgba(23, 26, 33, .045);
-  margin-bottom: 12px;
-  overflow: hidden;      /* so a photo corner cannot escape the radius */
+   So: rows everywhere, edge to edge, hairline dividers. The composer and
+   the skeleton now match the thing they stand in for. */
+.fb-body { padding: 0; }
+
+.fb-composer {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 8px solid var(--muted);   /* the break between compose and read */
+  box-shadow: none;
+  margin-bottom: 0;
 }
 
-/* A photo should fill the card's width and keep its corners. */
-.fb-post img { border-radius: 0; }
+/* The skeleton has to be the shape of the post it is standing in for, or the
+   feed jumps when it resolves. */
+.fb-post.fb-skeleton {
+  border-radius: 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  box-shadow: none;
+  margin-bottom: 0;
+  padding: 12px 16px;
+}
+
+/* Media keeps its own corners inside a square row — this is the one place a
+   radius belongs in a timeline. */
+.tw-image, .fb-post img {
+  border-radius: 14px;
+  border: 1px solid var(--border);
+}
 
 /* Skeletons that shimmer instead of sitting there.
    A static grey block is indistinguishable from a screen that has given up —
    which on a slow connection is exactly when a driver is looking at one. */
-.fb-skeleton [class*="line"],
-.fb-skeleton .sk,
-.fb-skeleton-line,
-.fb-skeleton-avatar,
-.fb-skeleton-media {
-  background: linear-gradient(
-    100deg,
-    #eceef2 30%,
-    #f6f7f9 48%,
-    #eceef2 62%
-  );
+.fb-skeleton .sk {
+  background: linear-gradient(100deg, #eceef2 30%, #f6f7f9 48%, #eceef2 62%);
   background-size: 220% 100%;
   animation: sk-sweep 1.35s ease-in-out infinite;
 }
@@ -6658,18 +6667,11 @@ html { background: var(--ground, #fbf7f4); }
   from { background-position: 180% 0; }
   to   { background-position: -60% 0; }
 }
-/* Somebody who has asked their phone not to animate should not be given a
+/* Somebody who has asked their phone not to animate should not be handed a
    moving gradient; a flat placeholder is the accessible answer. */
 @media (prefers-reduced-motion: reduce) {
-  .fb-skeleton [class*="line"],
-  .fb-skeleton .sk,
-  .fb-skeleton-line,
-  .fb-skeleton-avatar,
-  .fb-skeleton-media { animation: none; background: #eceef2; }
+  .fb-skeleton .sk { animation: none; background: #eceef2; }
 }
-
-/* The tab block casts onto the feed, so the first card needs to clear it. */
-.fb-tabs + .fb-body { padding-top: 14px; }
 
 /* ══ System polish ════════════════════════════════════════════════════
    Applied once, across every screen, rather than screen by screen. Three
@@ -6737,4 +6739,72 @@ button:not(:disabled):active,
    through the type scale; this is only the floor Safari checks. */
 @supports (-webkit-touch-callout: none) {
   input, select, textarea { font-size: max(16px, 1em); }
+}
+
+/* Compose button. Bottom-right above the tab bar, thumb-reachable on a phone
+   held one-handed — which is how this app is held. */
+.fb-fab {
+  position: fixed;
+  right: 16px;
+  /* Above the tab bar and its safe-area inset, not on top of it. */
+  bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+  z-index: 45;
+  width: 56px;
+  height: 56px;
+  border: 0;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: var(--accent-grad);
+  box-shadow: 0 8px 22px rgba(168, 47, 0, .42), 0 2px 6px rgba(23, 26, 33, .18);
+  cursor: pointer;
+}
+.fb-fab:active { transform: scale(.94); }
+[dir="rtl"] .fb-fab { right: auto; left: 16px; }
+
+/* ══ Community header: a timeline's header, not a portal's ═══════════
+   The reference is X, and X's header is slim and quiet: a mark, a title,
+   two icons, then text tabs with a hairline indicator. Mine was a heavy
+   coloured block with four large icon-and-label tabs eating sixty-odd
+   pixels before a single post appeared — which is a lot of chrome above a
+   feed whose whole job is to show posts.
+
+   The band stays, because it is what makes the app feel like an app on
+   every other screen, but it gets out of the way faster here. */
+.fb-topbar { padding: 8px 12px 6px; }
+
+.fb-tabs {
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 4px 14px rgba(168, 47, 0, .18);
+}
+
+/* Text tabs. The icon goes: at this size it was decoration, and it cost
+   more height than the word beside it. */
+.fb-tab { padding: 0 4px; min-height: 42px; }
+.fb-tab-icon { display: none; }
+.fb-tab-label {
+  font: 700 13px/1 var(--font-display, inherit);
+  letter-spacing: .01em;
+}
+
+/* The indicator is a short bar under the word, not a full-width rule —
+   it should point at the tab, not underline the whole column. */
+.fb-tab.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 6px;
+  width: 26px;
+  height: 3px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+/* A badge on a text tab has nowhere to sit but beside the word. */
+.fb-tab .fb-tab-badge {
+  position: static;
+  margin-inline-start: 5px;
+  transform: none;
 }

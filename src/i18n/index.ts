@@ -36,6 +36,7 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+    fb_compose: "Write a post",
     wa_holdToTalk: "Hold to record a voice note", wa_micDenied: "Buzz could not use the microphone. Check the app's permissions.", wa_voiceNote: "Voice note",
     wa_today: "Today", wa_yesterday: "Yesterday", wa_privacyNote: "Messages are stored on Gigzen's servers and only people in this chat can read them. They are not end-to-end encrypted.",
     wa_filterAll: "All", wa_filterUnread: "Unread", wa_filterGroups: "Groups",
@@ -383,6 +384,7 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+    fb_compose: "Sumulat ng post",
     wa_holdToTalk: "Pindutin nang matagal para mag-record", wa_micDenied: "Hindi magamit ng Buzz ang mikropono. Tingnan ang mga pahintulot.", wa_voiceNote: "Voice note",
     wa_today: "Ngayon", wa_yesterday: "Kahapon", wa_privacyNote: "Nakaimbak ang mga mensahe sa server ng Gigzen at ang nasa chat lang ang makakabasa. Hindi ito end-to-end encrypted.",
     wa_filterAll: "Lahat", wa_filterUnread: "Hindi pa nabasa", wa_filterGroups: "Mga Grupo",
@@ -429,6 +431,7 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+    fb_compose: "Escribir una publicación",
     wa_holdToTalk: "Mantén pulsado para grabar", wa_micDenied: "Buzz no pudo usar el micrófono. Revisa los permisos de la app.", wa_voiceNote: "Nota de voz",
     wa_today: "Hoy", wa_yesterday: "Ayer", wa_privacyNote: "Los mensajes se guardan en los servidores de Gigzen y solo quienes están en este chat pueden leerlos. No tienen cifrado de extremo a extremo.",
     wa_filterAll: "Todos", wa_filterUnread: "No leídos", wa_filterGroups: "Grupos",
@@ -475,6 +478,7 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+    fb_compose: "पोस्ट लिखें",
     wa_holdToTalk: "वॉइस नोट रिकॉर्ड करने के लिए दबाए रखें", wa_micDenied: "Buzz माइक्रोफ़ोन का उपयोग नहीं कर सका। ऐप की अनुमतियाँ जाँचें।", wa_voiceNote: "वॉइस नोट",
     wa_today: "आज", wa_yesterday: "कल", wa_privacyNote: "संदेश Gigzen के सर्वर पर रखे जाते हैं और केवल इस चैट के लोग ही पढ़ सकते हैं। ये एंड-टू-एंड एन्क्रिप्टेड नहीं हैं।",
     wa_filterAll: "सभी", wa_filterUnread: "अपठित", wa_filterGroups: "ग्रुप",
@@ -521,6 +525,7 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+    fb_compose: "পোস্ট লিখুন",
     wa_holdToTalk: "ভয়েস নোট রেকর্ড করতে চেপে ধরুন", wa_micDenied: "Buzz মাইক্রোফোন ব্যবহার করতে পারেনি। অ্যাপের অনুমতি দেখুন।", wa_voiceNote: "ভয়েস নোট",
     wa_today: "আজ", wa_yesterday: "গতকাল", wa_privacyNote: "বার্তা Gigzen-এর সার্ভারে থাকে এবং শুধু এই চ্যাটের লোকেরাই পড়তে পারেন। এগুলি এন্ড-টু-এন্ড এনক্রিপ্টেড নয়।",
     wa_filterAll: "সব", wa_filterUnread: "অপঠিত", wa_filterGroups: "গ্রুপ",
@@ -567,6 +572,7 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+    fb_compose: "Tulis postingan",
     wa_holdToTalk: "Tahan untuk merekam pesan suara", wa_micDenied: "Buzz tidak dapat menggunakan mikrofon. Periksa izin aplikasi.", wa_voiceNote: "Pesan suara",
     wa_today: "Hari ini", wa_yesterday: "Kemarin", wa_privacyNote: "Pesan disimpan di server Gigzen dan hanya orang dalam obrolan ini yang bisa membacanya. Pesan tidak terenkripsi ujung ke ujung.",
     wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Grup",
@@ -613,6 +619,7 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+    fb_compose: "Tulis hantaran",
     wa_holdToTalk: "Tahan untuk merakam nota suara", wa_micDenied: "Buzz tidak dapat menggunakan mikrofon. Semak kebenaran apl.", wa_voiceNote: "Nota suara",
     wa_today: "Hari ini", wa_yesterday: "Semalam", wa_privacyNote: "Mesej disimpan di pelayan Gigzen dan hanya orang dalam sembang ini boleh membacanya. Ia tidak disulitkan hujung ke hujung.",
     wa_filterAll: "Semua", wa_filterUnread: "Belum dibaca", wa_filterGroups: "Kumpulan",
@@ -659,6 +666,7 @@ const ms: Dict = {
 };
 
 const th: Dict = {
+    fb_compose: "เขียนโพสต์",
     wa_holdToTalk: "กดค้างเพื่อบันทึกข้อความเสียง", wa_micDenied: "Buzz ใช้ไมโครโฟนไม่ได้ ตรวจสอบสิทธิ์ของแอป", wa_voiceNote: "ข้อความเสียง",
     wa_today: "วันนี้", wa_yesterday: "เมื่อวาน", wa_privacyNote: "ข้อความถูกเก็บบนเซิร์ฟเวอร์ของ Gigzen และมีเพียงคนในแชทนี้ที่อ่านได้ ข้อความไม่ได้เข้ารหัสแบบต้นทางถึงปลายทาง",
     wa_filterAll: "ทั้งหมด", wa_filterUnread: "ยังไม่อ่าน", wa_filterGroups: "กลุ่ม",
@@ -705,6 +713,7 @@ const th: Dict = {
 };
 
 const vi: Dict = {
+    fb_compose: "Viết bài",
     wa_holdToTalk: "Giữ để ghi tin nhắn thoại", wa_micDenied: "Buzz không dùng được micro. Hãy kiểm tra quyền của ứng dụng.", wa_voiceNote: "Tin nhắn thoại",
     wa_today: "Hôm nay", wa_yesterday: "Hôm qua", wa_privacyNote: "Tin nhắn được lưu trên máy chủ Gigzen và chỉ người trong cuộc trò chuyện này đọc được. Chúng không được mã hóa đầu cuối.",
     wa_filterAll: "Tất cả", wa_filterUnread: "Chưa đọc", wa_filterGroups: "Nhóm",
@@ -751,6 +760,7 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+    fb_compose: "Escrever publicação",
     wa_holdToTalk: "Segure para gravar um áudio", wa_micDenied: "O Buzz não conseguiu usar o microfone. Verifique as permissões do app.", wa_voiceNote: "Mensagem de voz",
     wa_today: "Hoje", wa_yesterday: "Ontem", wa_privacyNote: "As mensagens ficam nos servidores da Gigzen e só quem está nesta conversa pode lê-las. Não têm criptografia de ponta a ponta.",
     wa_filterAll: "Todas", wa_filterUnread: "Não lidas", wa_filterGroups: "Grupos",
@@ -797,6 +807,7 @@ const pt: Dict = {
 };
 
 const fr: Dict = {
+    fb_compose: "Écrire un post",
     wa_holdToTalk: "Maintenez pour enregistrer un message vocal", wa_micDenied: "Buzz n'a pas pu utiliser le micro. Vérifiez les autorisations de l'app.", wa_voiceNote: "Message vocal",
     wa_today: "Aujourd'hui", wa_yesterday: "Hier", wa_privacyNote: "Les messages sont stockés sur les serveurs de Gigzen et seules les personnes de cette conversation peuvent les lire. Ils ne sont pas chiffrés de bout en bout.",
     wa_filterAll: "Tous", wa_filterUnread: "Non lus", wa_filterGroups: "Groupes",
@@ -843,6 +854,7 @@ const fr: Dict = {
 };
 
 const de: Dict = {
+    fb_compose: "Beitrag schreiben",
     wa_holdToTalk: "Zum Aufnehmen gedrückt halten", wa_micDenied: "Buzz konnte das Mikrofon nicht nutzen. Prüfe die App-Berechtigungen.", wa_voiceNote: "Sprachnachricht",
     wa_today: "Heute", wa_yesterday: "Gestern", wa_privacyNote: "Nachrichten liegen auf Gigzens Servern und nur Personen in diesem Chat können sie lesen. Sie sind nicht Ende-zu-Ende-verschlüsselt.",
     wa_filterAll: "Alle", wa_filterUnread: "Ungelesen", wa_filterGroups: "Gruppen",
@@ -889,6 +901,7 @@ const de: Dict = {
 };
 
 const zh: Dict = {
+    fb_compose: "发布动态",
     wa_holdToTalk: "按住录制语音", wa_micDenied: "Buzz 无法使用麦克风，请检查应用权限。", wa_voiceNote: "语音消息",
     wa_today: "今天", wa_yesterday: "昨天", wa_privacyNote: "消息存储在 Gigzen 的服务器上，只有此聊天中的人可以阅读。消息未进行端到端加密。",
     wa_filterAll: "全部", wa_filterUnread: "未读", wa_filterGroups: "群组",
@@ -935,6 +948,7 @@ const zh: Dict = {
 };
 
 const ja: Dict = {
+    fb_compose: "投稿する",
     wa_holdToTalk: "長押しで音声を録音", wa_micDenied: "Buzz がマイクを使用できませんでした。アプリの権限を確認してください。", wa_voiceNote: "音声メッセージ",
     wa_today: "今日", wa_yesterday: "昨日", wa_privacyNote: "メッセージは Gigzen のサーバーに保存され、このチャットの参加者だけが読めます。エンドツーエンド暗号化はされていません。",
     wa_filterAll: "すべて", wa_filterUnread: "未読", wa_filterGroups: "グループ",
@@ -981,6 +995,7 @@ const ja: Dict = {
 };
 
 const ko: Dict = {
+    fb_compose: "게시물 작성",
     wa_holdToTalk: "길게 눌러 음성 녹음", wa_micDenied: "Buzz가 마이크를 사용할 수 없습니다. 앱 권한을 확인하세요.", wa_voiceNote: "음성 메시지",
     wa_today: "오늘", wa_yesterday: "어제", wa_privacyNote: "메시지는 Gigzen 서버에 저장되며 이 대화에 있는 사람만 읽을 수 있습니다. 종단 간 암호화는 되어 있지 않습니다.",
     wa_filterAll: "전체", wa_filterUnread: "안 읽음", wa_filterGroups: "그룹",
@@ -1027,6 +1042,7 @@ const ko: Dict = {
 };
 
 const ar: Dict = {
+    fb_compose: "اكتب منشورًا",
     wa_holdToTalk: "اضغط مع الاستمرار لتسجيل رسالة صوتية", wa_micDenied: "تعذّر على Buzz استخدام الميكروفون. تحقّق من أذونات التطبيق.", wa_voiceNote: "رسالة صوتية",
     wa_today: "اليوم", wa_yesterday: "أمس", wa_privacyNote: "تُخزَّن الرسائل على خوادم Gigzen ولا يمكن قراءتها إلا لمن في هذه المحادثة. وهي ليست مشفّرة طرفًا إلى طرف.",
     wa_filterAll: "الكل", wa_filterUnread: "غير المقروءة", wa_filterGroups: "المجموعات",

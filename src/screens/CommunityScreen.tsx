@@ -26,7 +26,8 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ChallengeIcon } from "../components/ChallengeIcon";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
@@ -131,6 +132,22 @@ export function CommunityScreen() {
   const [hidden, setHidden] = useState<Set<string>>(new Set());
   const [shareFb, setShareFb] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  /* The compose button floats over the timeline. It does not open a second
+     way to write a post — it brings the driver to the one that is already
+     at the top, because two composers means two places a half-written post
+     can be lost. */
+  const composerRef = useRef<HTMLFormElement | null>(null);
+  const jumpToComposer = () => {
+    const form = composerRef.current;
+    if (!form) return;
+    form.scrollIntoView({ behavior: "smooth", block: "start" });
+    // Focus after the scroll, not with it: focusing an off-screen field makes
+    // the browser jump to it instantly and cancels the smooth scroll.
+    window.setTimeout(() => {
+      form.querySelector<HTMLElement>("textarea, input")?.focus();
+    }, 420);
+  };
   // Full-size image is fetched only when a photo is tapped.
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
 
@@ -353,7 +370,7 @@ export function CommunityScreen() {
               search. */}
 
           {/* Composer */}
-          <form className="fb-composer" onSubmit={submitPost}>
+          <form className="fb-composer" onSubmit={submitPost} ref={composerRef}>
             <div className="fb-composer-row">
               <span className="fb-avatar">{initials(user?.fullName ?? "Driver")}</span>
               <textarea
@@ -846,6 +863,27 @@ export function CommunityScreen() {
           <img src={viewerUrl} alt="" />
         </div>
       ) : null}
+
+      {/* Compose. Bottom-right, clear of the tab bar, and only on the timeline
+          — there is nothing to compose on Reels, Friends or Groups. It does not
+          open a second composer: it brings the driver to the one already at the
+          top, because two composers means two places a half-written post can be
+          lost. */}
+      {/* Rendered into <body>, not here.
+          position:fixed anchors to the viewport only if no ancestor has a
+          transform — and .page-shell carries one, an identity matrix left by an
+          entry animation. It changes nothing visually and still makes itself
+          the containing block, so the button positioned against a 1376px-tall
+          element and landed at y1140 on an 812px screen: present in the DOM,
+          off the bottom of the phone. A portal steps outside the subtree. */}
+      {tab === "home" && typeof document !== "undefined"
+        ? createPortal(
+            <button type="button" className="fb-fab" onClick={jumpToComposer} aria-label={t("fb_compose")}>
+              <Plus size={24} />
+            </button>,
+            document.body,
+          )
+        : null}
     </main>
   );
 }
