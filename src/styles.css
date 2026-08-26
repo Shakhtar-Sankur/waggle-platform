@@ -7438,3 +7438,82 @@ body[data-band="profile"] {
   flex-shrink: 12;
   min-width: 0;
 }
+
+/* ── Tabs on the same gutters as the header above them ────────────────
+   The tab row's cells already spanned 12→363, matching the logo's left
+   edge and the message button's right. The words inside them did not:
+   four equal columns with the label centred in each put "Home" at 37 and
+   ended "Groups" at 342, so the row read as floating between the two
+   things it was supposed to line up with.
+
+   Distributed instead of gridded. The first label starts on the logo's
+   edge, the last ends on the message button's, and the three gaps
+   between them come out equal.
+
+   The negative margins are what keep this from costing a tap target: the
+   outer tabs keep their 12px of padding (so the touch area is ~62px, not
+   the 38px of the word), and the margin pulls that padding back off the
+   gutter rather than pushing the text inward. */
+.fb-tabs {
+  display: flex;
+  justify-content: space-between;
+}
+.fb-tab {
+  flex: 0 0 auto;
+  padding-inline: 12px;
+}
+.fb-tab:first-child { margin-left: -12px; }
+.fb-tab:last-child { margin-right: -12px; }
+
+/* The underline was inset by a percentage of the cell, which only made
+   sense while cells were four equal columns. Now that a tab is as wide as
+   its word plus padding, the bar matches the word exactly. */
+.fb-tab.active::after {
+  left: 12px;
+  right: 12px;
+}
+
+/* ── The primary button gradient ──────────────────────────────────────
+   --accent-grad was the last of the hardcoded oranges: a literal brown
+   ramp used by every .button-primary, so "Edit Profile" sat brown under
+   a magenta header. It follows the section now like the rest of the
+   scale.
+
+   Each ramp is checked at its LIGHTEST stop, which is the one that
+   decides whether the white label holds up — the dark end is never the
+   problem. Teal's natural light end (#0d9488) measures 3.74:1 and is not
+   used; that ramp stops at #0f766e, 5.5:1. The others land at 5.7, 5.2
+   and 4.7:1.
+
+   Deliberately NOT retinted:
+     - the work-app tiles (Amazon Flex amber, DoorDash red) — those are
+       other companies' brands and are the whole point of the picker;
+     - Delete Account red — danger is a meaning, not a theme. */
+body[data-band="community"] {
+  --accent-grad: linear-gradient(135deg, #5b21b6 0%, #6d28d9 55%, #7c3aed 100%);
+}
+body[data-band="routes"] {
+  --accent-grad: linear-gradient(135deg, #134e4a 0%, #115e59 55%, #0f766e 100%);
+}
+body[data-band="messages"] {
+  --accent-grad: linear-gradient(135deg, #1e40af 0%, #1d4ed8 55%, #2563eb 100%);
+}
+body[data-band="profile"] {
+  --accent-grad: linear-gradient(135deg, #86198f 0%, #a21caf 55%, #c026d3 100%);
+}
+
+/* The wordmark is the logo, and a logo does not change colour with the
+   screen it happens to be sitting on. Pinned to the brand ramp so it
+   keeps the orange everywhere, whatever the section did to the token. */
+.wordmark-text {
+  background-image: linear-gradient(135deg, #a82f00 0%, #b23200 55%, #bc3a06 100%);
+}
+
+/* The bee is half the logo, and it was taking --primary while the
+   wordmark beside it kept the brand ramp — so the footer read "🐝 Buzz"
+   in two different colours. Pinned to match.
+
+   The header keeps its own treatment: on a coloured band the whole mark
+   goes white, and those rules are more specific than this one, so this
+   only reaches a wordmark standing on a plain background. */
+.wordmark svg { color: #b23200; }
