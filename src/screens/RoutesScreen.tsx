@@ -28,6 +28,7 @@ import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
 import { LocationService } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
+import { BAND_COLOUR, findStops, speedSegments } from "../services/RouteInsights";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -36,7 +37,7 @@ import { useChatStore } from "../stores/useChatStore";
 import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
 import { useProfileStore } from "../stores/useProfileStore";
-import type { Challenge, ChallengeMetric } from "../types";
+import type { Challenge, ChallengeMetric, LocationPoint } from "../types";
 import { currency, duration, initials, km, weeklyGoalFrom } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
 
@@ -357,6 +358,10 @@ export function RoutesScreen() {
 
   /** Road-matched geometry for whichever day is showing. */
   const [drawnPath, setDrawnPath] = useState<[number, number][]>([]);
+  /* The recorded points behind the drawn line. Kept because they carry the
+     timestamps — the matched geometry does not, and speed and stops are
+     both time. */
+  const [dayPoints, setDayPoints] = useState<LocationPoint[]>([]);
   const [pathSnapped, setPathSnapped] = useState(false);
   const [pathLoading, setPathLoading] = useState(false);
 
@@ -374,6 +379,7 @@ export function RoutesScreen() {
       const points = isToday ? route : await SupabaseService.routePointsForDay(pathDay);
       if (cancelled) return;
 
+      setDayPoints(points);
       if (points.length < 2) {
         setDrawnPath([]);
         setPathSnapped(false);
@@ -401,6 +407,18 @@ export function RoutesScreen() {
   }, [pathDay, isToday, route.length]);
 
   const routePositions = mapMode === "me" ? drawnPath : livePositions;
+
+  /* Speed runs and stops for whatever day is on screen. Recomputed only
+     when the drawn path or the underlying points change — walking a few
+     thousand vertices on every render would cost more than it shows. */
+  const speedRuns = useMemo(
+    () => (mapMode === "me" ? speedSegments(dayPoints, drawnPath) : []),
+    [mapMode, dayPoints, drawnPath],
+  );
+  const stops = useMemo(
+    () => (mapMode === "me" ? findStops(dayPoints) : []),
+    [mapMode, dayPoints],
+  );
   const onlineWorkers = workers.filter((worker) => worker.isOnline);
 
   // Only drivers you are connected with appear on the map. Showing every
@@ -596,6 +614,17 @@ export function RoutesScreen() {
           {/* Which day, in "Me" only. Native date input: it is localised,
               keyboard-accessible and already familiar on every phone, which no
               hand-rolled calendar in this codebase would be. */}
+          {/* What the colours mean. Without this the route is decorative;
+              with it a driver can see where the day was spent crawling. */}
+          {mapMode === "me" && speedRuns.length ? (
+            <div className="sv-speedkey">
+              <span><i style={{ background: BAND_COLOUR.stopped }} />{t("sv_bandStopped")}</span>
+              <span><i style={{ background: BAND_COLOUR.slow }} />{t("sv_bandSlow")}</span>
+              <span><i style={{ background: BAND_COLOUR.moving }} />{t("sv_bandMoving")}</span>
+              <span><i style={{ background: BAND_COLOUR.fast }} />{t("sv_bandFast")}</span>
+            </div>
+          ) : null}
+
           {mapMode === "me" ? (
             <div className="sv-daypick">
               <label>
@@ -646,16 +675,44 @@ export function RoutesScreen() {
                 which of the two it is rather than implying the better one. */}
             {mapMode === "me" && routePositions.length > 1 ? (
               <>
-                <Polyline positions={routePositions} pathOptions={{ color: "#fc5200", weight: 10, opacity: 0.28 }} />
-                <Polyline
-                  positions={routePositions}
-                  pathOptions={{
-                    color: "#fc5200",
-                    weight: 4,
-                    opacity: 0.95,
-                    dashArray: pathSnapped ? undefined : "6 7",
-                  }}
-                />
+                {/* The casing underneath, so the coloured run reads as one
+                    route rather than as loose pieces of different colours. */}
+                <Polyline positions={routePositions} pathOptions={{ color: "#7c2d12", weight: 11, opacity: 0.22 }} />
+                {speedRuns.length ? (
+                  speedRuns.map((run, i) => (
+                    <Polyline
+                      key={i}
+                      positions={run.positions}
+                      pathOptions={{
+                        color: BAND_COLOUR[run.band],
+                        weight: 5,
+                        opacity: 0.96,
+                        lineCap: "round",
+                        dashArray: pathSnapped ? undefined : "6 7",
+                      }}
+                    />
+                  ))
+                ) : (
+                  <Polyline
+                    positions={routePositions}
+                    pathOptions={{ color: "#fc5200", weight: 5, opacity: 0.95, dashArray: pathSnapped ? undefined : "6 7" }}
+                  />
+                )}
+                {/* Where the shift actually stood still. On a delivery map that
+                    is the interesting part: a queue at a restaurant, a wait for
+                    a customer, a break. */}
+                {stops.map((stop, i) => (
+                  <Marker
+                    key={`stop-${i}`}
+                    position={[stop.lat, stop.lng]}
+                    icon={L.divIcon({
+                      className: "stop-marker-wrap",
+                      html: `<div class="stop-marker"><span>${stop.minutes}</span></div>`,
+                      iconSize: [26, 26],
+                      iconAnchor: [13, 13],
+                    })}
+                  />
+                ))}
               </>
             ) : null}
             {mapMode === "friends" && friendWorkers.map((worker) => (

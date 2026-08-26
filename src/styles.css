@@ -6238,3 +6238,41 @@ html { background: var(--ground, #fbf7f4); }
   border-top: 1px solid #f0e2d9;
   box-shadow: 0 -8px 26px rgba(120, 45, 12, .10);
 }
+
+/* Stop markers — where the shift stood still for three minutes or more.
+   The number is the minutes, because "how long" is the whole question. */
+.stop-marker {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: #dc2626;
+  border: 2.5px solid #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, .35);
+  display: flex; align-items: center; justify-content: center;
+}
+.stop-marker span {
+  color: #fff;
+  font: 700 10px/1 var(--font-display, inherit);
+  letter-spacing: -.02em;
+}
+
+/* Legend for the speed colouring, so the colours mean something rather than
+   just being colourful. Sits under the mode switch on the Me view. */
+.sv-speedkey {
+  position: absolute;
+  left: 12px;
+  top: 196px;
+  z-index: 500;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  padding: 5px 9px;
+  border-radius: 999px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  box-shadow: 0 2px 10px rgb(0 0 0 / 0.12);
+  font: 600 10px/1 var(--font-display, inherit);
+  color: var(--muted-foreground);
+}
+.sv-speedkey i { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 3px; }
+.sv-speedkey span { display: inline-flex; align-items: center; white-space: nowrap; }
+[dir="rtl"] .sv-speedkey { left: auto; right: 12px; }
