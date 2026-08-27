@@ -40,6 +40,9 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
   useEffect(() => {
     let layer: L.Layer | null = null;
     let cancelled = false;
+    /** Handles for the two re-measure nudges below, so unmount cancels them. */
+    let frame = 0;
+    let settle = 0;
 
     (async () => {
       try {
@@ -70,6 +73,43 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
         });
         layer.addTo(map);
 
+        // Nudge both maps to re-measure.
+        //
+        // MapLibre fixes its viewport when the layer is added, and on this
+        // screen that happens BEFORE the layout settles — the header band, the
+        // bottom sheet and the web fonts all land after. So the GL map keeps a
+        // stale size and paints NOTHING: the canvas is present, correctly
+        // positioned and completely blank.
+        //
+        // Seen in the running app rather than reasoned about. The basemap was
+        // empty on first mount, no error logged, the raster fallback never
+        // fired because nothing had thrown — and dispatching a single resize
+        // event drew the whole city instantly. A driver opening Routes would
+        // have got a blank map until they rotated the phone.
+        //
+        // Two nudges, because one is not enough to cover both cases: the next
+        // frame catches the ordinary layout pass, and a short timeout catches
+        // the late one when fonts or the sheet animate in. Both are cheap, and
+        // resizing to the size it already has is a no-op.
+        const nudge = () => {
+          // invalidateSize() alone does NOT work here, and the reason is worth
+          // recording: Leaflet only emits `resize` when the measured size has
+          // actually CHANGED. The container's box is correct from the start —
+          // it is MapLibre's own viewport that is stale — so invalidateSize
+          // measures the same numbers, decides nothing happened, and stays
+          // silent. The plugin listens for that event, so it never resizes,
+          // and the map stays blank. Tried it; nothing moved.
+          //
+          // Firing the event directly is what the plugin is actually waiting
+          // for. Same-size payload on purpose: the point is the notification,
+          // not the numbers.
+          map.invalidateSize({ animate: false });
+          const size = map.getSize();
+          map.fire("resize", { oldSize: size, newSize: size });
+        };
+        frame = requestAnimationFrame(nudge);
+        settle = window.setTimeout(nudge, 350);
+
         // The attribution control is off on the MapContainer so Leaflet does
         // not stamp its own name in front. The DATA credit is still required —
         // ODbL for OpenStreetMap, and OpenMapTiles' own terms — so it is added
@@ -95,6 +135,10 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
 
     return () => {
       cancelled = true;
+      // A nudge that fires after unmount would call resize() on a map that is
+      // gone, which throws inside MapLibre rather than failing quietly.
+      cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
       if (layer) map.removeLayer(layer);
     };
   }, [map]);
