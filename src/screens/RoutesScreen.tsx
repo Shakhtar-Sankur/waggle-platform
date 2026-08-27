@@ -92,8 +92,11 @@ interface SearchHit {
   lng: number;
   label: string;
   sub: string;
-  /** True for a town/city/region, as opposed to a street or a shop. */
+  /** True for a settlement or district, as opposed to a street or a shop. */
   isPlace?: boolean;
+  /** True only for places big enough to be typed from another country — a
+   *  city, state or country, never a village or a suburb. */
+  isMajorPlace?: boolean;
 }
 
 // Rough squared-degree distance — only used to rank search hits by nearness,
@@ -279,20 +282,47 @@ export function RoutesScreen() {
               // place/neighbourhood must not outrank the branch down the road.
               // (Nominatim's `importance` is NOT usable here: the far 7-Elevens
               //  score 0.53 while the Manila ones score 0.0001.)
+              // Split in two, because "is a settlement" and "is a settlement
+              // worth typing from another country" are different questions and
+              // conflating them is what put three Punjab villages above
+              // Andheri East for a driver standing in Mumbai.
+              isMajorPlace:
+                (r.class === "boundary" && r.type === "administrative") ||
+                (r.class === "place" &&
+                  ["city", "state", "region", "province", "municipality", "county", "country"].includes(
+                    r.type ?? "",
+                  )),
               isPlace:
                 (r.class === "boundary" && r.type === "administrative") ||
                 (r.class === "place" &&
-                  ["city", "town", "village", "state", "region", "province", "municipality", "county", "country"].includes(
+                  ["city", "town", "village", "suburb", "neighbourhood", "state", "region", "province", "municipality", "county", "country"].includes(
                     r.type ?? "",
                   )),
             };
           })
           // Ranking, in order:
           //  1. name actually matches what was typed;
-          //  2. a real town/city beats a street or shop of the same name —
-          //     this is what puts Jakarta above Manila's "Jakarta" side-street;
-          //  3. nearest first, which is what decides between branches of a
-          //     chain like 7-Eleven, since none of them is a "place".
+          //  2. RELEVANT to where the driver is standing — either close by, or
+          //     a place big enough that someone would type its name from
+          //     another country;
+          //  3. among those, a major place first;
+          //  4. then nearest.
+          //
+          // Tier 2 is the one that was missing, and its absence was not
+          // subtle: "Andheri" from Mumbai returned a village in Kharar Tahsil,
+          // one in Sangrur and one in Baran — all ~1,400km away — before
+          // Andheri East, eight kilometres from the driver. The old rule
+          // ranked "is a settlement" above distance, and `village` counted
+          // while `suburb` did not, so three Punjab hamlets outranked the
+          // suburb the driver meant.
+          //
+          // Checked against the three cases this ranking exists to satisfy:
+          //   "Andheri" from Mumbai  → near suburb beats far villages;
+          //   "Jakarta" from Manila  → both pass tier 2 (one near, one major),
+          //                            and tier 3 puts the city above the
+          //                            Manila side-street named after it;
+          //   "7-Eleven" from Manila → near branches pass, Thai ones do not,
+          //                            so the one down the road comes first.
           .sort((a, b) => {
             const matches = (hit: SearchHit) => {
               const name = key(hit.label);
@@ -300,6 +330,16 @@ export function RoutesScreen() {
             };
             const byMatch = matches(a) - matches(b);
             if (byMatch !== 0) return byMatch;
+
+            // 60km: far enough to cover a metro area and the trips a driver
+            // actually makes, near enough that another state never qualifies.
+            const relevant = (hit: SearchHit) =>
+              distanceFrom(currentLocation, hit) <= 60 || hit.isMajorPlace ? 0 : 1;
+            const byRelevance = relevant(a) - relevant(b);
+            if (byRelevance !== 0) return byRelevance;
+
+            const byMajor = Number(b.isMajorPlace) - Number(a.isMajorPlace);
+            if (byMajor !== 0) return byMajor;
             const byPlace = Number(b.isPlace) - Number(a.isPlace);
             if (byPlace !== 0) return byPlace;
             return distanceFrom(currentLocation, a) - distanceFrom(currentLocation, b);
@@ -605,8 +645,19 @@ export function RoutesScreen() {
         </div>
       </div>
 
+      {/* `has-results` does for the results list what `has-route` does for the
+          directions panel: gets the sheet and the map controls out from
+          underneath it. Measured before adding it — the zoom and layers buttons
+          sat over the last 21px of every result line, and the record sheet
+          covered the fourth and fifth rows entirely. */}
       {view === "maps" ? (
-        <div className={"sv-content maps" + (searchPin ? " has-route" : "")}>
+        <div
+          className={
+            "sv-content maps" +
+            (searchPin ? " has-route" : "") +
+            (results.length ? " has-results" : "")
+          }
+        >
           {/* Me / Friends. Sits over the map rather than above it, because the
               map is the screen and a bar pushing it down costs more than the
               switch is worth. */}

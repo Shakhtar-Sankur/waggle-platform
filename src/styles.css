@@ -8092,3 +8092,40 @@ body[data-band="home"] {
 /* The emoji span is gone; drop the rule that sized it so it cannot
    re-apply to the svg that replaced it. */
 .vehicle-emoji { font-size: inherit; }
+
+/* ── The search results list had things sitting on top of it ──────────
+   Measured, not eyeballed: the zoom and layers controls occupy x259-303
+   while a result line runs to x280, so the last 21px of every address
+   was underneath a button — "Sangrur Tahsil, Sangrur, Punja[b]",
+   "Andheri East, K/E Ward, Mum[bai]". And the record sheet starts at
+   y389 while the list runs to y445, hiding the fourth and fifth results
+   completely.
+
+   Same treatment the directions panel already gets: while you are
+   choosing a destination, the controls for a map you are not looking at
+   yet get out of the way. They come back the moment the list closes. */
+.sv-content.has-results .sv-sheet {
+  transform: translateY(120%);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 220ms cubic-bezier(.2, .8, .2, 1), opacity 160ms ease;
+}
+/* The controls all live in .sv-rail — locate, zoom, layers. My first
+   attempt guessed at .sv-layers/.sv-locate, which match nothing, so the
+   two buttons carried on sitting over the addresses. Hide the rail. */
+.sv-content.has-results .sv-rail {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+}
+.sv-content.has-results .sv-speedkey,
+.sv-content.has-results .sv-mapnote { display: none; }
+/* The mode switch and the date picker sit at the top, right under the
+   search field, which is exactly where the list wants to be. */
+.sv-content.has-results .sv-mapmode,
+.sv-content.has-results .sv-daypick { opacity: 0; pointer-events: none; }
+
+/* And the list itself sits above the map layer regardless, so a control
+   I have not named here cannot quietly land on top of it again. */
+.sv-results,
+.sv-top > div:has(> button strong) { position: relative; z-index: 620; }
