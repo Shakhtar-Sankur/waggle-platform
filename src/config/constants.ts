@@ -1,11 +1,27 @@
 import type { WorkApp } from "../types";
 
-export const APP_NAME = "Buzz";
+/**
+ * What a driver sees. Just the product name, everywhere in the UI.
+ *
+ * Named for the waggle dance — how a returning bee tells the hive where it has
+ * been, which is the thing this app does between drivers.
+ */
+export const APP_NAME = "Waggle";
+
+/**
+ * The full name, for the places that need the company attached: the Play Store
+ * listing, the trademark filing, the legal pages.
+ *
+ * Deliberately NOT what appears on the icon or in the header. "Waggle" is a
+ * coined word and ownable on its own; the qualified form exists so the store
+ * entry and the mark are unambiguous, not so drivers have to say it.
+ */
+export const APP_LEGAL_NAME = "Gigzen Waggle";
 
 /**
  * The company behind the app.
  *
- * Buzz shipped without naming its maker anywhere — not on the auth screen,
+ * The app shipped without naming its maker anywhere — not on the auth screen,
  * not in the profile, and not in the privacy policy, which is a contract that
  * has to say who the other party is. A driver handing over their location is
  * entitled to know whose company holds it.

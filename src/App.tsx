@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { AppShell } from "./components/AppShell";
 import { ConsentGate } from "./components/ConsentGate";
+import { APP_NAME } from "./config/constants";
 import { Toasts } from "./components/Toasts";
 import { NotificationService } from "./services/NotificationService";
 import { SupabaseService } from "./services/SupabaseService";
@@ -154,7 +155,7 @@ export default function App() {
         <Route
           path="/home"
           element={
-            <AppShell title="Buzz">
+            <AppShell title={APP_NAME}>
               <HomeScreen />
             </AppShell>
           }

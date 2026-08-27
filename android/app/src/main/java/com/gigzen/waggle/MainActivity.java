@@ -1,4 +1,4 @@
-package com.masayaako.driver;
+package com.gigzen.waggle;
 
 import com.getcapacitor.BridgeActivity;
 

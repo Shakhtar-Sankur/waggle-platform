@@ -10,7 +10,7 @@ only when you want notifications delivered while the app is closed.
 
 | Step | State |
 |---|---|
-| 1. Firebase project + `google-services.json` | **done** — project `buzz-buzz-2390c`, package `com.masayaako.driver`, file in `android/app/` |
+| 1. Firebase project + `google-services.json` | **NEEDS REDOING** — project `buzz-buzz-2390c` exists, but its Android app is registered under the old package `com.masayaako.driver`. The app is now `com.gigzen.waggle`. See the box below. |
 | 2. Service account key | user-side, cannot be verified from here |
 | 3. Deploy `send-push` + set 4 secrets | **not done** |
 | 4. `private.push_config` row | not verified (needs service-role access) |
@@ -30,9 +30,33 @@ The app, the trigger and the Firebase side are all already in place.
 
 ## 1. Create a Firebase project (free)
 
+> ### ⚠ The package name changed — this step must be redone
+>
+> The app's `applicationId` is now **`com.gigzen.waggle`** (it was
+> `com.masayaako.driver`). The `google-services.json` currently in `android/app/`
+> is registered to the OLD package, and **the Android build will fail** until
+> this is fixed:
+>
+> ```
+> No matching client found for package name 'com.gigzen.waggle'
+> ```
+>
+> Editing the package name inside `google-services.json` by hand does NOT work.
+> The `mobilesdk_app_id` in that file is issued by Firebase per package, so a
+> hand-edited file is rejected. The Android app has to be registered properly.
+>
+> **What to do** (in the EXISTING project `buzz-buzz-2390c` — do not make a new
+> one, the server key and the `send-push` config stay valid):
+>
+> 1. Firebase console → project `buzz-buzz-2390c` → **Add app** → Android.
+> 2. Package name: `com.gigzen.waggle`.
+> 3. Download the new `google-services.json`, replace `android/app/google-services.json`.
+> 4. The old `com.masayaako.driver` app can stay registered; it costs nothing and
+>    keeps any existing test installs working until they are retired.
+
 1. Go to <https://console.firebase.google.com> → **Add project**.
-2. Add an **Android app** with package name **`com.masayaako.driver`**
-   (this must match exactly — it is tied to the signing keystore).
+2. Add an **Android app** with package name **`com.gigzen.waggle`**
+   (this must match `applicationId` in `android/app/build.gradle` exactly).
 3. Download **`google-services.json`** and place it in `android/app/google-services.json`.
 
 > **The Gradle side is already done — you do not need to edit any build file.**

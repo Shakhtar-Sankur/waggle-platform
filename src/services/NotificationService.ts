@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { LocalNotifications } from "@capacitor/local-notifications";
 import { PushNotifications } from "@capacitor/push-notifications";
+import { APP_NAME } from "../config/constants";
 import type { AppNotification } from "../types";
 import { uid } from "../utils/format";
 import { SupabaseService } from "./SupabaseService";
@@ -63,7 +64,7 @@ export const NotificationService = {
       await PushNotifications.addListener("pushNotificationReceived", (notification) => {
         void NotificationService.sendNative(
           NotificationService.create(
-            notification.title ?? "Buzz",
+            notification.title ?? APP_NAME,
             notification.body ?? "You have a new notification.",
             "system",
           ),

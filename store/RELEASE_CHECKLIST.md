@@ -35,7 +35,7 @@ alone; no real accounts, chat, or shared data). For a real multi-user launch:
 
 ## 🟢 Play Console steps (you must do these — needs your account)
 - [ ] Create a Google Play Developer account ($25 one-time, ID verification).
-- [ ] Create the app → package name `com.masayaako.driver`.
+- [ ] Create the app → package name `com.gigzen.waggle`.
 - [ ] **Main store listing** — paste from `store/store-listing.md`; upload icon, feature graphic, screenshots.
 - [ ] **Privacy policy** — host `store/privacy-policy.md` and paste the URL (App content → Privacy policy).
 - [ ] **Data safety** — answer per `store/data-safety.md`.

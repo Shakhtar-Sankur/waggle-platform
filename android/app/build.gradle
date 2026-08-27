@@ -9,10 +9,10 @@ if (localPropertiesFile.exists()) {
 }
 
 android {
-    namespace = "com.masayaako.driver"
+    namespace = "com.gigzen.waggle"
     compileSdk = rootProject.ext.compileSdkVersion
     defaultConfig {
-        applicationId "com.masayaako.driver"
+        applicationId "com.gigzen.waggle"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         // versionCode 1 is already on Play (internal testing), and Play rejects a

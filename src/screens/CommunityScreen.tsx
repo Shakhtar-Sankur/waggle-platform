@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ChallengeIcon } from "../components/ChallengeIcon";
+import { APP_NAME } from "../config/constants";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -1137,7 +1138,7 @@ function ProfileStat({ icon, value, label }: { icon: ReactNode; value: string; l
 }
 
 function sharePost(body: string) {
-  const data = { title: "Buzz", text: body };
+  const data = { title: APP_NAME, text: body };
   if (navigator.share) {
     void navigator.share(data).catch(() => undefined);
   } else if (navigator.clipboard) {
@@ -1154,7 +1155,7 @@ function sharePost(body: string) {
 function shareToFacebook(text: string) {
   if (navigator.clipboard) void navigator.clipboard.writeText(text).catch(() => undefined);
   if (navigator.share) {
-    void navigator.share({ title: "Buzz", text }).catch(() => undefined);
+    void navigator.share({ title: APP_NAME, text }).catch(() => undefined);
     return;
   }
   const shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
