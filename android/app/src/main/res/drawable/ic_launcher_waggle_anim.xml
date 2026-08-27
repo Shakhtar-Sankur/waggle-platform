@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The splash copy of the launcher mark.
+
+    A second file purely because an <adaptive-icon> cannot point its foreground
+    at an AnimatedVectorDrawable — the launcher needs a plain vector, so the
+    animation cannot simply be added to ic_launcher_waggle.xml. This is that
+    same artwork with names on the paths for avd_launcher_waggle.xml to target,
+    and with the run trimmed to nothing and the destination at zero alpha so
+    the mark can draw itself in.
+
+    Any edit to the geometry has to be made in BOTH files, and in the web mark
+    at src/components/Wordmark.tsx.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:name="dance"
+        android:scaleX="1.7"
+        android:scaleY="1.7"
+        android:translateX="13.2"
+        android:translateY="13.2">
+
+        <!-- trimPathEnd starts at 0: nothing is drawn until the animation runs.
+             If the AVD is ever removed, this file renders EMPTY rather than
+             wrong — which is the failure that gets noticed. -->
+        <path
+            android:name="run"
+            android:pathData="M13.5,36.5 C 19.9,35.6 23,31.8 22.3,25.3 C 21.6,18.8 24.6,15 31,14"
+            android:strokeColor="#FFFFFF"
+            android:strokeWidth="4.6"
+            android:strokeLineCap="round"
+            android:trimPathEnd="0" />
+
+        <path
+            android:name="pin"
+            android:pathData="M31,9.9 a4.1,4.1 0 1,1 0,8.2 a4.1,4.1 0 1,1 0,-8.2 Z"
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0" />
+    </group>
+</vector>

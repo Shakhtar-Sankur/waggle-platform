@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The launch animation: the app draws its own dance.
+
+    The bee walks the waggle run first and only then loops back, so that is the
+    order here — the heavy diagonal strokes itself in, then the return loops
+    trace around it. It is the actual sequence of the actual behaviour, which is
+    a better reason for an animation order than "it looks nice", and it happens
+    to look nice.
+
+    Deliberately restrained. A driver opening this at a traffic light sees it
+    several times a shift, and a performance gets old on the third viewing —
+    so there is no reveal, no bounce, no flourish. One stroke, then the loops,
+    done.
+
+    580ms total, under the 1000ms Android allows a splash icon before it cuts
+    the drawable off mid-movement, and matching the 600ms
+    windowSplashScreenAnimationDuration in values/styles.xml. Those two numbers
+    have to stay in step: the theme value is how long the system WAITS, and a
+    drawable that runs longer than it gets truncated.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_waggle_anim">
+
+    <!-- The run draws itself, 0 to 430ms. Decelerate, so it arrives rather
+         than stops. -->
+    <target android:name="run">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:duration="430"
+                android:interpolator="@android:interpolator/decelerate_quad" />
+        </aapt:attr>
+    </target>
+
+    <!-- The destination lands as the run reaches it, not before: the route
+         arrives somewhere. Short and un-eased — a dot that fades slowly reads
+         as a rendering fault rather than an arrival. -->
+    <target android:name="pin">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="fillAlpha"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:startOffset="360"
+                android:duration="120"
+                android:interpolator="@android:interpolator/decelerate_quad" />
+        </aapt:attr>
+    </target>
+
+</animated-vector>

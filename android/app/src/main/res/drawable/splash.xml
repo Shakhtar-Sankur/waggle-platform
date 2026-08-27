@@ -1,10 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Buzz launch/splash: the white bee mark on Buzz indigo. -->
+<!-- Waggle launch/splash: the white dance mark on Waggle indigo.
+
+     The STILL fallback. Android 12+ uses the animated icon named in
+     values/styles.xml; this is what older releases and any non-SplashScreen
+     path draw, so it points at the plain vector rather than the AVD. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/ic_launcher_background" />
     <item
         android:width="220dp"
         android:height="220dp"
-        android:drawable="@drawable/ic_launcher_bee"
+        android:drawable="@drawable/ic_launcher_waggle"
         android:gravity="center" />
 </layer-list>

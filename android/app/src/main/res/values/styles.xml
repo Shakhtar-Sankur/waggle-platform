@@ -23,7 +23,7 @@
              It was a still mark on a flat colour for as long as the web view
              took to boot, which on a cheap handset reads as a hang. -->
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>
-        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_launcher_bee</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_launcher_waggle</item>
         <item name="windowSplashScreenAnimationDuration">600</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>

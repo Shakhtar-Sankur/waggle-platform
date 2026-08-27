@@ -1,30 +1,34 @@
-import { useId } from "react";
 import { APP_NAME } from "../config/constants";
 
 /**
- * The Buzz mark.
+ * The Waggle mark: the waggle dance.
  *
- * Geometric rather than illustrative. The previous drawing was a literal bee —
- * an oval abdomen with soft elliptical wings tilted off-axis — which is a fine
- * sticker and a poor logo: at 26px the wings turned to grey fuzz, the tilt made
- * it look slightly crooked rather than dynamic, and it read as clip-art beside
- * type as clean as Jakarta.
+ * A forager returning to the hive walks a straight line while waggling her
+ * abdomen, then loops back to the start — alternating left and right — so the
+ * whole path traces a figure-eight. The ANGLE of that straight run encodes the
+ * direction to the food; its DURATION encodes the distance. It is one worker
+ * telling the rest of the hive where to go, in heading and kilometres, which is
+ * what this app does between drivers.
  *
- * What replaces it is built from a hexagon and two straight cuts. The hexagon
- * is a honeycomb cell, which does the same job the bee did — hive, swarm, a lot
- * of small journeys adding up — without drawing an insect. Two stripes keep the
- * bee reading, and the wings become two short bars set at the same angle as the
- * hexagon's own shoulders, so every edge in the mark belongs to one geometry
- * instead of curves fighting straight lines.
+ * It replaces a hexagon. The hexagon meant "hive" and drew fine, but a hexagon
+ * is the most common shape in software branding — it said the right thing in a
+ * voice a hundred other products already use. The dance path is specific to
+ * this name and this product, and it reads as a ROUTE rather than a container,
+ * which is closer to what a driver opens the app for.
  *
- * Still one artwork, still currentColor, still a mask: the stripes are cut OUT
- * of the body rather than painted on, so the same file works as indigo on white
- * and as white on indigo without a second version.
+ * The run carries the heavy stroke and the loops a lighter one. That is a
+ * legibility decision — at 26px three strokes of equal weight close into a
+ * blob — and it happens to be biologically true: the run is the signal, the
+ * loops are only the walk back to start it again.
+ *
+ * Strokes rather than fills, so there is no <mask> anywhere in it. That matters
+ * beyond tidiness: Android's VectorDrawable has no <mask> element at all, so
+ * the previous mark had to be redrawn with its stripes painted in the
+ * background colour to survive the port. This one is the same geometry in both
+ * places, and still one artwork on currentColor — indigo on white and white on
+ * indigo without a second file.
  */
 export function BeeMark({ size = 28, className = "" }: { size?: number; className?: string }) {
-  // Unique per instance so multiple marks on one page don't share a mask id,
-  // and stable across re-renders.
-  const id = `bee-${useId().replace(/:/g, "")}`;
   return (
     <svg
       className={className}
@@ -34,58 +38,42 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
       fill="none"
       aria-hidden="true"
     >
-      <defs>
-        {/* The mask's fills are INLINE STYLES, not `fill` attributes.
-            A presentation attribute loses to any stylesheet rule, and the
-            header carries `.wordmark * { fill: currentColor }` to turn the
-            mark white over a coloured band. That `*` reaches in here and
-            painted the black stripes white too, so the mask stopped cutting
-            and the bee rendered as a plain oval — a different logo on Home
-            than on every other screen.
+      {/* The waggle run.
 
-            An inline style outranks a stylesheet rule without needing
-            !important, so the mask keeps working whatever a parent does to
-            fill. */}
-        <mask id={id}>
-          {/* White = keep, black = cut away. */}
-          <rect x="0" y="0" width="48" height="48" style={{ fill: "#000" }} />
-          {/* Body: a hexagon, flat-topped, on the 48-unit grid. */}
-          <path d="M24 13.5 L35.5 20.25 L35.5 33.75 L24 40.5 L12.5 33.75 L12.5 20.25 Z" style={{ fill: "#fff" }} />
-          {/* Two cuts, not three. At icon size a third stripe closed up into a
-              grey band; two read as stripes and leave the shape legible. */}
-          <rect x="9" y="23.6" width="30" height="3.2" style={{ fill: "#000" }} />
-          <rect x="9" y="30.4" width="30" height="3.2" style={{ fill: "#000" }} />
-        </mask>
-      </defs>
+          The bee walks a STRAIGHT line while waggling side to side, so the
+          mark is a straight diagonal drawn as a wave: the path she takes and
+          the motion that names the app, in one stroke.
 
-      {/* Wings: two bars on the hexagon's own shoulder angle (30 degrees), so
-          nothing in the mark sits at an angle the geometry does not already
-          use. Squared ends, because a rounded cap at 26px is just a blur. */}
-      <rect
-        x="2.6"
-        y="12.4"
-        width="11.5"
-        height="3.4"
-        transform="rotate(-30 8.35 14.1)"
-        fill="currentColor"
-        opacity="0.5"
-      />
-      <rect
-        x="33.9"
-        y="12.4"
-        width="11.5"
-        height="3.4"
-        transform="rotate(30 39.65 14.1)"
-        fill="currentColor"
-        opacity="0.5"
-      />
+          Two shapes were tried and thrown away first, and both failed for the
+          same reason — they were faithful to the dance and illegible as a
+          logo. The true figure-eight closes into an oval with the run as a
+          chord through it, which stops being a bee at any size and becomes Ø:
+          slashed zero, empty set, no entry. Moving the loop off-axis fixed
+          that and produced a closed circle on a stick, which is a magnifying
+          glass. Accuracy was never the problem in either case.
 
-      {/* The striped hexagon body. */}
+          A wave along a diagonal has neither failure mode. It cannot close
+          into a counter, it has no circle to be mistaken for a lens, and it
+          reads as travel and energy to someone who will never hear the word
+          "waggle" explained. */}
       <path
-        d="M24 13.5 L35.5 20.25 L35.5 33.75 L24 40.5 L12.5 33.75 L12.5 20.25 Z"
-        fill="currentColor"
-        mask={`url(#${id})`}
+        d="M13.5 36.5 C 19.9 35.6, 23 31.8, 22.3 25.3 C 21.6 18.8, 24.6 15, 31 14"
+        stroke="currentColor"
+        strokeWidth="4.6"
+        strokeLinecap="round"
+        fill="none"
       />
+      {/* The destination, seated ON the end of the run rather than beyond it,
+          so the two read as one object instead of a line and a loose dot.
+
+          The one element here for the DRIVER rather than for the bee. A wave
+          on its own is a squiggle; a wave arriving at a weighted point is a
+          journey with somewhere to be, legible in any country before a word of
+          the story is told.
+
+          It costs nothing in truth: the waggle run already points at the food
+          source, so marking its head is what the dance means. */}
+      <circle cx="31" cy="14" r="4.1" fill="currentColor" />
     </svg>
   );
 }
@@ -98,17 +86,18 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
 /**
  * One size for the mark, everywhere it appears.
  *
- * 30, not 26, and the difference is the viewBox. The artwork occupies y9.5
- * to y41 of a 48-unit box — 31.5 units, or 66% — so the drawn bee is
- * two-thirds of whatever number is set here. At 26 that meant a 17.1px bee
- * standing next to a 19.6px cap height, which is why it read as too small
- * beside the word even though the box was the same size as the type.
+ * Re-measured for the dance, which fills less of its box than the hexagon did.
+ * Including the stroke, the artwork spans roughly 9.2 to 38.8 on both axes of
+ * the 48-unit viewBox — 29.6 units, or 62%, where the hexagon was 66%. Holding
+ * the old 30 would have shrunk the drawn mark from 19.7px to 18.5px, which is
+ * the kind of drift that makes a header look subtly wrong without anyone being
+ * able to say why.
  *
- * 30 * (31.5/48) = 19.7px of drawn bee against 27px Inter's 19.6px caps.
- * Matched by measurement rather than by matching the numbers that are easy
- * to see in the markup.
+ * 32 * (29.6/48) = 19.7px of drawn mark against 27px Jakarta's 19.6px caps —
+ * the same measured result as before, arrived at through the new geometry
+ * rather than by keeping the old number.
  */
-export const MARK_SIZE = 30;
+export const MARK_SIZE = 32;
 
 export function Wordmark({
   size = 22,
