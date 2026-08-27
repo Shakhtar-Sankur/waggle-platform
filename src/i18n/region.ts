@@ -43,6 +43,17 @@ const COUNTRY_LANG: Record<string, Lang> = {
   // Urdu, now that the app has it. Pakistan was previously reading through to
   // the device language and landing on English for most handsets.
   PK: "ur",
+  // The rest of the launch map, so every target country resolves to a
+  // dictionary rather than to English.
+  NL: "nl", IT: "it", GR: "el", CY: "el", FI: "fi",
+  PL: "pl", RO: "ro", MD: "ro", CZ: "cs", SE: "sv", DK: "da", NO: "nb", TR: "tr",
+  RU: "ru", KZ: "ru", BY: "ru", UA: "uk", IL: "he",
+  KE: "sw", TZ: "sw", UG: "sw",
+  KH: "km", MM: "my", LK: "si", NP: "ne",
+  // BE stays French below. Belgium is majority Dutch-speaking, but the device
+  // language is consulted BEFORE this map, so a Flemish handset already gets
+  // Dutch — this only decides the fallback for an English phone in Brussels,
+  // where French is the safer guess.
   ID: "id",
   MY: "ms",
   TH: "th",
@@ -116,6 +127,7 @@ const LANG_PREFIX: Record<string, Lang> = {
   // India's other languages, and Urdu. `pa` covers pa-IN and pa-PK alike; both
   // are Punjabi, and the driver can switch script by picking another language.
   ta: "ta", te: "te", mr: "mr", kn: "kn", ml: "ml", gu: "gu", pa: "pa", ur: "ur",
+  nl: "nl", it: "it", pl: "pl", ro: "ro", cs: "cs", sv: "sv", da: "da", nb: "nb", no: "nb", fi: "fi", el: "el", tr: "tr", ru: "ru", uk: "uk", he: "he", sw: "sw", km: "km", my: "my", si: "si", ne: "ne",
 };
 
 /** The device UI language, if it is one the app speaks. */

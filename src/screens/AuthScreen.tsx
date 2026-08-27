@@ -194,7 +194,19 @@ export function AuthScreen() {
           </button>
         </p>
       </section>
-      <p className="terms">
+      {/* dir="auto", not the inherited page direction.
+
+          The legal strings are deliberately NOT machine-translated, so in a
+          right-to-left language this line is English sitting inside an RTL
+          container. The bidi algorithm then moves the trailing full stop to
+          the front and it renders as ".and Privacy Policy" — seen in Hebrew on
+          the first screen anyone opens.
+
+          "auto" asks the browser to take direction from the first strong
+          character in the line, so English reads left-to-right here while
+          Arabic — which DOES have translated legal text — still reads
+          right-to-left. Neither case needs to know about the other. */}
+      <p className="terms" dir="auto">
         {t("auth_footerPrefix")} <Link to="/terms">{t("consent_terms")}</Link>{" "}
         {t("consent_and")} <Link to="/privacy">{t("consent_privacyPolicy")}</Link>.
       </p>
