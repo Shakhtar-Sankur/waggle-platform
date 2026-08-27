@@ -23,14 +23,25 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
       aria-hidden="true"
     >
       <defs>
+        {/* The mask's fills are INLINE STYLES, not `fill` attributes.
+            A presentation attribute loses to any stylesheet rule, and the
+            header carries `.wordmark * { fill: currentColor }` to turn the
+            mark white over a coloured band. That `*` reaches in here and
+            painted the black stripes white too, so the mask stopped cutting
+            and the bee rendered as a plain oval — a different logo on Home
+            than on every other screen.
+
+            An inline style outranks a stylesheet rule without needing
+            !important, so the mask keeps working whatever a parent does to
+            fill. */}
         <mask id={id}>
           {/* White = keep, black = cut away. */}
-          <rect x="0" y="0" width="48" height="48" fill="black" />
-          <rect x="14" y="15" width="20" height="26" rx="10" fill="white" />
+          <rect x="0" y="0" width="48" height="48" style={{ fill: "#000" }} />
+          <rect x="14" y="15" width="20" height="26" rx="10" style={{ fill: "#fff" }} />
           {/* Three thin stripes cut out — reads as a bee, not a face. */}
-          <rect x="12" y="23.2" width="24" height="2.8" rx="1.4" fill="black" />
-          <rect x="12" y="29.4" width="24" height="2.8" rx="1.4" fill="black" />
-          <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" fill="black" />
+          <rect x="12" y="23.2" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
+          <rect x="12" y="29.4" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
+          <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
         </mask>
       </defs>
 

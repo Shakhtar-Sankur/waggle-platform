@@ -466,7 +466,16 @@ export const SupabaseService = {
     return supabase!.storage.from(VOICE_BUCKET).getPublicUrl(path).data.publicUrl;
   },
 
-  async uploadPhoto(userId: string, photo: PickedPhoto): Promise<UploadedPhoto> {
+  /**
+   * Takes only the two blobs, not a whole PickedPhoto. The Outbox rebuilds a
+   * photo from queued data URLs and has no dimensions or byte count to give —
+   * demanding the full type forced it to invent them, which is how a parameter
+   * ends up carrying fields the function never reads.
+   */
+  async uploadPhoto(
+    userId: string,
+    photo: Pick<PickedPhoto, "full" | "thumb">,
+  ): Promise<UploadedPhoto> {
     assertSupabase();
     const id = crypto.randomUUID();
     const bucket = supabase!.storage.from(PHOTO_BUCKET);

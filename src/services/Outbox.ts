@@ -185,11 +185,7 @@ async function send(item: OutboxItem) {
   if (item.photo) {
     const full = await dataUrlToBlob(item.photo.full);
     const thumb = await dataUrlToBlob(item.photo.thumb);
-    image = await SupabaseService.uploadPhoto(item.userId, {
-      full,
-      thumb,
-      preview: "",
-    });
+    image = await SupabaseService.uploadPhoto(item.userId, { full, thumb });
   }
 
   if (item.kind === "post") {
