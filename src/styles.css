@@ -33,8 +33,8 @@
      which both resolve to Roboto on Android — so the bundled Inter loaded on
      every device and was used on none of them, and the app rendered in the
      generic system face. That is what made the type read like a document. */
-  --font-display: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-  --font-body: "Inter Variable", "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --font-display: "Jakarta Variable", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+  --font-body: "Jakarta Variable", "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
 }
 
 * {
@@ -5278,7 +5278,7 @@ svg.lucide { stroke-width: 1.75; }
   font-weight: 800;
   letter-spacing: -0.045em;
   font-variant-numeric: tabular-nums;
-  font-feature-settings: "ss01", "cv05";   /* Inter's straighter 1 and l */
+  font-feature-settings: "calt" 1;   /* Jakarta draws a tailed l already */
 }
 
 /* Screen and section titles: heavier and tighter than before. */
@@ -8345,8 +8345,13 @@ body[data-band="home"] {
       near-identical verticals, and this app is full of addresses, plate
       numbers and street names where telling them apart matters.
       ss01 is the matching set for the rest of the face. */
+/* Inter's cv05/ss01 went with Inter — those are its axis names and mean
+   nothing to another face. Jakarta's own useful set is different: it draws
+   a tailed l by default, so the l/1/I confusion that cv05 was there to fix
+   does not arise, and what is worth turning on instead is contextual
+   alternates for the letter pairs it kerns badly without them. */
 body {
-  font-feature-settings: "cv05", "ss01";
+  font-feature-settings: "calt" 1;
 }
 
 /* 2. Headings stop dropping a single word onto a line of its own.
