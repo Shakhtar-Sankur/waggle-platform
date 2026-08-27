@@ -1,53 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The launch animation: the app draws its own dance.
+    The launch animation: the point draws the W.
 
-    The bee walks the waggle run first and only then loops back, so that is the
-    order here — the heavy diagonal strokes itself in, then the return loops
-    trace around it. It is the actual sequence of the actual behaviour, which is
-    a better reason for an animation order than "it looks nice", and it happens
-    to look nice.
+    One movement, start to end. The node travels the whole letter along the
+    exact path the mark is made of, and the stroke appears behind it as it
+    goes — so the app opens by drawing its own logo rather than by revealing
+    a finished one.
 
-    Deliberately restrained. A driver opening this at a traffic light sees it
-    several times a shift, and a performance gets old on the third viewing —
-    so there is no reveal, no bounce, no flourish. One stroke, then the loops,
-    done.
+    The two animations below are the same motion described twice, and they
+    have to stay in step:
 
-    580ms total, under the 1000ms Android allows a splash icon before it cuts
-    the drawable off mid-movement, and matching the 600ms
-    windowSplashScreenAnimationDuration in values/styles.xml. Those two numbers
-    have to stay in step: the theme value is how long the system WAITS, and a
-    drawable that runs longer than it gets truncated.
+      - pinGroup moves along `pathData`, which is the SAME path data as the
+        run in ic_launcher_waggle_anim.xml. If one is edited and the other is
+        not, the point drifts off the line it is supposed to be drawing.
+      - run reveals itself with trimPathEnd 0 to 1 over the same duration and
+        the same interpolator, so the stroke ends exactly where the point is.
+
+    Both use a linear interpolator ON PURPOSE. Easing would desynchronise
+    them: trimPathEnd eases along the path's LENGTH while a motion path eases
+    along its own parameterisation, and the two are not the same function, so
+    the point would run ahead of the ink in the curved sections and lag in the
+    straight ones. Linear keeps the dot on the tip of the stroke throughout.
+
+    560ms, under the 1000ms Android allows a splash icon before it truncates
+    the drawable, and inside the 600ms windowSplashScreenAnimationDuration in
+    values/styles.xml. Those two numbers have to stay in step: the theme value
+    is how long the system WAITS, and a drawable that runs longer gets cut off
+    mid-movement.
 -->
 <animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:drawable="@drawable/ic_launcher_waggle_anim">
 
-    <!-- The run draws itself, 0 to 430ms. Decelerate, so it arrives rather
-         than stops. -->
+    <!-- The point travels the letter. -->
+    <target android:name="pinGroup">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyXName="translateX"
+                android:propertyYName="translateY"
+                android:pathData="M11,15 C 12.5,30 15,35 17.5,35 C 20,35 22.5,26 24,22 C 25.5,26 28,35 30.5,35 C 33,34 35,28 36,18"
+                android:duration="560"
+                android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+
+    <!-- The ink follows it. -->
     <target android:name="run">
         <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
             <objectAnimator
                 android:propertyName="trimPathEnd"
                 android:valueFrom="0"
                 android:valueTo="1"
-                android:duration="430"
-                android:interpolator="@android:interpolator/decelerate_quad" />
+                android:duration="560"
+                android:interpolator="@android:interpolator/linear" />
         </aapt:attr>
     </target>
-
-    <!-- The destination lands as the run reaches it, not before: the route
-         arrives somewhere. Short and un-eased — a dot that fades slowly reads
-         as a rendering fault rather than an arrival. -->
-    <target android:name="pin">
-        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
-            <objectAnimator
-                android:propertyName="fillAlpha"
-                android:valueFrom="0"
-                android:valueTo="1"
-                android:startOffset="360"
-                android:duration="120"
-                android:interpolator="@android:interpolator/decelerate_quad" />
-        </aapt:attr>
-    </target>
-
 </animated-vector>

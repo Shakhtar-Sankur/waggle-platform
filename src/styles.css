@@ -2269,9 +2269,30 @@ select:focus {
   font-weight: 600;
 }
 
+/* Delete Account, in the brand indigo rather than red. Asked for explicitly.
+
+   Used in exactly two places, both of them this one action: the button on
+   Profile and the confirm button in its dialog. So this IS the Delete Account
+   style, and changing it here is the whole change.
+
+   The !important stays — it is what beats the Button component variant, and
+   removing it is what made an earlier, more specific attempt at this silently
+   lose. Worth knowing why it is there before deleting it.
+
+   The trade is real and worth stating once: red is what "this cannot be
+   undone" looks like everywhere, and colour is the only warning a button
+   carries before it is pressed. In indigo it reads as an ordinary action
+   sitting under Log Out. The label and the confirmation dialog still spell out
+   what it does, so the guard is not gone — it is one cue lighter. */
 .danger-action {
-  color: var(--danger) !important;
-  border-color: color-mix(in srgb, var(--danger) 35%, var(--border)) !important;
+  /* A LITERAL indigo, not var(--primary-strong).
+
+     The token is remapped per section — Profile sets it to magenta — so
+     routing this through it produced a magenta Delete Account button on the
+     one screen the button actually appears. The company colour is indigo
+     everywhere, and this is a brand decision rather than a sectional one. */
+  color: #4338ca !important;
+  border-color: color-mix(in srgb, #4338ca 40%, var(--border)) !important;
 }
 
 /* =====================================================================
@@ -3056,6 +3077,22 @@ html {
   background-clip: text;
   color: transparent;
   white-space: nowrap;
+  /* line-height BELOW 1 would cut the word in half, and 1 already cuts part
+     of it off.
+
+     background-clip: text paints the background and then clips it to the
+     glyphs — so the gradient only exists INSIDE the element's box. The box of
+     a single-line block is its line-height, and that was 27px at a 27px font,
+     i.e. exactly the em box. Jakarta''s descenders reach about 0.21em below
+     the baseline, so the tails of both g''s in "Waggle" fell outside the
+     painted area and rendered transparent.
+
+     They were not clipped by an overflow rule and nothing was hiding them —
+     there was simply no gradient that far down, so there was nothing to show.
+     Which is why it looked like the letters were unfinished rather than cut.
+
+     1.3 puts the whole glyph, descenders included, inside the painted box. */
+  line-height: 1.3;
 }
 /* On the orange auth screen the gradient would vanish — go solid instead. */
 .wordmark.solid,
@@ -8987,20 +9024,31 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    sitting under Log Out. The label and the confirmation dialog still
    spell out what it does, so the guard is not gone — but it is one cue
    lighter than it was. */
+/* The footer lockup is INDIGO, like every other instance of it.
+
+   It was violet — the Community band colour — so the company name at the foot
+   of Profile was painted in a third colour, different from both the indigo it
+   is everywhere else and the magenta of the page it sits on. A logo does not
+   change colour with the screen it happens to be on; that principle is already
+   written at .wordmark-text, and this rule was quietly breaking it. */
 .profile-page .wordmark svg,
-.profile-brand .wordmark svg { color: #6d28d9; }
+.profile-brand .wordmark svg { color: #3730a3; }
 .profile-page .wordmark-text,
 .profile-brand .wordmark-text {
-  background-image: linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #8b5cf6 100%);
+  background-image: linear-gradient(135deg, #312e81 0%, #3730a3 55%, #4338ca 100%);
 }
-.profile-page .button-outline.danger,
-.profile-page [class*="delete"],
-.profile-page .button-outline:has(svg) {
-  color: #6d28d9;
-  border-color: color-mix(in srgb, #6d28d9 45%, transparent);
-}
+
+/* Delete Account, in the brand indigo.
+
+   The selectors here matched NOTHING. The button carries
+   `danger-action`, not `danger` and not anything containing "delete", so
+   every rule below was inert and the button stayed the red it inherits from
+   --danger. Asked for twice across two sessions and never actually applied —
+   which is worth noting, because a rule that silently matches nothing looks
+   exactly like a rule that works. */
+.profile-page .danger-action svg,
 .profile-page .button-outline.danger svg,
-.profile-page [class*="delete"] svg { color: #6d28d9; }
+.profile-page [class*="delete"] svg { color: #4338ca; }
 
 /* ══ Map chrome: the final word on where things sit ═══════════════════
    These positions had been set, overridden and re-set across several
