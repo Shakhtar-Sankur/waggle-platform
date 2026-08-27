@@ -7718,3 +7718,111 @@ body[data-band="home"] {
   padding: 6px 12px;
   background: rgba(255, 255, 255, .22);
 }
+
+/* ── Thread gutters, matched to the reference ─────────────────────────
+   Measured against WhatsApp rather than guessed: its bubbles sit about
+   8px off each edge with a cap near 85% of the column. Ours were 12px
+   and 82% — close, but visibly more inset, which makes the column read
+   as narrower than it is and wastes width on the one screen where a long
+   message most wants it.
+
+   8px and 85% now. The gutters stay EQUAL on both sides, which is the
+   part that actually matters: an incoming bubble 8px off the left and an
+   outgoing one 8px off the right is what makes a thread read as aligned
+   rather than as drifting toward the middle. */
+.wa-messages { padding-inline: 8px; }
+.wa-stack { max-width: 85%; }
+
+/* ── Avatars: one hue, not two ────────────────────────────────────────
+   The initials circle was `linear-gradient(135deg, var(--primary-text),
+   #9a3412)` — the section colour blended into a hardcoded rust. On
+   Community that runs violet into orange, and the middle of that ramp is
+   a muddy maroon that belongs to neither end. It looked wrong because it
+   WAS wrong: half of it was a leftover from when the whole app was
+   orange, and the retint only moved the other half.
+
+   One hue now, light to dark within the section, so the circle reads as
+   a deliberate tint of the screen rather than a colour accident. */
+.fb-avatar,
+.wa-avatar-accent {
+  background-image: linear-gradient(135deg, var(--primary), var(--primary-fill));
+}
+
+/* ── The friend row was crowded ───────────────────────────────────────
+   A 56px avatar and a 76px Add button in a 259px row leaves 173px for a
+   name, a platform, a rating and a status — everything ran right up to
+   the button with 10px between them.
+
+   The avatar comes down to 48. It is the least informative thing in the
+   row (two letters), and the 8px it gives back go to the text, which is
+   what someone actually reads when deciding whether to add a driver.
+   The button is untouched: 34px is already below the 44px target this
+   app holds elsewhere, and shrinking it further to buy space would trade
+   a real problem for a worse one. */
+.fb-friend-row .fb-avatar.lg {
+  width: 48px;
+  height: 48px;
+  font-size: 16px;
+}
+.fb-friend-row { gap: 12px; }
+
+/* ── The friend row: the name was sliding under the button ────────────
+   Measured across five rows: the name's right edge sat 4px past the
+   button's left edge on every one, and 30px past on a row showing
+   "Requested" — that state is 102px wide against "Add"'s 76.
+
+   The name never truncated. `.fb-friend-tap` could shrink (flex 1 1 0,
+   min-width 0) but the <strong> inside it had no overflow rule, so it
+   drew at its natural width and simply ran underneath. A flex parent
+   that is allowed to shrink does nothing if its child refuses to.
+
+   Three things, and all three are needed:
+     the name and its subtitle truncate;
+     the button never shrinks, so it cannot be squeezed into the text;
+     both button states share a width, so a row does not reflow the
+     moment you tap Add. */
+.fb-friend-tap { min-width: 0; }
+.fb-friend-row strong,
+.fb-friend-row .fb-friend-tap p {
+  display: block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Slimmer, as asked. 13px and tighter padding take "Add" from 76px to
+   about 62 and give the text back the difference. The 34px height stays:
+   it is already under the 44px target this app holds elsewhere, and
+   buying width by losing height would trade a crowding problem for a
+   missed-tap one. */
+.fb-friend-btns .button,
+.fb-friend-row .button-primary {
+  flex: 0 0 auto;
+  font-size: 13px;
+  padding-inline: 10px;
+  gap: 5px;
+}
+.fb-friend-btns .button svg,
+.fb-friend-row .button-primary svg { width: 14px; height: 14px; }
+
+/* Two misses from the pass above.
+
+   The "Requested" state is `button-outline`, and it is a direct child of
+   the row rather than living in `.fb-friend-btns` — so neither selector
+   I wrote reached it, and it stayed 102px wide and 30px over the name
+   while every "Add" row was fixed. Matching on the row's own children
+   catches every variant, which is what I should have written first.
+
+   And the truncation needed min-width:0 on the DIV wrapping the name,
+   not just on the tap target. A flex item defaults to min-width:auto —
+   it refuses to shrink below its content — so the chain has to be
+   unlocked at every level between the flex container and the text. I
+   unlocked the outer one and stopped. */
+.fb-friend-row > .button,
+.fb-friend-btns > .button {
+  flex: 0 0 auto;
+  font-size: 13px;
+  padding-inline: 10px;
+}
+.fb-friend-tap > div { min-width: 0; }

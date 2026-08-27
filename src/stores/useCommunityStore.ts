@@ -39,14 +39,6 @@ interface CommunityState {
   sendConnection: (workerId: string) => Promise<void>;
   acceptConnection: (connectionId: string) => Promise<void>;
   toggleChallenge: (id: string) => void;
-  addChallenge: (input: {
-    title: string;
-    description: string;
-    icon: string;
-    target: number;
-    metric: ChallengeMetric;
-  }) => void;
-  removeChallenge: (id: string) => void;
   toggleGroup: (id: string) => void;
 }
 
@@ -296,27 +288,6 @@ export const useCommunityStore = create<CommunityState>()(
             challenge.id === id ? { ...challenge, joined: !challenge.joined } : challenge,
           ),
         })),
-      addChallenge: (input) =>
-        set((state) => ({
-          // User-created challenges land at the top (become the featured hero) and
-          // are auto-joined — you're in the challenge you just made.
-          challenges: [
-            {
-              id: uid("challenge"),
-              title: input.title.trim(),
-              description: input.description.trim(),
-              icon: input.icon || "🎯",
-              progress: 0,
-              target: input.target,
-              joined: true,
-              metric: input.metric,
-              custom: true,
-            },
-            ...state.challenges,
-          ],
-        })),
-      removeChallenge: (id) =>
-        set((state) => ({ challenges: state.challenges.filter((c) => c.id !== id) })),
       toggleGroup: (id) => {
         const user = useAuthStore.getState().user;
         const group = get().groups.find((g) => g.id === id);
@@ -345,10 +316,17 @@ export const useCommunityStore = create<CommunityState>()(
       // Cloud data (posts/workers/comments/connections) is refetched on load;
       // only persist the local-only challenges and groups.
       partialize: (state) => ({ challenges: state.challenges, groups: state.groups }),
-      version: 1,
+      version: 2,
       // v1: the earnings challenge title had a hardcoded "₱" that showed to
       // drivers on every other currency. Swap it for the {amount} token so it
       // renders in their own currency.
+      //
+      // v2: driver-created challenges are gone. They were only ever written to
+      // this device — there is no challenges table — so one could not be seen
+      // or joined by anybody else while sitting in a list of challenges that
+      // could. Any already saved are dropped here: leaving them would strand
+      // rows nothing can now delete, since the control that removed them went
+      // with the feature.
       migrate: (persisted, version) => {
         const state = persisted as { challenges?: Challenge[] } | undefined;
         if (version < 1 && state?.challenges) {
@@ -357,6 +335,9 @@ export const useCommunityStore = create<CommunityState>()(
               ? { ...challenge, title: "{amount} Weekly Run" }
               : challenge,
           );
+        }
+        if (version < 2 && state?.challenges) {
+          state.challenges = state.challenges.filter((challenge) => !challenge.custom);
         }
         return state as never;
       },

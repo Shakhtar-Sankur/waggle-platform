@@ -15,7 +15,6 @@ import {
   Square,
   Target,
   Timer,
-  Trash2,
   Trophy,
   X,
 } from "lucide-react";
@@ -23,7 +22,6 @@ import L from "leaflet";
 import { ChallengeIcon } from "../components/ChallengeIcon";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { createPortal } from "react-dom";
 import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
 import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
@@ -141,10 +139,7 @@ export function RoutesScreen() {
   const challenges = useCommunityStore((state) => state.challenges);
   const toggleChallenge = useCommunityStore((state) => state.toggleChallenge);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
-  const addChallenge = useCommunityStore((state) => state.addChallenge);
-  const removeChallenge = useCommunityStore((state) => state.removeChallenge);
   const activeApp = useProfileStore((state) => state.activeApp);
-  const currencyCode = useProfileStore((state) => state.currencyCode);
   const dailyGoal = useProfileStore((state) => state.dailyGoal);
   const baseRate = useProfileStore((state) => state.baseRate);
   const app = getWorkApp(activeApp);
@@ -180,7 +175,7 @@ export function RoutesScreen() {
   // ₱2,500/week, impossible as $2,500/week (~3,570 km). Derive it from the
   // driver's own daily goal instead. Custom challenges keep their own target.
   const targetOf = (challenge: Challenge): number =>
-    challenge.id === "challenge_earn" && !challenge.custom
+    challenge.id === "challenge_earn"
       ? weeklyGoalFrom(dailyGoal)
       : challenge.target;
 
@@ -338,33 +333,6 @@ export function RoutesScreen() {
     setSearchPin(null);
   };
 
-  // Challenge-creation modal + its form state.
-  const [creating, setCreating] = useState(false);
-  const [form, setForm] = useState<{
-    title: string;
-    description: string;
-    metric: ChallengeMetric;
-    target: string;
-    icon: string;
-  }>({ title: "", description: "", metric: "distance", target: "", icon: "🎯" });
-
-  const metricUnit = (metric: ChallengeMetric) =>
-    metric === "distance" ? "km" : metric === "earnings" ? currencyCode : t("sv_metricMsgUnit");
-
-  const canCreate = form.title.trim().length > 0 && Number(form.target) > 0;
-  const submitChallenge = (event: FormEvent) => {
-    event.preventDefault();
-    if (!canCreate) return;
-    addChallenge({
-      title: form.title,
-      description: form.description.trim() || t("sv_challengeNoDesc"),
-      icon: form.icon.trim() || "🎯",
-      target: Math.round(Number(form.target)),
-      metric: form.metric,
-    });
-    setForm({ title: "", description: "", metric: "distance", target: "", icon: "🎯" });
-    setCreating(false);
-  };
 
   /* ── the two map modes ────────────────────────────────────────────────
      "Me" is your own movement: the roads you drove, on the day you pick.
@@ -1095,9 +1063,6 @@ export function RoutesScreen() {
               <h4>{t("sv_recommended")}</h4>
               <span>{t("sv_basedOn")}</span>
             </div>
-            <button className="svc-create-btn" onClick={() => setCreating(true)}>
-              <Plus size={16} /> {t("sv_createChallenge")}
-            </button>
           </div>
           <div className="svc-list">
             {challenges.map((challenge) => {
@@ -1111,22 +1076,12 @@ export function RoutesScreen() {
                   <div className="svc-card-body">
                     <strong>
                       {titleOf(challenge)}
-                      {challenge.custom ? <span className="svc-tag">{t("sv_yours")}</span> : null}
                     </strong>
                     <p>{challenge.description}</p>
                     <div className="svc-bar"><span style={{ width: `${pct}%` }} /></div>
                     <div className="svc-card-foot">
                       <small>{Math.round(progress)} / {targetOf(challenge)} · {pct}%</small>
                       <div className="svc-card-actions">
-                        {challenge.custom ? (
-                          <button
-                            className="svc-del"
-                            aria-label={t("sv_deleteChallenge")}
-                            onClick={() => removeChallenge(challenge.id)}
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        ) : null}
                         <button
                           className={`svc-mini ${challenge.joined ? "joined" : ""}`}
                           onClick={() => toggleChallenge(challenge.id)}
@@ -1159,109 +1114,6 @@ export function RoutesScreen() {
         </div>
       )}
 
-      {creating
-        ? createPortal(
-            <div className="svc-modal-scrim" onClick={() => setCreating(false)}>
-              <form
-                className="svc-modal"
-                onClick={(e) => e.stopPropagation()}
-                onSubmit={submitChallenge}
-              >
-                <header className="svc-modal-head">
-                  <span className="svc-modal-icon"><Flag size={18} /></span>
-                  <div>
-                    <strong>{t("sv_newChallenge")}</strong>
-                    <small>{t("sv_newChallengeSub")}</small>
-                  </div>
-                  <button
-                    type="button"
-                    className="svc-modal-close"
-                    aria-label={t("sv_cancel")}
-                    onClick={() => setCreating(false)}
-                  >
-                    <X size={18} />
-                  </button>
-                </header>
-
-                <label className="svc-field svc-field-icon">
-                  <span>{t("sv_challengeIcon")}</span>
-                  <input
-                    value={form.icon}
-                    maxLength={2}
-                    onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-                    aria-label={t("sv_challengeIcon")}
-                  />
-                </label>
-
-                <label className="svc-field">
-                  <span>{t("sv_challengeTitle")}</span>
-                  <input
-                    value={form.title}
-                    placeholder={t("sv_challengeTitlePh")}
-                    onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-                    autoFocus
-                  />
-                </label>
-
-                <label className="svc-field">
-                  <span>{t("sv_challengeDesc")}</span>
-                  <input
-                    value={form.description}
-                    placeholder={t("sv_challengeDescPh")}
-                    onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))}
-                  />
-                </label>
-
-                <div className="svc-field">
-                  <span>{t("sv_challengeMetric")}</span>
-                  <div className="svc-metric-pills">
-                    {(["distance", "earnings", "social"] as ChallengeMetric[]).map((m) => (
-                      <button
-                        type="button"
-                        key={m}
-                        className={form.metric === m ? "active" : ""}
-                        onClick={() => setForm((f) => ({ ...f, metric: m }))}
-                      >
-                        {m === "distance"
-                          ? t("sv_metricDistance")
-                          : m === "earnings"
-                            ? t("sv_metricEarnings")
-                            : t("sv_metricSocial")}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <label className="svc-field">
-                  <span>{t("sv_challengeTarget")}</span>
-                  <div className="svc-target-row">
-                    <input
-                      type="number"
-                      min={1}
-                      inputMode="numeric"
-                      value={form.target}
-                      placeholder="0"
-                      onChange={(e) => setForm((f) => ({ ...f, target: e.target.value }))}
-                    />
-                    <em>{metricUnit(form.metric)}</em>
-                  </div>
-                </label>
-
-                <p className="svc-modal-note">{t("sv_challengeAuto")}</p>
-
-                <div className="svc-modal-actions">
-                  <button type="button" className="svc-modal-cancel" onClick={() => setCreating(false)}>
-                    {t("sv_cancel")}
-                  </button>
-                  <button type="submit" className="svc-modal-save" disabled={!canCreate}>
-                    {t("sv_createChallenge")}
-                  </button>
-                </div>
-              </form>
-            </div>,
-            document.body,
-          )
-        : null}
     </main>
   );
 }

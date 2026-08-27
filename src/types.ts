@@ -200,7 +200,13 @@ export interface Challenge {
   joined: boolean;
   /** Which weekly activity drives progress (defaults inferred from id for built-ins). */
   metric?: ChallengeMetric;
-  /** True for challenges the user created themselves (so they can be removed). */
+  /**
+   * Legacy. Drivers used to be able to create their own challenges, which were
+   * written to this device only — there was never a challenges table — so one
+   * could not be seen or joined by anyone else while sitting in a list of
+   * challenges that could. The feature is gone; this field survives so the
+   * store's v2 migration can find the leftovers and drop them.
+   */
   custom?: boolean;
 }
 
