@@ -7826,3 +7826,269 @@ body[data-band="home"] {
   padding-inline: 10px;
 }
 .fb-friend-tap > div { min-width: 0; }
+
+/* ── The feed avatar, same mud as the others ──────────────────────────
+   .tw-avatar carried the identical `var(--primary-text)` → #9a3412 ramp
+   I fixed on .fb-avatar, so post avatars stayed violet-into-rust while
+   the ones two tabs over went clean. Same fix.
+
+   The old comment's point still holds and is why this uses the deep end
+   of the scale rather than --primary: white initials on a vivid accent
+   measured 3.32:1. --primary → --primary-fill keeps white at 5.2:1 or
+   better in every section. */
+.tw-avatar {
+  background: linear-gradient(135deg, var(--primary), var(--primary-fill));
+}
+
+/* ── The settings selects were 22px tall ──────────────────────────────
+   Language and Currency rendered at 22px with zero padding — a native
+   select left entirely unstyled, half the height of a minimum touch
+   target, in a sheet that a driver opens to change how the whole app
+   reads. Next to the vehicle picker's chunky tiles they looked like
+   something unfinished, because they were.
+
+   Still native <select> elements underneath, deliberately: on a phone
+   that opens the OS picker, which is scrollable, searchable on Android,
+   and works with a screen reader — a hand-rolled dropdown list would
+   look more designed and behave worse for the 16-language list this
+   feeds. Only the closed state is restyled. */
+.modal-panel select,
+.settings-form select {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 100%;
+  min-height: 48px;
+  padding: 0 40px 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background-color: var(--card);
+  color: var(--foreground);
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  /* The chevron the native appearance was providing, drawn back in.
+     A data URI rather than a pseudo-element: <select> cannot carry one. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%23667085' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+}
+.modal-panel select:focus-visible,
+.settings-form select:focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+/* Auto-currency switches this off; say so by looking off rather than by
+   silently ignoring taps. */
+.modal-panel select:disabled,
+.settings-form select:disabled {
+  background-color: var(--muted);
+  color: var(--muted-foreground);
+  cursor: not-allowed;
+  opacity: 1; /* the browser default washes it out to unreadable */
+}
+
+/* ── Settings: groups instead of a list ───────────────────────────────
+   It was eight controls stacked at one weight — no grouping, no
+   hierarchy, native checkboxes, and a 22px select. Nothing told you
+   where a setting lived, so finding one meant reading all of them.
+
+   Four cards now, each with a heading and an icon. Rows sit inside with
+   a hairline between, which is what makes a group read as a group. */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-group {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.settings-group > h4 {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0;
+  padding: 11px 14px;
+  background: var(--muted);
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.settings-group > h4 svg { color: var(--primary); flex-shrink: 0; }
+
+.settings-group > label {
+  display: block;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--border);
+}
+.settings-group > label:last-child { border-bottom: 0; }
+.settings-group > label > span {
+  display: block;
+  margin-bottom: 7px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--foreground);
+}
+.settings-hint {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--muted-foreground);
+}
+
+/* A toggle row is label-left, control-right on ONE line — its control is
+   binary, so it needs no room of its own. */
+.settings-group > label.toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.settings-group > label.toggle-row > span { margin-bottom: 0; }
+
+/* ── A real switch ────────────────────────────────────────────────────
+   The native checkbox was a 16px square that read as a form from 1998
+   next to the vehicle tiles. Same input underneath — it stays a checkbox
+   for the keyboard and for a screen reader — with the box drawn as a
+   track and a knob. */
+.settings-group input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  position: relative;
+  flex-shrink: 0;
+  width: 46px;
+  height: 28px;
+  margin: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #cbd0d9;
+  cursor: pointer;
+  transition: background .18s ease;
+}
+.settings-group input[type="checkbox"]::after {
+  content: "";
+  position: absolute;
+  top: 3px; left: 3px;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .28);
+  transition: transform .18s ease;
+}
+.settings-group input[type="checkbox"]:checked { background: var(--primary); }
+.settings-group input[type="checkbox"]:checked::after { transform: translateX(18px); }
+.settings-group input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 30%, transparent);
+}
+
+/* Text inputs match the selects, so a row of controls reads as one set. */
+.settings-group input:not([type="checkbox"]) {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--card);
+  font-size: 15px;
+}
+.settings-group input:not([type="checkbox"]):focus-visible {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+}
+
+/* The vehicle tiles were already the best-looking thing here; just let
+   them use the full row and stop the third being clipped on a narrow
+   sheet. */
+.settings-group .vehicle-picker {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.settings-group .vehicle-picker > * { min-width: 0; }
+
+/* The switch was rendering as a 46px circle. `.settings-form input` sets
+   min-height:46px and padding:0 12px for text fields, and I gave the
+   checkbox a `height` but never a `min-height` — a min-height larger
+   than height wins, so the track was as tall as it was wide and the
+   border-radius turned it into a blob. Both axes pinned now. */
+.settings-group input[type="checkbox"] {
+  min-height: 28px;
+  max-height: 28px;
+  padding: 0;
+}
+
+/* "Motorcycle" ran out of its tile. The three vehicle labels sit in
+   equal columns and inherited the form's 15px, at which the longest word
+   is wider than a third of the sheet. 12px fits all three, and the tile
+   keeps its height so the touch target does not change. */
+.vehicle-picker button {
+  font-size: 12px;
+  padding-inline: 4px;
+  min-width: 0;
+}
+.vehicle-picker button > span:not(.vehicle-emoji) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── The vehicle picker, brought up to date ───────────────────────────
+   Three flat outlined boxes with an emoji and a word. The icons are line
+   drawings now, so the tiles can carry them properly: the icon sits in a
+   soft round well, the selected tile fills that well with the section
+   colour and inverts the glyph, and the whole thing lifts slightly. That
+   is the current idiom for a segmented choice — a filled token you can
+   see from the corner of your eye — rather than a checkbox in a box. */
+.vehicle-picker button {
+  min-height: 88px;
+  gap: 8px;
+  padding: 12px 4px 10px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-weight: 600;
+  color: var(--muted-foreground);
+  transition: border-color .16s ease, background .16s ease, transform .16s ease;
+}
+.vehicle-picker button:hover { border-color: color-mix(in srgb, var(--primary) 40%, var(--border)); }
+
+/* The well behind the glyph. */
+.vehicle-picker button > :first-child {
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border-radius: 999px;
+  background: var(--muted);
+  color: var(--foreground);
+  transition: background .16s ease, color .16s ease;
+}
+
+.vehicle-picker button.selected {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  color: var(--primary-text);
+  font-weight: 700;
+  /* A hair off the surface — enough to read as chosen next to two that
+     are not, without the drop shadow that would date it again. */
+  transform: translateY(-1px);
+}
+.vehicle-picker button.selected > :first-child {
+  background: var(--primary);
+  color: #fff;
+}
+
+/* The emoji span is gone; drop the rule that sized it so it cannot
+   re-apply to the svg that replaced it. */
+.vehicle-emoji { font-size: inherit; }

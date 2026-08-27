@@ -1,5 +1,6 @@
-import { Pencil, Settings, Trash2, Wrench, Camera } from "lucide-react";
+import { Bike, Globe, Pencil, Settings, Shield, Trash2, Wallet, Wrench, Camera } from "lucide-react";
 import { WorkAppMark } from "../components/WorkAppMark";
+import { VehicleIcon } from "../components/VehicleIcon";
 import type { ReactNode } from "react";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -298,53 +299,77 @@ function SettingsModal({
       title={t("profile_settings")}
       description={t("settings_sub")}
     >
+      {/* Grouped rather than one flat list of label+control. Eight unrelated
+          settings stacked at the same weight gave a driver nothing to scan
+          by — where a setting lives is half of finding it. Four groups, each
+          named, each with the icon doing the same job as the heading. */}
       <form className="settings-form" onSubmit={submit}>
-        <label className="toggle-row">
-          <span>{t("settings_autoRegion")}</span>
-          <input type="checkbox" checked={autoRegion} onChange={(event) => setAutoRegion(event.target.checked)} />
-        </label>
-        <label>
-          <span>{t("settings_language")}</span>
-          <select value={lang} onChange={(event) => setLang(event.target.value as Lang)}>
-            {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>{l.label}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>{t("settings_currency")}</span>
-          <select
-            value={autoRegion ? profile.currencyCode : currencyCode}
-            disabled={autoRegion}
-            onChange={(event) => setCurrencyCode(event.target.value)}
-          >
-            {CURRENCIES.map((c) => (
-              <option key={c.code} value={c.code}>{c.symbol} · {c.label} ({c.code})</option>
-            ))}
-          </select>
-        </label>
+        <section className="settings-group">
+          <h4><Globe size={15} /> {t("settings_grpRegion")}</h4>
+          <label className="toggle-row">
+            <span>{t("settings_autoRegion")}</span>
+            <input type="checkbox" checked={autoRegion} onChange={(event) => setAutoRegion(event.target.checked)} />
+          </label>
+          <label>
+            <span>{t("settings_language")}</span>
+            <select value={lang} onChange={(event) => setLang(event.target.value as Lang)}>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>{t("settings_currency")}</span>
+            <select
+              value={autoRegion ? profile.currencyCode : currencyCode}
+              disabled={autoRegion}
+              onChange={(event) => setCurrencyCode(event.target.value)}
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code}>{c.symbol} · {c.label} ({c.code})</option>
+              ))}
+            </select>
+            {/* Say why it is greyed out, instead of leaving a dead control. */}
+            {autoRegion ? <small className="settings-hint">{t("settings_currencyAuto")}</small> : null}
+          </label>
+        </section>
+
+        <section className="settings-group">
+          <h4><Bike size={15} /> {t("settings_grpVehicle")}</h4>
         <label>
           <span>{t("settings_vehicle")}</span>
           <div className="vehicle-picker">
-            {/* Emoji rather than lucide here: lucide has no motorcycle glyph, so
-                motorcycle and bicycle both rendered the identical bike icon. */}
-            <VehicleButton value="car" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🚗</span>} label={t("vehicle_car")} />
-            <VehicleButton value="motorcycle" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🏍️</span>} label={t("vehicle_motorcycle")} />
-            <VehicleButton value="bicycle" selected={vehicleType} onSelect={setVehicleType} icon={<span className="vehicle-emoji">🚲</span>} label={t("vehicle_bicycle")} />
+            {/* Drawn icons, not emoji. Emoji are rendered by the platform, so
+                the picker was colour clip-art on one phone and a flat outline
+                on another, in a sheet where everything else is a line icon.
+                See VehicleIcon for why lucide could not supply these. */}
+            <VehicleButton value="car" selected={vehicleType} onSelect={setVehicleType} icon={<VehicleIcon type="car" size={26} />} label={t("vehicle_car")} />
+            <VehicleButton value="motorcycle" selected={vehicleType} onSelect={setVehicleType} icon={<VehicleIcon type="motorcycle" size={26} />} label={t("vehicle_motorcycle")} />
+            <VehicleButton value="bicycle" selected={vehicleType} onSelect={setVehicleType} icon={<VehicleIcon type="bicycle" size={26} />} label={t("vehicle_bicycle")} />
           </div>
         </label>
-        <label>
-          <span>{t("settings_homeAddress")}</span>
-          <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder={t("settings_homeAddressPh")} />
-        </label>
-        <label>
-          <span>{t("settings_baseRate")}</span>
-          <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder={t("settings_baseRatePh")} />
-        </label>
-        <label className="toggle-row">
-          <span>{t("settings_shareStats")}</span>
-          <input type="checkbox" checked={shareStats} onChange={(event) => setShareStats(event.target.checked)} />
-        </label>
+        </section>
+
+        <section className="settings-group">
+          <h4><Wallet size={15} /> {t("settings_grpWork")}</h4>
+          <label>
+            <span>{t("settings_homeAddress")}</span>
+            <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder={t("settings_homeAddressPh")} />
+          </label>
+          <label>
+            <span>{t("settings_baseRate")}</span>
+            <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder={t("settings_baseRatePh")} />
+          </label>
+        </section>
+
+        <section className="settings-group">
+          <h4><Shield size={15} /> {t("settings_grpPrivacy")}</h4>
+          <label className="toggle-row">
+            <span>{t("settings_shareStats")}</span>
+            <input type="checkbox" checked={shareStats} onChange={(event) => setShareStats(event.target.checked)} />
+          </label>
+        </section>
+
         <Button>{t("common_save")}</Button>
       </form>
     </Modal>
