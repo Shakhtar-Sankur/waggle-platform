@@ -76,18 +76,32 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
  * (used on the orange auth screen); the default draws the name in the brand
  * gradient for the light in-app chrome.
  */
+/** One size for the mark, everywhere it appears. */
+export const MARK_SIZE = 26;
+
 export function Wordmark({
   size = 22,
+  markSize = MARK_SIZE,
   tone = "gradient",
   className = "",
 }: {
   size?: number;
+  /** The bee. Defaults to MARK_SIZE and should almost never be passed. */
+  markSize?: number;
   tone?: "gradient" | "solid";
   className?: string;
 }) {
   return (
     <span className={`wordmark ${tone === "solid" ? "solid" : ""} ${className}`}>
-      <BeeMark size={size * 1.18} className="wordmark-bee" />
+      {/* The mark used to be `size * 1.18`, so it scaled with the WORD next to
+          it: the header passes 27 and got a 32px bee, the profile footer passes
+          24 and got 28, while every screen that draws the mark on its own uses
+          26. Three sizes for one logo, and no amount of aligning the callers
+          could fix it while the mark was derived from the text.
+
+          The word can still be sized for its context. The mark cannot — it is
+          the logo, and a logo is one size. */}
+      <BeeMark size={markSize} className="wordmark-bee" />
       <span className="wordmark-text" style={{ fontSize: size }}>
         {APP_NAME}
       </span>

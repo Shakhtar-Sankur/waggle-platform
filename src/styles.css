@@ -8324,5 +8324,78 @@ body[data-band="home"] {
   min-width: 0;
 }
 .header-mark { flex-shrink: 0; }
-/* Collapsed, the whole row shrinks; the mark comes with it. */
-.app-header.is-collapsed .header-mark { width: 21px; height: 21px; }
+/* The mark does not shrink when the header collapses. It is the one
+   element on the row whose size is the brand rather than a layout
+   choice, and 26px is small enough already. */
+
+/* ══ Typography, finished ═════════════════════════════════════════════
+   The foundations were already right: Inter Variable self-hosted, and
+   tracking that tightens as type grows. What was missing is that the
+   refinements stopped at the stat tiles — those three numbers had
+   Inter's character alternates and tabular figures, and nothing else in
+   the app did.
+
+   Three things, all of them legibility before style. This is read at
+   arm's length, in daylight, by somebody who has stopped for eleven
+   seconds. */
+
+/* 1. Inter's alternates, app-wide instead of on three numbers.
+      cv05 gives the lowercase L a tail, which is the single most useful
+      substitution here: without it "l" and "1" and "I" are three
+      near-identical verticals, and this app is full of addresses, plate
+      numbers and street names where telling them apart matters.
+      ss01 is the matching set for the rest of the face. */
+body {
+  font-feature-settings: "cv05", "ss01";
+}
+
+/* 2. Headings stop dropping a single word onto a line of its own.
+      "Hello, Ana / Delacruz" and "Chhatrapati Shivaji Maharaj /
+      International Airport" both read better balanced across their
+      lines than filled-then-orphaned. Browsers cap the work at a few
+      lines, so it costs nothing on the short strings it applies to. */
+h1, h2, h3, h4,
+.section-heading h3,
+.sv-sheet-title strong,
+.settings-group > h4,
+.fb-post-head strong {
+  text-wrap: balance;
+}
+
+/* Body copy gets the lighter version, which only prevents the last line
+   being a single word rather than re-balancing the whole block. */
+p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
+  text-wrap: pretty;
+}
+
+/* 3. Figures that change or stack need to be tabular, so digits keep
+      their column instead of the line twitching every time a value
+      updates. The stats had this; the clocks, distances, counts and
+      prices everywhere else did not — and a chat timestamp jittering as
+      minutes tick over is the same defect in a smaller place. */
+.wa-bubble small,
+.wa-chat-top small,
+.wa-voice small,
+.tw-post-head time,
+.sv-friend-who small,
+.svc-card-foot small,
+.sv-search-msg,
+.fb-post-actions,
+.stat-grid strong,
+.stat-grid small,
+.sv-stat strong,
+.goal-card strong,
+.earnings-report strong,
+.wa-unread,
+.fb-reacts,
+.tw-actions {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Small uppercase labels want the opposite of a heading: letters set
+   tightly at that size close up into a block. */
+.stat-grid small,
+.sv-stat small,
+.settings-group > h4 {
+  letter-spacing: .045em;
+}
