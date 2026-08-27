@@ -394,12 +394,18 @@ select:focus {
   justify-content: center;
   gap: 22px;
   padding: 32px 24px;
-  /* Was #ff4400 → #ff6a00. Pure white on that is 3.45:1, and the secondary text
-     sat at 72% alpha, which measured 2.38:1 — eight of the nine strings on this
-     screen failed AA, on the first screen anyone sees. Deepening the ramp puts
-     white at 5.18:1 against the lightest stop while keeping it unmistakably the
-     brand orange. */
-  background: linear-gradient(135deg, #b83a05 0%, #b83a05 48%, #c2410c 100%);
+  /* Indigo, matching Home. This screen was the last orange surface in the
+     app and the first one anyone sees, which made the brand look like it
+     changed colour on the way in.
+
+     The contrast discipline that produced the orange ramp is kept, not
+     dropped: the original #ff4400 put white at 3.45:1 and the secondary text
+     at 2.38:1, so eight of nine strings failed AA on the sign-in screen. The
+     replacement is measured the same way — white on the LIGHTEST stop
+     (#4338CA) is 7.9:1, which is better than the 5.18:1 the deepened orange
+     managed, so every string on this screen gains margin rather than
+     spending it. */
+  background: linear-gradient(135deg, #312E81 0%, #3730A3 48%, #4338CA 100%);
   color: #fff;
 }
 
@@ -9016,3 +9022,100 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 /* On the friends page there is no date and no note, so the switch is a
    whole pill again rather than a shape with one squared end. */
 .sv-content.is-friends-page .sv-mapmode { border-radius: 12px; }
+
+/* The Community mark sits on the violet band, where --primary is violet
+   too — so the bee was a slightly different violet ON violet and read as
+   a smudge rather than a logo. White, like every other mark that sits on
+   a coloured band. */
+.fb-beemark { color: #fff; }
+
+/* The auth screen has no data-band — it is outside the tabbed shell — so
+   it kept the default brand tokens while its background went indigo. That
+   left an orange bee in the white circle and orange "Log In" text on an
+   indigo field: the two most prominent things on the first screen anyone
+   sees, in the colour the app no longer uses.
+
+   The scale is remapped here the same way each section does it, so
+   everything reading var(--primary-*) follows without being listed. */
+.auth-screen {
+  --primary: #4F46E5;
+  --primary-strong: #4338CA;
+  --primary-text: #4338CA;
+  --primary-soft: #EEF2FF;
+  --primary-fill: #3730A3;
+  --accent-grad: linear-gradient(135deg, #312E81 0%, #3730A3 55%, #4338CA 100%);
+}
+/* The mark in its white disc, and the label on the white button — both
+   were inheriting the old orange directly rather than through a token. */
+.auth-screen .auth-mark svg,
+.auth-screen .wordmark svg,
+.auth-screen > svg,
+.auth-screen [class*="logo"] svg { color: #4F46E5; }
+.auth-screen .button,
+.auth-screen .button-primary { color: #4338CA; }
+
+/* ── The sign-in screen, on glass ─────────────────────────────────────
+   Asked for a transparent background. Literal transparency has nothing
+   to show through here — there is no wallpaper behind an app's own first
+   screen, so it would reveal white and read as a rendering fault. What
+   the request means in practice is glass: a translucent panel over a
+   background with something in it to blur.
+
+   So the flat gradient gains two soft light blooms, and the card becomes
+   a frosted panel that lets them through. The blur is what makes it look
+   like glass rather than like a grey box — without a backdrop-filter a
+   translucent panel just looks washed out. */
+.auth-screen {
+  position: relative;
+  overflow: hidden;
+  background:
+    radial-gradient(60% 45% at 18% 12%, rgba(139, 122, 255, .55) 0%, transparent 60%),
+    radial-gradient(55% 40% at 88% 82%, rgba(88, 200, 255, .30) 0%, transparent 62%),
+    linear-gradient(135deg, #312E81 0%, #3730A3 48%, #4338CA 100%);
+}
+
+.auth-card {
+  position: relative;
+  width: 100%;
+  max-width: 380px;
+  padding: 30px 22px 26px;
+  border-radius: 22px;
+  background: rgba(255, 255, 255, .10);
+  border: 1px solid rgba(255, 255, 255, .18);
+  backdrop-filter: blur(18px) saturate(130%);
+  -webkit-backdrop-filter: blur(18px) saturate(130%);
+  box-shadow: 0 18px 50px rgba(15, 12, 60, .32);
+}
+
+/* The fields sit on the card, so they need to be lighter than it or they
+   disappear into their own container. */
+.auth-screen .input-shell {
+  background: rgba(255, 255, 255, .13);
+  border: 1px solid rgba(255, 255, 255, .24);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+.auth-screen .input-shell:focus-within {
+  background: rgba(255, 255, 255, .19);
+  border-color: rgba(255, 255, 255, .55);
+}
+
+/* The mark's disc keeps its solid white — it is the one element that
+   should not be see-through, because a logo behind frosting reads as a
+   smudge rather than a mark. */
+.auth-screen .brand-icon {
+  background: #fff;
+  box-shadow: 0 8px 26px rgba(15, 12, 60, .28);
+}
+
+/* Where a browser has no backdrop-filter (older Android WebViews), a
+   translucent panel over a gradient is muddy and the text loses contrast.
+   Those get a solid card instead — less pretty, still legible, which is
+   the right way round. */
+@supports not (backdrop-filter: blur(1px)) {
+  .auth-card {
+    background: rgba(49, 46, 129, .82);
+    border-color: rgba(255, 255, 255, .22);
+  }
+  .auth-screen .input-shell { background: rgba(255, 255, 255, .16); }
+}
