@@ -59,12 +59,25 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
           a shape that HAPPENS to be a W costs a non-Latin reader nothing —
           they get a distinctive silhouette either way — while a Latin reader
           gets the name for free. The alternative gave everybody a squiggle. */}
+      {/* fill is an INLINE STYLE, not a `fill="none"` attribute.
+
+          The header carries `.wordmark * { fill: currentColor }` so the mark
+          turns white over a coloured band. A presentation attribute loses to
+          any stylesheet rule, so that `*` reached in here and filled this
+          path — the wave became a solid blob on Home, Community, Routes,
+          Messages and Profile, while the auth screen (which has no band) was
+          fine. One logo on the first screen, a different one everywhere after.
+
+          The previous hexagon mark hit this exact rule and the fix was written
+          down in this file; the shape changed and the lesson did not carry
+          over. An inline style outranks a stylesheet rule without !important,
+          so the stroke survives whatever a parent does to fill. */}
       <path
         d="M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18"
         stroke="currentColor"
         strokeWidth="4.6"
         strokeLinecap="round"
-        fill="none"
+        style={{ fill: "none" }}
       />
       {/* The destination, seated on the end of the final upstroke.
 

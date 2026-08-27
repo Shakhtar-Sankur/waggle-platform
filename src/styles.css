@@ -130,7 +130,7 @@ input:focus,
 textarea:focus,
 select:focus {
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(255, 68, 0, 0.12);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
 }
 
 .glass-card,
@@ -190,7 +190,7 @@ select:focus {
   box-shadow: var(--shadow-glow-primary), inset 0 1px 0 rgba(255, 255, 255, 0.28);
 }
 .button-primary:active {
-  box-shadow: 0 4px 14px rgba(255, 77, 23, 0.28);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.28);
 }
 
 .button-secondary {
@@ -733,7 +733,7 @@ select:focus {
 
 .journey-card {
   background:
-    linear-gradient(150deg, rgba(255, 77, 23, 0.1), #fff 42%),
+    linear-gradient(150deg, rgba(79, 70, 229, 0.1), #fff 42%),
     #fff;
 }
 
@@ -785,7 +785,7 @@ select:focus {
 
 .stat-box.highlight {
   background: var(--primary-soft);
-  border-color: rgba(255, 77, 23, 0.18);
+  border-color: rgba(79, 70, 229, 0.18);
 }
 
 .stat-box span {
@@ -808,6 +808,23 @@ select:focus {
   font-size: 11px;
   text-transform: uppercase;
   font-weight: 700;
+  /* Two lines reserved for every label, whether it needs them or not.
+
+     "ACTIVE TIME" wraps at the 58px these cards give it; "KM TODAY" and
+     "EARNINGS" do not. So the middle label was 25.2px tall against their
+     12.6px and began 6.3px higher, and three labels that should sit on one
+     line sat on two different ones.
+
+     Reserving the space unconditionally is what keeps them aligned in every
+     language — this is a 43-language app, and which of the three wraps is a
+     property of the translation, not of the design. Fixing only English would
+     have moved the bug rather than removed it. */
+  line-height: 1.2;
+  min-height: 2.4em;
+  text-align: center;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
 }
 
 .stat-box.highlight strong {
@@ -969,7 +986,7 @@ select:focus {
   height: 96px;
   margin: 0 auto;
   position: relative;
-  border: 4px solid rgba(255, 68, 0, 0.18);
+  border: 4px solid rgba(79, 70, 229, 0.18);
   font-size: 28px;
 }
 
@@ -1085,7 +1102,7 @@ select:focus {
 .profile-app-grid button.selected {
   border-color: var(--primary);
   background: var(--primary-soft);
-  box-shadow: 0 0 0 2px rgba(255, 68, 0, 0.08);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.08);
 }
 
 .routes-screen {
@@ -3028,7 +3045,7 @@ html {
 .wordmark-bee {
   flex-shrink: 0;
   /* A touch of lift so the mark doesn't sit flat against the text. */
-  filter: drop-shadow(0 1px 1px rgba(255, 68, 0, 0.25));
+  filter: drop-shadow(0 1px 1px rgba(79, 70, 229, 0.25));
 }
 .wordmark-text {
   font-family: var(--font-display);
@@ -4250,7 +4267,7 @@ html {
   font-size: 16px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 8px 20px rgba(252, 82, 0, 0.32);
+  box-shadow: 0 8px 20px rgba(79, 70, 229, 0.32);
 }
 .sv-record:active {
   transform: scale(0.99);
@@ -4571,7 +4588,7 @@ body::before {
   font-weight: 700;
   font-size: 15px;
   cursor: pointer;
-  box-shadow: 0 8px 18px rgba(252, 82, 0, 0.3);
+  box-shadow: 0 8px 18px rgba(79, 70, 229, 0.3);
 }
 .svc-join.joined {
   background: #fff;
@@ -4725,7 +4742,7 @@ body::before {
   margin-left: 6px;
   padding: 2px 7px;
   border-radius: 999px;
-  background: rgba(252, 82, 0, 0.12);
+  background: rgba(79, 70, 229, 0.12);
   color: var(--sv-orange);
   font-size: 10.5px;
   font-weight: 700;
@@ -5895,7 +5912,7 @@ body[data-band] .app-header.is-collapsed {
   position: absolute;
   inset: 4px 8px;
   border-radius: 14px;
-  background: rgba(255, 77, 23, .13);
+  background: rgba(79, 70, 229, .13);
 }
 /* The pill is a backdrop, so the label and icon have to sit above it. */
 .nav-item.active > * { position: relative; z-index: 1; }
@@ -6253,7 +6270,7 @@ html { background: var(--ground, #fbf7f4); }
   font-size: 16px;
   font-weight: 700;
   letter-spacing: .01em;
-  box-shadow: 0 10px 24px rgba(168, 47, 0, .34);
+  box-shadow: 0 10px 24px rgba(79, 70, 229, .34);
 }
 
 /* The goal card gets a solid tinted surface rather than a gradient to white. */
@@ -6397,7 +6414,7 @@ html { background: var(--ground, #fbf7f4); }
   background: var(--primary-fill);
   color: #fff;
   border-color: rgba(255, 255, 255, .85);
-  box-shadow: 0 4px 14px rgba(168, 47, 0, .45);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, .45);
 }
 
 /* Steps · Start · Pin */
@@ -6416,7 +6433,7 @@ html { background: var(--ground, #fbf7f4); }
 .sv-routeacts button.is-on { background: var(--primary-soft); border-color: #ffd0b8; color: var(--primary-text); }
 .sv-routeacts button.primary {
   background: var(--primary-fill); border-color: transparent; color: #fff;
-  box-shadow: 0 6px 16px rgba(168, 47, 0, .34);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, .34);
 }
 .sv-routeacts button:active { transform: scale(.98); }
 
@@ -6781,7 +6798,7 @@ button:not(:disabled):active,
   place-items: center;
   color: #fff;
   background: var(--accent-grad);
-  box-shadow: 0 8px 22px rgba(168, 47, 0, .42), 0 2px 6px rgba(23, 26, 33, .18);
+  box-shadow: 0 8px 22px rgba(79, 70, 229, .42), 0 2px 6px rgba(23, 26, 33, .18);
   cursor: pointer;
 }
 .fb-fab:active { transform: scale(.94); }
@@ -6800,7 +6817,7 @@ button:not(:disabled):active,
 
 .fb-tabs {
   border-radius: 0 0 16px 16px;
-  box-shadow: 0 4px 14px rgba(168, 47, 0, .18);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, .18);
 }
 
 /* Text tabs. The icon goes: at this size it was decoration, and it cost
