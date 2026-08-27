@@ -280,6 +280,28 @@ export function RoutesScreen() {
     map?.setView([hit.lat, hit.lng], 16, { animate: true });
   };
 
+  /**
+   * Leaving a page drops what belonged to it.
+   *
+   * Maps and Friends share one Leaflet instance, so a destination searched on
+   * Maps stayed pinned — with its route line, its turn list and its ETA — when
+   * you switched to Friends, where it means nothing and covers the people you
+   * came to look at. The search box kept the text too, so the Friends page
+   * opened mid-query for somewhere you had already been.
+   *
+   * Cleared on the way out rather than the way in, so neither page has to know
+   * what the other left behind.
+   */
+  useEffect(() => {
+    setLocQuery("");
+    setResults([]);
+    setSearchMsg("");
+    setSearchPin(null);
+    setRouteOptions([]);
+    setChosenRoute(0);
+    setPinnedHere(false);
+  }, [view]);
+
   const clearSearch = () => {
     setLocQuery("");
     setResults([]);

@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { APP_NAME } from "../config/constants";
 import { useT } from "../i18n";
-import { Wordmark } from "./Wordmark";
+import { BeeMark, Wordmark } from "./Wordmark";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { Button } from "./ui/Button";
 
@@ -59,13 +59,25 @@ export function Header({ title }: HeaderProps) {
   return (
     <header className={collapsed ? "app-header is-collapsed" : "app-header"}>
       <div className="shell-row">
-        {/* On Home the title IS the brand, so show the mark instead of plain text. */}
+        {/* The mark appears on every screen, at one size.
+            It used to be: the full wordmark on Home, a bare bee at 30px on
+            Community, another at 26px on Routes, and nothing at all on
+            Messages or Profile — five headers, four treatments, and no size
+            repeated. A logo that changes size from page to page reads as four
+            different logos.
+
+            Home still gets the wordmark, because there the brand IS the title.
+            Everywhere else the mark sits beside the screen's own name, which
+            is what those screens need to say. */}
         {isHome ? (
           <h1 className="header-brand">
             <Wordmark size={collapsed ? 20 : 27} />
           </h1>
         ) : (
-          <h1>{titles[title] ?? title}</h1>
+          <h1 className="header-titled">
+            <BeeMark size={26} className="header-mark" />
+            {titles[title] ?? title}
+          </h1>
         )}
         <div className="header-actions">
           <Button

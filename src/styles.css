@@ -8282,3 +8282,47 @@ body[data-band="home"] {
   line-height: 1.45;
   color: var(--muted-foreground);
 }
+
+/* ── Map attribution was half under the tab bar ───────────────────────
+   Measured: the credit line runs y725-738 and the bottom nav starts at
+   731, so six of its thirteen pixels were covered. This is not
+   decoration — OpenFreeMap, OpenMapTiles and OpenStreetMap all require
+   visible attribution, and a line you cannot read does not provide it.
+
+   Lifted clear of the nav, and made a little more legible while there. */
+.leaflet-control-attribution {
+  margin-bottom: calc(var(--nav-h, 74px) + 4px) !important;
+  font-size: 10px;
+  background: rgba(255, 255, 255, .82) !important;
+  padding: 1px 6px !important;
+  border-radius: 6px 0 0 0;
+}
+
+/* ── Tap targets under the floor ──────────────────────────────────────
+   Audited by hit-testing every control on the map screens. These came
+   back below 40px on a 375x812 phone; the two clear buttons were 26x26,
+   which is a quarter of the area a 44px target has.
+
+   The visible chrome is unchanged — the padding grows the hit area
+   without moving anything, so nothing shifts on screen. */
+.sv-search-clear,
+.sv-search-go,
+.sv-route-close,
+.sv-directions-close {
+  min-width: 40px;
+  min-height: 40px;
+}
+.svc-mini { min-height: 38px; padding-inline: 14px; }
+.sv-nav-tabs button { min-height: 40px; }
+
+/* The mark beside a screen title. Sized once here so the five headers
+   cannot drift apart again — they were 32, 30, 26, and twice absent. */
+.header-titled {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+}
+.header-mark { flex-shrink: 0; }
+/* Collapsed, the whole row shrinks; the mark comes with it. */
+.app-header.is-collapsed .header-mark { width: 21px; height: 21px; }
