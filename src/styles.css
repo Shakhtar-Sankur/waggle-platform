@@ -2734,7 +2734,7 @@ html {
   z-index: 60;
   display: flex;
   flex-direction: column;
-  background: #ece5dd;
+  background: #e8eaf2;
 }
 .wa-convo-header {
   display: flex;
@@ -2781,7 +2781,7 @@ html {
   display: flex;
   flex-direction: column;
   gap: 4px;
-  background-color: #fdf5ec;
+  background-color: #f4f5fa;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160' viewBox='0 0 160 160'%3E%3Cg stroke='%23c2410c' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round' opacity='.13'%3E%3Cg transform='translate(28 30) rotate(-18)'%3E%3Cellipse cx='0' cy='0' rx='6' ry='8.5'/%3E%3Cpath d='M-6 -3h12M-6 2h12M-5 7h10'/%3E%3Cellipse cx='-7' cy='-8' rx='5' ry='3' transform='rotate(-38 -7 -8)'/%3E%3Cellipse cx='7' cy='-8' rx='5' ry='3' transform='rotate(38 7 -8)'/%3E%3C/g%3E%3Cpath d='M110 14l10 5.8v11.4l-10 5.8-10-5.8V19.8z'/%3E%3Cpath d='M56 74q10-8 20 0'/%3E%3Cpath d='M60 80q6-5 12 0'/%3E%3Cpath d='M23 96a7 7 0 0 1 14 0c0 6-7 13-7 13s-7-7-7-13z'/%3E%3Ccircle cx='30' cy='96' r='2.5'/%3E%3Cg transform='translate(118 110) rotate(24)'%3E%3Cellipse cx='0' cy='0' rx='5' ry='7'/%3E%3Cpath d='M-5 -2.5h10M-5 2h10'/%3E%3Cellipse cx='-6' cy='-6.5' rx='4' ry='2.5' transform='rotate(-38 -6 -6.5)'/%3E%3Cellipse cx='6' cy='-6.5' rx='4' ry='2.5' transform='rotate(38 6 -6.5)'/%3E%3C/g%3E%3Cpath d='M78 124l7 4v8l-7 4-7-4v-8z'/%3E%3Cpath d='M136 60q-8 10 0 20' stroke-dasharray='3 5'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 160px 160px;
   background-repeat: repeat;
@@ -2802,7 +2802,7 @@ html {
   box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13);
 }
 .wa-bubble.me {
-  background: #ffe9c9;
+  background: #e3e6f8;
 }
 /* Side-to-side placement belongs to .wa-row now. The bubble used to set
    align-self itself, which was correct when it was a direct child of the
@@ -2852,7 +2852,7 @@ html {
   gap: 8px;
   padding: 8px 10px;
   padding-bottom: max(8px, env(safe-area-inset-bottom));
-  background: #ece5dd;
+  background: #e8eaf2;
 }
 .wa-input input {
   flex: 1;
@@ -3918,7 +3918,7 @@ html {
 }
 .sv-nav-tabs button.active {
   color: var(--primary-text);
-  background: #fff2ec;
+  background: #eef2ff;
 }
 
 .sv-content {
@@ -4764,7 +4764,7 @@ body::before {
   cursor: pointer;
 }
 .svc-del:active {
-  background: #ffe3d8;
+  background: #e0e3f5;
   color: var(--sv-orange);
 }
 
@@ -5956,8 +5956,8 @@ body[data-band] { background: #fbf7f4; }
 /* The goal card was white on white with a grey ring. Give it a surface and
    let the ring read as progress rather than decoration. */
 .home-native .goal-card {
-  background: linear-gradient(135deg, #fff6f1 0%, #ffffff 62%);
-  border: 1px solid #ffe0d0;
+  background: linear-gradient(135deg, #f5f6fb 0%, #ffffff 62%);
+  border: 1px solid #dfe3f7;
 }
 .home-native .goal-ring-fg { stroke: var(--primary); }
 
@@ -5972,8 +5972,8 @@ body[data-band] { background: #fbf7f4; }
 
 /* The empty state should look like an invitation, not a disabled card. */
 .home-native .income-empty {
-  background: linear-gradient(135deg, #fff7ef 0%, #ffffff 60%);
-  border: 1px solid #ffe2cc;
+  background: linear-gradient(135deg, #f5f6fb 0%, #ffffff 60%);
+  border: 1px solid #dfe3f7;
 }
 .home-native .income-empty-icon { color: var(--primary); }
 
@@ -6080,8 +6080,8 @@ body[data-band] { background: #fbf7f4; }
 /* The empty state was centred in the remaining space and read as an error.
    Give it a surface so it reads as a state, and colour its icon. */
 .wa-page.has-band .empty-state {
-  background: linear-gradient(135deg, #fff7ef 0%, #ffffff 62%);
-  border: 1px solid #ffe2cc;
+  background: linear-gradient(135deg, #f5f6fb 0%, #ffffff 62%);
+  border: 1px solid #dfe3f7;
   border-radius: 18px;
   padding: 28px 20px;
 }
@@ -6145,7 +6145,7 @@ body[data-band] { background: #fbf7f4; }
 .sv-nav .sv-nav-brand, .sv-nav .sv-nav-brand * { color: #fff; }
 .sv-nav-tabs button { color: rgba(255, 255, 255, .70); }
 /* The active tab keeps its light pill, so its text must be the dark thing on
-   it. Setting it white gave white-on-#fff2ec — about 1.05:1, which is not low
+   it. Setting it white gave white-on-#eef2ff — about 1.05:1, which is not low
    contrast, it is no contrast. */
 .sv-nav-tabs button.active { color: var(--primary-text); }
 .sv-nav-tabs button.active::after { background: var(--primary-text) !important; }
@@ -6157,7 +6157,11 @@ body[data-band] { background: #fbf7f4; }
 .sv-stats .sv-stat:nth-child(1) svg { color: #2563eb; }
 .sv-stats .sv-stat:nth-child(2) { background: #fff5e6; border: 1px solid #ffe6bf; }
 .sv-stats .sv-stat:nth-child(2) svg { color: #b45309; }
-.sv-stats .sv-stat:nth-child(3) { background: #fff1ea; border: 1px solid #ffdcc9; }
+/* Children 1 and 2 are a semantic pair — blue, then amber — and keep their
+   own colours. Child 3 is the BRAND slot: its icon already reads
+   var(--primary-text), which went indigo with the rest of the app, so the box
+   was a peach card holding an indigo glyph. */
+.sv-stats .sv-stat:nth-child(3) { background: #eef2ff; border: 1px solid #dfe3f7; }
 .sv-stats .sv-stat:nth-child(3) svg { color: var(--primary-text); }
 
 /* ══ Type: a native scale, not a web one ══════════════════════════════
@@ -6227,10 +6231,10 @@ html { background: var(--ground, #fbf7f4); }
   overflow: hidden;
 }
 .home-native .journey-card .section-heading {
-  background: linear-gradient(180deg, #fff3ec 0%, #fffaf7 100%);
+  background: linear-gradient(180deg, #eef2ff 0%, #f8f9ff 100%);
   margin: 0 -16px 14px;
   padding: 14px 16px 12px;
-  border-bottom: 1px solid #ffe3d4;
+  border-bottom: 1px solid #dfe3f7;
 }
 
 /* Section icons become filled chips instead of bare strokes — the single
@@ -6275,7 +6279,7 @@ html { background: var(--ground, #fbf7f4); }
 
 /* The goal card gets a solid tinted surface rather than a gradient to white. */
 .home-native .goal-card {
-  background: #fff4ee;
+  background: #eef2ff;
   border: 0;
 }
 
@@ -6284,7 +6288,7 @@ html { background: var(--ground, #fbf7f4); }
 .bottom-nav {
   background: #ffffff;
   backdrop-filter: none;
-  border-top: 1px solid #f0e2d9;
+  border-top: 1px solid #e5e7eb;
   box-shadow: 0 -8px 26px rgba(120, 45, 12, .10);
 }
 
@@ -6589,7 +6593,7 @@ html { background: var(--ground, #fbf7f4); }
    the presence and a smaller repeat, so it reads as texture instead of
    content. */
 .wa-messages {
-  background-color: #f7f3ef;
+  background-color: #f5f6fb;
   background-size: 116px 116px;
   padding: 12px 12px 16px;
   gap: 3px;
@@ -7324,7 +7328,7 @@ body[data-band="profile"] {
    change either — and a blue-line doodle under blue bubbles was busier
    than the neutral. */
 .wa-messages {
-  background-color: #f6efe6;
+  background-color: #f4f5fa;
   background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%27%20width%3D%27150%27%20height%3D%27150%27%20viewBox%3D%270%200%20150%20150%27%3E%3Cg%20stroke%3D%27%238a4a1e%27%20stroke-width%3D%271.6%27%20fill%3D%27none%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20opacity%3D%27.42%27%3E%3Cg%20transform%3D%27translate%2826%2030%29%20rotate%28-16%29%20scale%281.0%29%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%270%27%20rx%3D%276%27%20ry%3D%278.5%27%2F%3E%3Cpath%20d%3D%27M-6%20-3h12M-6%202h12M-5%207h10%27%2F%3E%3Cellipse%20cx%3D%27-7%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%28-38%20-7%20-8%29%27%2F%3E%3Cellipse%20cx%3D%277%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%2838%207%20-8%29%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M115.5%2016.5L115.5%2027.5L106.0%2033.0L96.5%2027.5L96.5%2016.5L106.0%2011.0z%27%2F%3E%3Cg%20transform%3D%27translate%2858%2062%29%20scale%281.0%29%27%3E%3Cpath%20d%3D%27M-10%200q10-8%2020%200%27%2F%3E%3Cpath%20d%3D%27M-6%206q6-5%2012%200%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2822%2092%29%20scale%281.0%29%27%3E%3Cpath%20d%3D%27M-7%20-6a7%207%200%200%201%2014%200c0%206-7%2013-7%2013S-7%200-7-6z%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%27-6%27%20r%3D%272.6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28120%20104%29%20rotate%2822%29%20scale%280.85%29%27%3E%3Cellipse%20cx%3D%270%27%20cy%3D%270%27%20rx%3D%276%27%20ry%3D%278.5%27%2F%3E%3Cpath%20d%3D%27M-6%20-3h12M-6%202h12M-5%207h10%27%2F%3E%3Cellipse%20cx%3D%27-7%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%28-38%20-7%20-8%29%27%2F%3E%3Cellipse%20cx%3D%277%27%20cy%3D%27-8%27%20rx%3D%275.5%27%20ry%3D%273.2%27%20transform%3D%27rotate%2838%207%20-8%29%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M81.8%20117.5L81.8%20126.5L74.0%20131.0L66.2%20126.5L66.2%20117.5L74.0%20113.0z%27%2F%3E%3Cg%20transform%3D%27translate%28134%2060%29%20rotate%2810%29%27%3E%3Cpath%20d%3D%27M-9%20-10q-8%2010%200%2020%27%20stroke-dasharray%3D%273%204.5%27%2F%3E%3C%2Fg%3E%3Cpath%20d%3D%27M148.1%20134.5L148.1%20141.5L142.0%20145.0L135.9%20141.5L135.9%20134.5L142.0%20131.0z%27%2F%3E%3Cg%20transform%3D%27translate%2842%20142%29%20rotate%28-20%29%27%3E%3Cpath%20d%3D%27M-9%20-10q-8%2010%200%2020%27%20stroke-dasharray%3D%273%204.5%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2898%2078%29%27%3E%3Ccircle%20cx%3D%270%27%20cy%3D%270%27%20r%3D%278%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%270%27%20r%3D%272.8%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%28146%2096%29%20scale%280.8%29%27%3E%3Cpath%20d%3D%27M0%20-6v12M-6%200h12M-4%20-4l8%208M4%20-4l-8%208%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2862%2016%29%20scale%280.72%29%27%3E%3Cpath%20d%3D%27M-7%20-6a7%207%200%200%201%2014%200c0%206-7%2013-7%2013S-7%200-7-6z%27%2F%3E%3Ccircle%20cx%3D%270%27%20cy%3D%27-6%27%20r%3D%272.6%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2814%20128%29%20scale%280.8%29%27%3E%3Cpath%20d%3D%27M-10%200q10-8%2020%200%27%2F%3E%3Cpath%20d%3D%27M-6%206q6-5%2012%200%27%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%27translate%2888%2044%29%20scale%280.6%29%27%3E%3Cpath%20d%3D%27M0%20-6v12M-6%200h12M-4%20-4l8%208M4%20-4l-8%208%27%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
   background-size: 150px 150px;
   background-repeat: repeat;
@@ -7628,7 +7632,7 @@ body[data-band="profile"] {
 html { background: #f3f4f6; }
 .bottom-nav { border-top-color: #e5e7eb; }
 
-/* 3. The Maps/Challenges pill, a hardcoded #fff2ec. It already takes
+/* 3. The Maps/Challenges pill, a hardcoded #eef2ff. It already takes
       --primary-text for its label; the fill should come from the same
       place rather than being written out in orange. */
 .sv-nav-tabs button.active { background: var(--primary-soft); }
@@ -7690,10 +7694,10 @@ body[data-band="home"] {
    Four more literals, all of them tints rather than fills, all written
    when the brand was the only colour the app had:
 
-     .goal-card      a flat #fff4ee
+     .goal-card      a flat #eef2ff
      .journey-card   the brand orange at 10% fading to white
-     .income-empty   #fff7ef fading to white
-     .section-heading a #fff3ec → #fffaf7 ramp
+     .income-empty   #f5f6fb fading to white
+     .section-heading a #eef2ff → #f8f9ff ramp
 
    Each now mixes from the section instead of naming a colour, so they
    are a wash OF the screen they sit on rather than a warm cast across
