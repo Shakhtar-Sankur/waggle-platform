@@ -2,12 +2,24 @@ import { useId } from "react";
 import { APP_NAME } from "../config/constants";
 
 /**
- * The Buzz bee mark.
+ * The Buzz mark.
  *
- * Drawn with `currentColor` and a mask, so the stripes are cut OUT of the body
- * rather than painted on. That means the same mark reads correctly as orange on
- * a light background (in-app chrome) and as white on orange (auth screen, app
- * icon) without needing two artworks.
+ * Geometric rather than illustrative. The previous drawing was a literal bee —
+ * an oval abdomen with soft elliptical wings tilted off-axis — which is a fine
+ * sticker and a poor logo: at 26px the wings turned to grey fuzz, the tilt made
+ * it look slightly crooked rather than dynamic, and it read as clip-art beside
+ * type as clean as Jakarta.
+ *
+ * What replaces it is built from a hexagon and two straight cuts. The hexagon
+ * is a honeycomb cell, which does the same job the bee did — hive, swarm, a lot
+ * of small journeys adding up — without drawing an insect. Two stripes keep the
+ * bee reading, and the wings become two short bars set at the same angle as the
+ * hexagon's own shoulders, so every edge in the mark belongs to one geometry
+ * instead of curves fighting straight lines.
+ *
+ * Still one artwork, still currentColor, still a mask: the stripes are cut OUT
+ * of the body rather than painted on, so the same file works as indigo on white
+ * and as white on indigo without a second version.
  */
 export function BeeMark({ size = 28, className = "" }: { size?: number; className?: string }) {
   // Unique per instance so multiple marks on one page don't share a mask id,
@@ -37,36 +49,43 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
         <mask id={id}>
           {/* White = keep, black = cut away. */}
           <rect x="0" y="0" width="48" height="48" style={{ fill: "#000" }} />
-          <rect x="14" y="15" width="20" height="26" rx="10" style={{ fill: "#fff" }} />
-          {/* Three thin stripes cut out — reads as a bee, not a face. */}
-          <rect x="12" y="23.2" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
-          <rect x="12" y="29.4" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
-          <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" style={{ fill: "#000" }} />
+          {/* Body: a hexagon, flat-topped, on the 48-unit grid. */}
+          <path d="M24 13.5 L35.5 20.25 L35.5 33.75 L24 40.5 L12.5 33.75 L12.5 20.25 Z" style={{ fill: "#fff" }} />
+          {/* Two cuts, not three. At icon size a third stripe closed up into a
+              grey band; two read as stripes and leave the shape legible. */}
+          <rect x="9" y="23.6" width="30" height="3.2" style={{ fill: "#000" }} />
+          <rect x="9" y="30.4" width="30" height="3.2" style={{ fill: "#000" }} />
         </mask>
       </defs>
 
-      {/* Wings — small, swept up and back so the striped body leads the shape. */}
-      <ellipse
-        cx="13.4"
-        cy="13.2"
-        rx="6.4"
-        ry="3.7"
-        transform="rotate(-38 13.4 13.2)"
+      {/* Wings: two bars on the hexagon's own shoulder angle (30 degrees), so
+          nothing in the mark sits at an angle the geometry does not already
+          use. Squared ends, because a rounded cap at 26px is just a blur. */}
+      <rect
+        x="2.6"
+        y="12.4"
+        width="11.5"
+        height="3.4"
+        transform="rotate(-30 8.35 14.1)"
         fill="currentColor"
-        opacity="0.42"
+        opacity="0.5"
       />
-      <ellipse
-        cx="34.6"
-        cy="13.2"
-        rx="6.4"
-        ry="3.7"
-        transform="rotate(38 34.6 13.2)"
+      <rect
+        x="33.9"
+        y="12.4"
+        width="11.5"
+        height="3.4"
+        transform="rotate(30 39.65 14.1)"
         fill="currentColor"
-        opacity="0.42"
+        opacity="0.5"
       />
 
-      {/* Striped body. */}
-      <rect x="14" y="15" width="20" height="26" rx="10" fill="currentColor" mask={`url(#${id})`} />
+      {/* The striped hexagon body. */}
+      <path
+        d="M24 13.5 L35.5 20.25 L35.5 33.75 L24 40.5 L12.5 33.75 L12.5 20.25 Z"
+        fill="currentColor"
+        mask={`url(#${id})`}
+      />
     </svg>
   );
 }

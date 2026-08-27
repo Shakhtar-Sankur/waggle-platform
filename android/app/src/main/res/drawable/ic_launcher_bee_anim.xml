@@ -1,16 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  The splash bee, in a form that can move.
+  Buzz splash mark, animated.
 
-  A copy of ic_launcher_bee rather than a rename of it: the adaptive launcher
-  icon must stay a plain VectorDrawable — an adaptive icon cannot animate, and
-  pointing it at an AnimatedVectorDrawable makes the launcher fall back to a
-  blank square on some devices. So the static one keeps its job and this one
-  carries the names the animator targets.
+  Geometric rather than illustrative, matching src/components/Wordmark.tsx: a
+  honeycomb hexagon with two stripe cuts and two wing bars on the hexagon's own
+  shoulder angle. The previous drawing was a literal bee whose soft elliptical
+  wings turned to grey fuzz at launcher size.
 
-  Everything sits inside a root group so the whole mark can be scaled as one,
-  and the stripes are drawn in the background indigo — VectorDrawable has no
-  <mask>, and the layer beneath is a flat fill, so the result is identical.
+  A copy of the launcher mark with named groups the animator targets: an
+  adaptive icon cannot be an AnimatedVectorDrawable.
+
+  All meaning stays inside the centre 72x72dp safe zone, so no launcher mask —
+  circle, squircle, rounded square — can clip it.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
@@ -25,38 +26,31 @@
         android:scaleX="0.72"
         android:scaleY="0.72">
 
-        <!-- Left wing -->
-        <group
-            android:name="wingLeft"
-            android:pivotX="32"
-            android:pivotY="31"
-            android:rotation="-38">
-            <path
-                android:fillColor="#FFFFFF"
-                android:fillAlpha="0.45"
-                android:pathData="M19,31 a13,7.5 0 1,0 26,0 a13,7.5 0 1,0 -26,0 z" />
-        </group>
-
-        <!-- Right wing -->
-        <group
-            android:name="wingRight"
-            android:pivotX="76"
-            android:pivotY="31"
-            android:rotation="38">
-            <path
-                android:fillColor="#FFFFFF"
-                android:fillAlpha="0.45"
-                android:pathData="M63,31 a13,7.5 0 1,0 26,0 a13,7.5 0 1,0 -26,0 z" />
-        </group>
-
-        <!-- Body capsule -->
+    <!-- Wings: bars on the hexagon's own shoulder angle. -->
+    <group android:name="wingLeft" android:pivotX="30.52" android:pivotY="39.15" android:rotation="-30">
         <path
             android:fillColor="#FFFFFF"
-            android:pathData="M54,34 a16,16 0 0,1 16,16 v14 a16,16 0 0,1 -16,16 a16,16 0 0,1 -16,-16 v-14 a16,16 0 0,1 16,-16 z" />
+            android:fillAlpha="0.5"
+            android:pathData="M21.9,36.6 h17.25 v5.1 h-17.25 z" />
+    </group>
+    <group android:name="wingRight" android:pivotX="77.47" android:pivotY="39.15" android:rotation="30">
+        <path
+            android:fillColor="#FFFFFF"
+            android:fillAlpha="0.5"
+            android:pathData="M68.85,36.6 h17.25 v5.1 h-17.25 z" />
+    </group>
 
-        <!-- Stripes, in the background colour. -->
-        <path android:fillColor="#4F46E5" android:pathData="M32,46.5 h44 v5 h-44 z" />
-        <path android:fillColor="#4F46E5" android:pathData="M32,57.0 h44 v5 h-44 z" />
-        <path android:fillColor="#4F46E5" android:pathData="M32,67.5 h44 v5 h-44 z" />
+    <!-- Body: the same flat-topped hexagon as the in-app mark, scaled from the
+         48-unit web grid onto the 108dp icon canvas (x1.5, centred), so the
+         launcher icon and the mark inside the app are one drawing rather than
+         two that drift. -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54.0,38.25L71.25,48.38L71.25,68.62L54.0,78.75L36.75,68.62L36.75,48.38z" />
+
+    <!-- Two cuts, in the background colour. VectorDrawable has no <mask>, and
+         the layer beneath is a flat fill, so painting them is identical. -->
+    <path android:fillColor="#4F46E5" android:pathData="M31.5,53.4 h45.0 v4.8 h-45.0 z" />
+    <path android:fillColor="#4F46E5" android:pathData="M31.5,63.6 h45.0 v4.8 h-45.0 z" />
     </group>
 </vector>
