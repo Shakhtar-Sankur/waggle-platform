@@ -6,7 +6,7 @@
 <title>Waggle — every kilometre counts</title>
 <meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in sixteen languages, with the currency set from where you are. A GIGZEN product.">
 <meta name="author" content="Gigzen Private Limited">
-<meta name="theme-color" content="#FF4D17">
+<meta name="theme-color" content="#4F46E5">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='11' fill='%23FF4D17'/><rect x='14' y='15' width='20' height='26' rx='10' fill='white'/><rect x='12' y='23' width='24' height='3' rx='1.5' fill='%23FF4D17'/><rect x='12' y='29' width='24' height='3' rx='1.5' fill='%23FF4D17'/><rect x='12' y='36' width='24' height='3' rx='1.5' fill='%23FF4D17'/></svg>">
 
 <style>
@@ -46,14 +46,14 @@
   --rule:    #F0DED2;
 
   /* The brand orange, and the darkened one that is safe as small text.
-     #FF4D17 measures 3.4:1 on this cream — fine for a 96px number or a
+     #4F46E5 measures 3.4:1 on this cream — fine for a 96px number or a
      button fill, not for a 14px label. Every text use takes --flame-ink,
      which measures 6.0:1. This distinction is the single most common way a
      bright brand colour ends up illegible. */
-  --flame:      #FF4D17;
-  --flame-ink:  #B23200;
+  --flame:      #4F46E5;
+  --flame-ink:  #3730A3;
   --flame-deep: #9E2A00;
-  /* The button fill, and NOT --flame: white on #FF4D17 measures 3.32:1, which
+  /* The button fill, and NOT --flame: white on #4F46E5 measures 3.32:1, which
      would make the most important control on the page the least readable
      thing on it. #C63B00 is 5.1:1 against white and still unmistakably the
      brand orange. The bright tone stays for marks, rules and glows, where
@@ -188,7 +188,7 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 .feature p { margin-top: 18px; max-width: 48ch; }
 
 /* ── the one bold block ────────────────────────────────────────────────── */
-/* White on #9E2A00 measures 7.4:1. The brand #FF4D17 could not carry white
+/* White on #9E2A00 measures 7.4:1. The brand #4F46E5 could not carry white
    text at any size that matters — it is 3.35:1 — so the band is the deep
    tone and the bright one stays for fills and marks. */
 .band { background: linear-gradient(160deg, #B83400 0%, #9E2A00 58%, #7E1F00 100%); color: #FFEFE7; }
@@ -262,7 +262,7 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 /* ══════════════════════════════════════════════════════════════════════════
    THE BEE SYSTEM
    ══════════════════════════════════════════════════════════════════════════
-   The app is called Buzz and its icon is a bee, but the page around it
+   The app is called Waggle and its icon is a W drawn as a wave, but the page around it
    was a generic warm layout that could have belonged to any product. A motif
    does more for "next gen" than motion alone: motion without identity is just
    a page that moves.
@@ -405,11 +405,11 @@ input[type=range] {
             <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" fill="black"/>
           </mask>
         </defs>
-        <ellipse cx="13.4" cy="13.2" rx="6.4" ry="3.6" transform="rotate(-32 13.4 13.2)" fill="#FF4D17" opacity=".38"/>
-        <ellipse cx="34.6" cy="13.2" rx="6.4" ry="3.6" transform="rotate(32 34.6 13.2)" fill="#FF4D17" opacity=".38"/>
-        <rect width="48" height="48" fill="#FF4D17" mask="url(#beeMask)"/>
+        <ellipse cx="13.4" cy="13.2" rx="6.4" ry="3.6" transform="rotate(-32 13.4 13.2)" fill="#4F46E5" opacity=".38"/>
+        <ellipse cx="34.6" cy="13.2" rx="6.4" ry="3.6" transform="rotate(32 34.6 13.2)" fill="#4F46E5" opacity=".38"/>
+        <rect width="48" height="48" fill="#4F46E5" mask="url(#beeMask)"/>
       </svg>
-      Buzz
+      Waggle
     </a>
     <div class="navlinks">
       <a href="#why">Why</a>
@@ -444,7 +444,7 @@ input[type=range] {
         <p class="hero-note rv">Version 1.5 · Android 8.0 and later · 7.9&nbsp;MB · free, with no ads</p>
       </div>
       <div class="rv" style="position:relative">
-        <div class="phone"><img src="shots/home.jpg" alt="The Buzz home screen, showing today's distance, active time and earnings, with a Start Tracking button." width="310" height="672" loading="eager"></div>
+        <div class="phone"><img src="shots/home.jpg" alt="The Waggle home screen, showing today's distance, active time and earnings, with a Start Tracking button." width="310" height="672" loading="eager"></div>
         <!-- Chips repeat things the app genuinely shows, so the page is not
              promising behaviour the product does not have. -->
         <div class="chip a"><i></i>Tracking · 12.4 km</div>
@@ -475,7 +475,7 @@ input[type=range] {
           check, and no one to ask about the road ahead.</p>
         </div>
         <div class="card rv">
-          <h3>What Buzz adds</h3>
+          <h3>What Waggle adds</h3>
           <p>One place where the distance is counted honestly, the map has the people you know on
           it, and the road report comes from riders who came through ten minutes ago.</p>
         </div>
@@ -637,12 +637,12 @@ input[type=range] {
     <div class="wrap">
       <span class="eyebrow rv">Download</span>
       <h2 class="rv" style="margin-top:16px">Try it on your phone</h2>
-      <p class="lede rv" style="margin-top:18px;max-width:54ch">Buzz is in closed
+      <p class="lede rv" style="margin-top:18px;max-width:54ch">Waggle is in closed
       testing and is not on Google Play publicly yet. You can install this build
       directly.</p>
 
       <div class="dl-box rv">
-        <a class="btn btn-primary" href="Buzz-v1.5.apk" download>Download Buzz-v1.5.apk</a>
+        <a class="btn btn-primary" href="Waggle-1.0.apk" download>Download Waggle-1.0.apk</a>
         <div class="dl-meta">
           <span>Version <b>1.5</b></span>
           <span>Build <b>6</b></span>
@@ -659,7 +659,7 @@ input[type=range] {
         <ol class="steps">
           <li>Download the file above on your Android phone.</li>
           <li>Open it. Android will ask whether to allow installs from your browser — allow it for that app only.</li>
-          <li>Install, then turn that permission back off. Buzz does not need it again.</li>
+          <li>Install, then turn that permission back off. Waggle does not need it again.</li>
         </ol>
 
         <p class="hash">SHA-256 · 2ef7ff1a08424e421b446be660b318c42762b3ba49a6bd45f85578a87e721ee9
@@ -682,7 +682,7 @@ input[type=range] {
         </svg>
         <span class="gword">GIGZEN</span>
       </span>
-      <p class="fine" style="margin-top:12px">Buzz is a product of<br>
+      <p class="fine" style="margin-top:12px">Waggle is a product of<br>
       <b style="color:var(--ink)">Gigzen Private Limited</b><br>Bhubaneswar, Odisha, India</p>
     </div>
     <div>
