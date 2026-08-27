@@ -931,7 +931,12 @@ export function RoutesScreen() {
                 ) : (
                   <Polyline
                     positions={routePositions}
-                    pathOptions={{ color: "#fc5200", weight: 5, opacity: 0.95, dashArray: pathSnapped ? undefined : "6 7" }}
+                    /* Brand indigo. This is the app's own line on someone
+                       else's map, so it carries the company colour — unlike
+                       BAND_COLOUR in RouteInsights, which stays a semantic
+                       red/amber/orange/green speed ramp and is not brand at
+                       all. */
+                    pathOptions={{ color: "#4338ca", weight: 5, opacity: 0.95, dashArray: pathSnapped ? undefined : "6 7" }}
                   />
                 )}
                 {/* Where the shift actually stood still. On a delivery map that

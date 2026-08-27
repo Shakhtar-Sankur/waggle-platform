@@ -5,30 +5,45 @@
   --muted: #eef0f4;
   --muted-foreground: #565d6b;
   --border: #e6e8ee;
-  --primary: #ff4d17;
+  /* Indigo is the company's colour, so it is the ROOT here rather than an
+     override applied per screen.
+
+     It used to be the other way round. --primary was #ff4d17 and indigo was
+     patched in three separate places — the home band, the auth screen, and a
+     handful of literal `color:` rules — each one added when somebody noticed
+     orange surviving somewhere it should not have. The default stayed orange
+     underneath all of it, so every new surface started out the wrong colour
+     and had to be caught by eye. That is why the notification tint was still
+     #ff4400 months after the brand changed.
+
+     One definition, and the sections override it deliberately rather than the
+     brand leaking through by accident.
+
+     Contrast is unchanged in kind: #4f46e5 is 6.3:1 under white, so it carries
+     white labels, and --primary-text below is the darkened stop for small text
+     on light ground. */
+  --primary: #4f46e5;
   /* Same brand hue, darkened purely for SMALL TEXT on light surfaces.
-     #ff4d17 measures 3.32:1 on white — below the 4.5:1 AA floor — so buttons
-     and large marks keep the vivid orange while labels use this. */
-  --primary-text: #c2410c;
-  --primary-strong: #f03700;
-  --primary-soft: #fff1ea;
+     #4f46e5 measures 4.2:1 on white — just under the 4.5:1 AA floor — so
+     buttons and large marks keep the vivid indigo while labels use this,
+     which measures 7.9:1. */
+  --primary-text: #4338ca;
+  --primary-strong: #4338ca;
+  --primary-soft: #eef2ff;
   --success: #16c784;
   --secondary: #1f2430;
   --danger: #c81e1e;
   --radius: 22px;
   /* Filled surfaces that carry white text: buttons, avatars, badges.
-     The old ramp ran #ff5a1f → #ff9d3d, and white on those stops measures
-     3.12, 2.60 and 2.07 — so every primary button in the app, and every
-     avatar, was below AA. Deepened so the lightest stop still clears 4.5
-     (5.61) while reading as the same orange.
+     Every stop clears AA under white — the lightest, #4338ca, measures 7.9:1.
      The bright --primary survives for marks, rules and glows, where nothing
      has to be read off it. */
-  --accent-grad: linear-gradient(135deg, #a82f00 0%, #b23200 55%, #bc3a06 100%);
+  --accent-grad: linear-gradient(135deg, #312e81 0%, #3730a3 55%, #4338ca 100%);
   /* A flat fill for the same job. */
-  --primary-fill: #b23200;
+  --primary-fill: #3730a3;
   --shadow-card: 0 6px 22px rgba(23, 26, 33, 0.06), 0 1px 3px rgba(23, 26, 33, 0.05);
   --shadow-elevated: 0 24px 54px rgba(23, 26, 33, 0.16);
-  --shadow-glow-primary: 0 10px 26px rgba(255, 77, 23, 0.32);
+  --shadow-glow-primary: 0 10px 26px rgba(79, 70, 229, 0.32);
   /* Inter FIRST. It was listed after -apple-system and BlinkMacSystemFont,
      which both resolve to Roboto on Android — so the bundled Inter loaded on
      every device and was used on none of them, and the app rendered in the
@@ -3827,7 +3842,7 @@ html {
    Strava-style Maps screen
    ============================================================ */
 .strava-screen {
-  --sv-orange: #fc5200;
+  --sv-orange: #4338ca;
   position: fixed;
   top: 0;
   bottom: 74px;
@@ -4252,7 +4267,7 @@ html {
 }
 .driver-marker.me {
   border-color: #fff;
-  background: var(--sv-orange, #fc5200);
+  background: var(--sv-orange, #4338ca);
 }
 
 /* Ambient depth — subtle high-tech gradient wash behind the app screens. */
@@ -4483,7 +4498,7 @@ body::before {
 
 /* Strava challenges view */
 .sv-content.challenges {
-  --sv-orange: #fc5200;
+  --sv-orange: #4338ca;
 }
 .svc-hero {
   background: #fff;
@@ -4493,7 +4508,10 @@ body::before {
 }
 .svc-hero-media {
   height: 150px;
-  background: linear-gradient(135deg, #fc5200, #ff8a3d);
+  /* Was a bare linear-gradient(#fc5200, #ff8a3d) with no variable in it, so
+     this hero stayed orange on every screen no matter which section it was
+     shown in. Routed through the band tokens like everything else. */
+  background: linear-gradient(135deg, var(--band-a, #4338ca), var(--band-b, #312e81));
   display: grid;
   place-items: center;
   position: relative;
@@ -4737,7 +4755,7 @@ body::before {
 .svc-modal-scrim {
   /* Portaled to <body>, outside .strava-screen — redeclare the brand colour so
      var(--sv-orange) resolves for the modal's buttons, pills, and accents. */
-  --sv-orange: #fc5200;
+  --sv-orange: #4338ca;
   position: fixed;
   inset: 0;
   z-index: 1200;
@@ -5682,11 +5700,11 @@ body { font-weight: 400; }
 }
 /* The mode you are in reads as the label; the one you would switch to is
    quieter, so the button says "here, and there" rather than shouting both. */
-.sv-mapmode .sv-mapmode-now { color: var(--sv-orange, #fc5200); }
+.sv-mapmode .sv-mapmode-now { color: var(--sv-orange, #4338ca); }
 .sv-mapmode .sv-mapmode-next { color: var(--muted-foreground); opacity: .75; }
 .sv-mapmode svg { color: var(--muted-foreground); opacity: .6; flex: none; }
 .sv-mapmode:focus-visible {
-  outline: 2px solid var(--sv-orange, #fc5200);
+  outline: 2px solid var(--sv-orange, #4338ca);
   outline-offset: 2px;
 }
 .sv-mapmode:active { transform: scale(.97); }
@@ -5711,7 +5729,7 @@ body { font-weight: 400; }
 /* Snapped to roads is a stronger claim than a straight line between fixes,
    so the two are not allowed to look the same. */
 .sv-mapnote em { font-style: normal; font-weight: 600; }
-.sv-mapnote em.ok { color: var(--sv-orange, #fc5200); }
+.sv-mapnote em.ok { color: var(--sv-orange, #4338ca); }
 .sv-mapnote em.raw { color: var(--muted-foreground); }
 
 /* Day picker, "Me" only. */
@@ -5736,7 +5754,7 @@ body { font-weight: 400; }
 .sv-today {
   border: 1px solid var(--border);
   background: var(--background, #fff);
-  color: var(--sv-orange, #fc5200);
+  color: var(--sv-orange, #4338ca);
   cursor: pointer;
   border-radius: 999px;
   padding: 7px 13px;
@@ -5777,7 +5795,7 @@ body { font-weight: 400; }
   padding: calc(var(--band-pull, 88px) + 14px) var(--shell-pad, 16px) 62px;
   background:
     radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
-    linear-gradient(160deg, #b8340a 0%, #a82f00 48%, #8f2800 100%);
+    linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-flat, #3730a3) 48%, var(--band-b, #312e81) 100%);
   border-radius: 0 0 26px 26px;
   color: #fff;
 }
@@ -5865,7 +5883,7 @@ body[data-band] .app-header h1 { color: #fff; }
 /* Once the band has scrolled away, the header takes the brand colour rather
    than turning white — a bar that changes colour mid-scroll reads as a bug. */
 body[data-band] .app-header.is-collapsed {
-  background: #a82f00;
+  background: var(--band-flat, #3730a3);
   border-bottom-color: rgba(0, 0, 0, .12);
   box-shadow: 0 1px 12px rgba(0, 0, 0, .18);
 }
@@ -6058,10 +6076,10 @@ body[data-band] { background: #fbf7f4; }
    gives the screen a head — and makes the feed underneath read as content
    rather than as more of the same surface. No markup change: they are
    already the first two children and already sticky at 0 and 58px. */
-.fb-page { --shell-pad: 12px; background: #f4efe9; }
+.fb-page { --shell-pad: 12px; background: #f7f7fb; }
 
 .fb-topbar {
-  background: linear-gradient(160deg, #b8340a 0%, #a82f00 100%);
+  background: linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-flat, #3730a3) 100%);
   border-bottom: 0;
 }
 .fb-topbar .wordmark, .fb-topbar .wordmark * { color: #fff; }
@@ -6084,10 +6102,10 @@ body[data-band] { background: #fbf7f4; }
 
 /* The tabs continue the block, and round off its bottom edge. */
 .fb-tabs {
-  background: #a82f00;
+  background: var(--band-flat, #3730a3);
   border-bottom: 0;
   border-radius: 0 0 20px 20px;
-  box-shadow: 0 6px 18px rgba(168, 47, 0, .22);
+  box-shadow: 0 6px 18px rgba(55, 48, 163, .22);
 }
 .fb-tab { color: rgba(255, 255, 255, .72); }
 .fb-tab.active { color: #fff; }
@@ -6104,7 +6122,7 @@ body[data-band] { background: #fbf7f4; }
    The Maps/Challenges bar was white above a full-bleed map, so the screen
    had a web-style chrome strip on top of an app-style body. */
 .sv-nav {
-  background: linear-gradient(160deg, #b8340a 0%, #a82f00 100%);
+  background: linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-flat, #3730a3) 100%);
   border-bottom: 0;
 }
 .sv-nav .sv-nav-brand, .sv-nav .sv-nav-brand * { color: #fff; }
@@ -6889,7 +6907,7 @@ button:not(:disabled):active,
    a filled pill, a bolder label and a heavier icon, because for the ~8% of
    men with red-green colour blindness a scheme that speaks only in hue says
    nothing at all. */
-body[data-band="home"]      { --band-a: #b8340a; --band-b: #8f2800; --band-flat: #a82f00; }
+body[data-band="home"]      { --band-a: #4338ca; --band-b: #312e81; --band-flat: #3730a3; }
 body[data-band="community"] { --band-a: #6d28d9; --band-b: #4c1d95; --band-flat: #5b21b6; }
 body[data-band="routes"]    { --band-a: #0f766e; --band-b: #134e4a; --band-flat: #115e59; }
 body[data-band="messages"]  { --band-a: #1d4ed8; --band-b: #1e3a8a; --band-flat: #1e40af; }
@@ -6902,12 +6920,12 @@ body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat:
 .home-band {
   background:
     radial-gradient(120% 90% at 85% -10%, rgba(255, 255, 255, .18) 0%, transparent 55%),
-    linear-gradient(160deg, var(--band-a, #b8340a) 0%, var(--band-b, #8f2800) 100%);
+    linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-b, #312e81) 100%);
 }
 
 /* And the collapsed header follows it, so scrolling does not change the
    colour of the bar halfway down the screen. */
-body[data-band] .app-header.is-collapsed { background: var(--band-flat, #a82f00); }
+body[data-band] .app-header.is-collapsed { background: var(--band-flat, #3730a3); }
 
 /* The warm ground was mixed for orange. Each section gets a ground tinted
    toward its own hue — barely-there (these are ~2% saturation), but enough
@@ -6960,7 +6978,7 @@ body[data-band="profile"]   { background: #fdf6fc; }
 
 /* The bottom nav's active pill takes the section colour too, so the tab you
    are on and the screen you are looking at agree. */
-.nav-item.active::before { background: color-mix(in srgb, var(--band-flat, #ff4d17) 14%, transparent); }
+.nav-item.active::before { background: color-mix(in srgb, var(--band-flat, #3730a3) 14%, transparent); }
 .nav-item.active { color: var(--band-flat, var(--primary-text)); }
 
 /* ── The accents follow the section too ───────────────────────────────
@@ -6999,7 +7017,7 @@ body[data-band="profile"] {
 /* Routes' own top bar carried the orange as a literal gradient rather than
    reading a token, so it survived the retint. Pointed at the section. */
 .sv-nav {
-  background-image: linear-gradient(160deg, var(--band-a, #b8340a) 0%, var(--band-b, #8f2800) 100%);
+  background-image: linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-b, #312e81) 100%);
 }
 
 /* The compose button is chrome, not content: it belongs to the screen it
@@ -7509,10 +7527,15 @@ body[data-band="profile"] {
 }
 
 /* The wordmark is the logo, and a logo does not change colour with the
-   screen it happens to be sitting on. Pinned to the brand ramp so it
-   keeps the orange everywhere, whatever the section did to the token. */
+   screen it happens to be sitting on. Pinned to the brand ramp so it stays
+   indigo everywhere, whatever the section did to the token.
+
+   This is the rule that mattered most: it was pinned to the ORANGE ramp, and
+   pinned deliberately, so the one element guaranteed not to follow a section
+   was also the one guaranteed to stay the wrong colour. The company name in
+   the header rendered in a brand the company had abandoned. */
 .wordmark-text {
-  background-image: linear-gradient(135deg, #a82f00 0%, #b23200 55%, #bc3a06 100%);
+  background-image: linear-gradient(135deg, #312e81 0%, #3730a3 55%, #4338ca 100%);
 }
 
 /* The bee is half the logo, and it was taking --primary while the
@@ -7522,7 +7545,7 @@ body[data-band="profile"] {
    The header keeps its own treatment: on a coloured band the whole mark
    goes white, and those rules are more specific than this one, so this
    only reaches a wordmark standing on a plain background. */
-.wordmark svg { color: #b23200; }
+.wordmark svg { color: #3730a3; }
 
 /* ── The underline was a leftover fighting its replacement ────────────
    The active tab's bar carried THREE horizontal constraints at once:
@@ -7563,12 +7586,12 @@ body[data-band="profile"] {
 .strava-screen,
 .sv-content.challenges,
 .svc-modal-scrim {
-  --sv-orange: var(--primary-text, #fc5200);
+  --sv-orange: var(--primary-text, #4338ca);
 }
 
 /* The challenge hero banner had the ramp written out longhand. */
 .svc-hero-media {
-  background: linear-gradient(135deg, var(--band-a, #fc5200), var(--band-b, #ff8a3d));
+  background: linear-gradient(135deg, var(--band-a, #4338ca), var(--band-b, #312e81));
 }
 
 /* ── The pale oranges ─────────────────────────────────────────────────
@@ -7638,14 +7661,11 @@ html { background: #f3f4f6; }
    three start reading as one, the fix is to push Messages toward cyan
    and Community toward purple rather than to move Home again. */
 body[data-band="home"] {
+  /* Home carries the company colour, so it declares only its band and its
+     ground — every --primary-* it used to repeat is now identical to :root
+     and has been removed. The other four sections still remap the scale,
+     because they genuinely differ from the brand; home never did. */
   --band-a: #4338ca; --band-b: #312e81; --band-flat: #3730a3;
-  --primary: #4f46e5;
-  --primary-strong: #4338ca;
-  --primary-text: #4338ca;
-  --primary-soft: #eef2ff;
-  --primary-fill: #3730a3;
-  --sv-orange: #4338ca;
-  --accent-grad: linear-gradient(135deg, #312e81 0%, #3730a3 55%, #4338ca 100%);
   background: #f5f6fb;
 }
 
@@ -9029,30 +9049,26 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    a coloured band. */
 .fb-beemark { color: #fff; }
 
-/* The auth screen has no data-band — it is outside the tabbed shell — so
-   it kept the default brand tokens while its background went indigo. That
-   left an orange bee in the white circle and orange "Log In" text on an
-   indigo field: the two most prominent things on the first screen anyone
-   sees, in the colour the app no longer uses.
+/* The auth screen used to re-declare the whole indigo scale here, because it
+   has no data-band — it is outside the tabbed shell — and so inherited the
+   root tokens back when those were orange. That left an orange mark in the
+   white circle and orange "Log In" text on an indigo field: the two most
+   prominent things on the first screen anyone sees, in the colour the app no
+   longer used.
 
-   The scale is remapped here the same way each section does it, so
-   everything reading var(--primary-*) follows without being listed. */
-.auth-screen {
-  --primary: #4F46E5;
-  --primary-strong: #4338CA;
-  --primary-text: #4338CA;
-  --primary-soft: #EEF2FF;
-  --primary-fill: #3730A3;
-  --accent-grad: linear-gradient(135deg, #312E81 0%, #3730A3 55%, #4338CA 100%);
-}
+   The root is indigo now, so the remap is gone rather than kept as a third
+   copy of the same six values. Keeping it would have preserved exactly the
+   arrangement that let the brand drift in the first place. */
+
 /* The mark in its white disc, and the label on the white button — both
-   were inheriting the old orange directly rather than through a token. */
+   inherit a coloured context rather than the token, so they are still named
+   explicitly. */
 .auth-screen .auth-mark svg,
 .auth-screen .wordmark svg,
 .auth-screen > svg,
-.auth-screen [class*="logo"] svg { color: #4F46E5; }
+.auth-screen [class*="logo"] svg { color: var(--primary, #4f46e5); }
 .auth-screen .button,
-.auth-screen .button-primary { color: #4338CA; }
+.auth-screen .button-primary { color: var(--primary-strong, #4338ca); }
 
 /* ── The sign-in screen, on glass ─────────────────────────────────────
    Asked for a transparent background. Literal transparency has nothing

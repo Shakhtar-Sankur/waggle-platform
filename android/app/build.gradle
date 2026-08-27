@@ -15,21 +15,19 @@ android {
         applicationId "com.gigzen.waggle"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // These numbers carry over from Buzz on com.masayaako.driver, where
-        // versionCode 6 was the highest on Play and a duplicate would be
-        // rejected.
+        // Waggle's first release, numbered as one.
         //
-        // That constraint no longer applies. The applicationId changed, so Play
-        // sees a DIFFERENT app: the old listing cannot be updated from here,
-        // and this listing starts empty and will accept any versionCode as its
-        // first upload. 7/1.6 is kept only so the numbering stays continuous
-        // for anyone reading the git history — starting again at 1/1.0 would be
-        // equally valid and arguably more honest for a new listing.
+        // These were 7 and "1.6", carried over from Buzz on
+        // com.masayaako.driver where versionCode 6 was the highest on Play.
+        // That constraint died with the package change: Play sees a DIFFERENT
+        // app, so this listing starts empty and accepts any versionCode as its
+        // first upload. Keeping 1.6 would have claimed a release history this
+        // listing does not have.
         //
-        // Once something IS uploaded here, the usual rule returns: every later
+        // From the first upload onward the usual rule returns: every later
         // upload needs a higher versionCode than the highest already accepted.
-        versionCode 7
-        versionName "1.6"
+        versionCode 1
+        versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
