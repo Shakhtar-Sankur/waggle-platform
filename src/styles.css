@@ -8129,3 +8129,78 @@ body[data-band="home"] {
    I have not named here cannot quietly land on top of it again. */
 .sv-results,
 .sv-top > div:has(> button strong) { position: relative; z-index: 620; }
+
+/* ── The search results were indented by a bullet that isn't there ────
+   .sv-results is a <ul>, and a <ul> ships with padding-left:40px so its
+   markers have somewhere to sit. The list-style was removed and the
+   padding was not, so every result row started 40px in: the card's edge
+   at x12, the row at x52, the pin at x65, the name at x91. That gap is
+   what made the row read as "space, then logo, then name" instead of an
+   icon beside a label.
+
+   Reset. The pin now sits on the card's own gutter and the name follows
+   it, so the list lines up with the search field above it. */
+.sv-results {
+  list-style: none;
+  padding-left: 0;
+  margin: 8px 0 0;
+}
+
+/* ── The map controls sat behind the record sheet ─────────────────────
+   The rail was centred vertically — top:46%, translateY(-50%) — which
+   works on a tall viewport and fails on a short one. Measured: the rail
+   runs to y413 while the sheet starts at y389, so the last 24px of
+   "Change map layer" was underneath it. Not merely tight: the button
+   could not be tapped.
+
+   Anchored above the sheet now, using its measured height rather than a
+   guess, because the sheet grows with its content — "Ready to record"
+   and a live recording with pace and splits are different heights, as is
+   a phone with a home indicator.
+
+   When the sheet is out of the way (a route or a results list is open)
+   the rail drops back down into easy thumb reach. */
+.sv-rail {
+  top: auto;
+  bottom: calc(var(--sv-sheet-h, 236px) + 14px);
+  transform: none;
+  transition: bottom 220ms cubic-bezier(.2, .8, .2, 1);
+}
+.sv-content.has-route .sv-rail { bottom: 24px; }
+
+/* The layer switch, out of the rail and up beside the search field.
+   Sized and coloured like the rail buttons so it still reads as a map
+   control rather than as part of the search. */
+.sv-layerbtn {
+  position: absolute;
+  top: 122px;
+  right: 12px;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}
+.sv-layerbtn[aria-pressed="true"] {
+  background: var(--primary-fill);
+  color: #fff;
+}
+/* Out of the way whenever the results list or a route panel is open, the
+   same as everything else that floats over the map. */
+.sv-content.has-results .sv-layerbtn,
+.sv-content.has-route .sv-layerbtn { opacity: 0; pointer-events: none; }
+
+/* With three buttons down to two, the rail fits between the mode row and
+   the sheet with room to spare. */
+.sv-rail { bottom: calc(var(--sv-sheet-h, 236px) + 16px); }
+
+/* The layer button was still landing on the date field. Both were pinned
+   to the right edge at overlapping heights; the date picker owns that
+   row, so the button drops below it. */
+.sv-layerbtn { top: 214px; }

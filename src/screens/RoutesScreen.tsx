@@ -22,7 +22,7 @@ import L from "leaflet";
 import { ChallengeIcon } from "../components/ChallengeIcon";
 import { VectorBasemap } from "../components/VectorBasemap";
 import { useBrandBand } from "../hooks/useBrandBand";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
 import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
@@ -30,6 +30,7 @@ import { LocationService } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
 import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
 import { describeStep, directionsBetween, scoreAgainstHistory, type Directions } from "../services/DirectionsService";
+import { searchPlaces, type PlaceHit } from "../services/PlacesService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -86,27 +87,11 @@ const MODE_KEY = {
 type MapStyle = keyof typeof TILES;
 type StravaView = "maps" | "challenges";
 
-/** One geocoded place from the location search. */
-interface SearchHit {
-  lat: number;
-  lng: number;
-  label: string;
-  sub: string;
-  /** True for a settlement or district, as opposed to a street or a shop. */
-  isPlace?: boolean;
-  /** True only for places big enough to be typed from another country — a
-   *  city, state or country, never a village or a suburb. */
-  isMajorPlace?: boolean;
-}
+/** One geocoded place. The shape lives with the search service now. */
+type SearchHit = PlaceHit;
 
 // Rough squared-degree distance — only used to rank search hits by nearness,
 // so it never needs real great-circle accuracy.
-function distanceFrom(from: { lat: number; lng: number }, hit: SearchHit): number {
-  const dLat = from.lat - hit.lat;
-  const dLng = (from.lng - hit.lng) * Math.cos((from.lat * Math.PI) / 180);
-  return dLat * dLat + dLng * dLng;
-}
-
 /**
  * Escapes text destined for a Leaflet divIcon's HTML string.
  *
@@ -205,6 +190,38 @@ export function RoutesScreen() {
 
   const [view, setView] = useState<StravaView>("maps");
   const [map, setMap] = useState<L.Map | null>(null);
+
+  /**
+   * The record sheet's height, published to CSS as --sv-sheet-h.
+   *
+   * The map controls were centred vertically (top: 46%) and knew nothing about
+   * the sheet below them, so on a shorter viewport the last button in the rail
+   * — "Change map layer" — ended up 24px underneath it and could not be
+   * tapped at all. Measuring rather than hardcoding, because the sheet grows
+   * with its content: "Ready to record" and a live recording with pace and
+   * splits are not the same height, and neither is a phone with a home
+   * indicator.
+   *
+   * Same approach the header already uses for --band-pull.
+   */
+  const sheetRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sheetRef.current;
+    if (!el) return;
+    const publish = () => {
+      document.documentElement.style.setProperty(
+        "--sv-sheet-h",
+        `${Math.round(el.getBoundingClientRect().height)}px`,
+      );
+    };
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--sv-sheet-h");
+    };
+  }, [view]);
   const [mapStyle, setMapStyle] = useState<MapStyle>("standard");
 
   // Location search (OpenStreetMap Nominatim — free, no API key).
@@ -225,132 +242,18 @@ export function RoutesScreen() {
     setSearchMsg("");
     setResults([]);
     try {
-      // TWO searches, merged — neither alone is enough:
-      //   • local only  → "Jakarta" returns Manila side-streets named Jakarta
-      //                   and never the Indonesian capital.
-      //   • global only → "7-Eleven" returns branches in Thailand and Malaysia
-      //                   instead of the one down the road.
-      // Run both and let the ranking below decide.
-      const d = 1.5; // ~165 km box around the driver
-      const viewbox = [
-        currentLocation.lng - d,
-        currentLocation.lat + d,
-        currentLocation.lng + d,
-        currentLocation.lat - d,
-      ].join(",");
-      const fetchHits = async (bounded: 0 | 1) => {
-        const response = await fetch(
-          `https://nominatim.openstreetmap.org/search?format=json&limit=12&addressdetails=1` +
-            `&viewbox=${viewbox}&bounded=${bounded}&q=${encodeURIComponent(q)}`,
-          { headers: { Accept: "application/json" } },
-        );
-        return (await response.json()) as Array<{
-          lat: string;
-          lon: string;
-          display_name: string;
-          name?: string;
-          class?: string;
-          type?: string;
-        }>;
-      };
-      // In parallel so the driver isn't waiting twice.
-      const [nearby, worldwide] = await Promise.all([fetchHits(1), fetchHits(0)]);
-      const raw = [...(Array.isArray(nearby) ? nearby : []), ...(Array.isArray(worldwide) ? worldwide : [])];
-      const key = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
-      const wanted = key(q);
-
-      if (Array.isArray(raw) && raw.length) {
-        const seen = new Set<string>();
-        const hits: SearchHit[] = raw
-          .filter((r) => {
-            const id = `${r.lat},${r.lon}`;
-            if (seen.has(id)) return false;
-            seen.add(id);
-            return true;
-          })
-          .map((r) => {
-            const parts = (r.display_name || "").split(",").map((s) => s.trim());
-            return {
-              lat: Number(r.lat),
-              lng: Number(r.lon),
-              label: r.name || parts[0] || q,
-              sub: parts.slice(1, 4).join(", "),
-              // A genuine settlement rather than a shop or a street. Measured:
-              // Jakarta and Cebu City come back as boundary/administrative,
-              // while every 7-Eleven is shop/convenience. The `place` class is
-              // deliberately narrowed to settlement types — a stray POI tagged
-              // place/neighbourhood must not outrank the branch down the road.
-              // (Nominatim's `importance` is NOT usable here: the far 7-Elevens
-              //  score 0.53 while the Manila ones score 0.0001.)
-              // Split in two, because "is a settlement" and "is a settlement
-              // worth typing from another country" are different questions and
-              // conflating them is what put three Punjab villages above
-              // Andheri East for a driver standing in Mumbai.
-              isMajorPlace:
-                (r.class === "boundary" && r.type === "administrative") ||
-                (r.class === "place" &&
-                  ["city", "state", "region", "province", "municipality", "county", "country"].includes(
-                    r.type ?? "",
-                  )),
-              isPlace:
-                (r.class === "boundary" && r.type === "administrative") ||
-                (r.class === "place" &&
-                  ["city", "town", "village", "suburb", "neighbourhood", "state", "region", "province", "municipality", "county", "country"].includes(
-                    r.type ?? "",
-                  )),
-            };
-          })
-          // Ranking, in order:
-          //  1. name actually matches what was typed;
-          //  2. RELEVANT to where the driver is standing — either close by, or
-          //     a place big enough that someone would type its name from
-          //     another country;
-          //  3. among those, a major place first;
-          //  4. then nearest.
-          //
-          // Tier 2 is the one that was missing, and its absence was not
-          // subtle: "Andheri" from Mumbai returned a village in Kharar Tahsil,
-          // one in Sangrur and one in Baran — all ~1,400km away — before
-          // Andheri East, eight kilometres from the driver. The old rule
-          // ranked "is a settlement" above distance, and `village` counted
-          // while `suburb` did not, so three Punjab hamlets outranked the
-          // suburb the driver meant.
-          //
-          // Checked against the three cases this ranking exists to satisfy:
-          //   "Andheri" from Mumbai  → near suburb beats far villages;
-          //   "Jakarta" from Manila  → both pass tier 2 (one near, one major),
-          //                            and tier 3 puts the city above the
-          //                            Manila side-street named after it;
-          //   "7-Eleven" from Manila → near branches pass, Thai ones do not,
-          //                            so the one down the road comes first.
-          .sort((a, b) => {
-            const matches = (hit: SearchHit) => {
-              const name = key(hit.label);
-              return name.includes(wanted) || wanted.includes(name) ? 0 : 1;
-            };
-            const byMatch = matches(a) - matches(b);
-            if (byMatch !== 0) return byMatch;
-
-            // 60km: far enough to cover a metro area and the trips a driver
-            // actually makes, near enough that another state never qualifies.
-            const relevant = (hit: SearchHit) =>
-              distanceFrom(currentLocation, hit) <= 60 || hit.isMajorPlace ? 0 : 1;
-            const byRelevance = relevant(a) - relevant(b);
-            if (byRelevance !== 0) return byRelevance;
-
-            const byMajor = Number(b.isMajorPlace) - Number(a.isMajorPlace);
-            if (byMajor !== 0) return byMajor;
-            const byPlace = Number(b.isPlace) - Number(a.isPlace);
-            if (byPlace !== 0) return byPlace;
-            return distanceFrom(currentLocation, a) - distanceFrom(currentLocation, b);
-          })
-          .slice(0, 6);
+      // Provider and ranking both live in PlacesService now — this used to be
+      // ninety lines of fetching, de-duplicating and sorting inside the
+      // component, which made "swap the geocoder" a rewrite of a screen.
+      const hits = await searchPlaces(q, currentLocation);
+      if (!hits.length) {
+        setSearchMsg(t("sv_searchNoResult"));
+      } else if (hits.length === 1) {
         // A single confident match jumps straight there; otherwise let the
         // driver pick, since "Jollibee" legitimately matches many branches.
-        if (hits.length === 1) selectResult(hits[0]);
-        else setResults(hits);
+        selectResult(hits[0]);
       } else {
-        setSearchMsg(t("sv_searchNoResult"));
+        setResults(hits);
       }
     } catch {
       setSearchMsg(t("sv_searchFailed"));
@@ -1056,6 +959,26 @@ export function RoutesScreen() {
             {searchMsg ? <p className="sv-search-msg">{searchMsg}</p> : null}
           </div>
 
+          {/* The layer switch used to be the third button in the rail below.
+              It does not fit: between the mode row and the record sheet there
+              are 188px, and locate + zoom + layers need 212. Anchoring the rail
+              lower buried the layer button under the sheet; anchoring it higher
+              put it on top of the date picker, where elementFromPoint proved a
+              tap on the calendar opened "centre on me" instead.
+
+              So it moves rather than shuffling the collision around. It is the
+              least-used control here — a driver switches to satellite rarely
+              and re-centres constantly — and top-right beside the search is
+              where map apps put a layer toggle anyway. */}
+          <button
+            className="sv-layerbtn"
+            aria-label={t("a11y_changeMapLayer")}
+            aria-pressed={mapStyle === "satellite"}
+            onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
+          >
+            <Layers size={18} />
+          </button>
+
           <div className="sv-rail">
             <button className="sv-rail-btn" aria-label={t("a11y_centerOnMe")} onClick={recenter}>
               <LocateFixed size={19} />
@@ -1065,16 +988,9 @@ export function RoutesScreen() {
               <span className="sv-zoom-div" />
               <button aria-label={t("a11y_zoomOut")} onClick={() => map?.zoomOut()}><Minus size={18} /></button>
             </div>
-            <button
-              className="sv-rail-btn"
-              aria-label={t("a11y_changeMapLayer")}
-              onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
-            >
-              <Layers size={19} />
-            </button>
           </div>
 
-          <div className="sv-sheet">
+          <div className="sv-sheet" ref={sheetRef}>
             <div className="sv-sheet-grip" />
             <div className="sv-sheet-title">
               <strong>{isTracking ? t("sv_recording") : t("sv_ready")}</strong>
