@@ -8653,3 +8653,256 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .driver-marker-wrap.is-stale .driver-marker { filter: grayscale(.35); }
 .sv-friendlist li.is-stale .sv-friend-dot { opacity: .6; filter: grayscale(.4); }
 .sv-friendlist li.is-stale .sv-friend-away { color: var(--muted-foreground); }
+
+/* ── The sheet can be put away ────────────────────────────────────────
+   It had a grip — the bar every phone sheet uses to mean "drag me" — and
+   it did nothing. That is worse than no handle at all: it promises an
+   interaction and refuses it, leaving a third of the map permanently
+   covered with no way to look underneath.
+
+   Collapsed, only the handle stays, so the map is clear and getting the
+   panel back is obvious. */
+.sv-sheet {
+  transition: transform 260ms cubic-bezier(.2, .8, .2, 1);
+}
+.sv-sheet.is-collapsed {
+  /* Down by its own height, less the strip that keeps the handle in
+     reach — a percentage, so it works whatever the sheet contains. */
+  transform: translateY(calc(100% - 26px));
+}
+
+/* The handle is a button now, so it needs a real target: 44px tall,
+   full width, with the visible bar drawn as its ::before. */
+.sv-sheet-grip {
+  display: block;
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  position: relative;
+  touch-action: none; /* or the browser scrolls instead of dragging */
+}
+.sv-sheet-grip::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .22);
+}
+.sv-sheet-grip:active { cursor: grabbing; }
+.sv-sheet-grip:active::before { background: rgba(0, 0, 0, .38); }
+
+/* The controls follow the sheet down, so a collapsed panel gives the map
+   back its full height rather than leaving the rail floating mid-screen. */
+.sv-content:has(.sv-sheet.is-collapsed) .sv-rail { bottom: 46px; }
+
+/* (The ".sv-mapcontrols" wrapper this block styled never existed — the
+   mode switch and the date picker are siblings 150 lines apart in the
+   markup and could not share a parent without moving JSX. The rules
+   stayed behind after that attempt was reverted, and one of them set
+   both elements to position:static, which dropped them out of their
+   absolute placement and flowed them at the top-left of the map behind
+   the header. Removed; the joined look is done further down purely by
+   placing the two halves flush.) */
+
+/* ── The sheet can be put away ────────────────────────────────────────
+   It had a grip — the bar every phone sheet uses to mean "drag me" — and
+   it did nothing. That is worse than no handle at all: it promises an
+   interaction and refuses it, leaving a third of the map permanently
+   covered with no way to look underneath.
+
+   Collapsed, only the handle stays, so the map is clear and getting the
+   panel back is obvious. */
+.sv-sheet {
+  transition: transform 260ms cubic-bezier(.2, .8, .2, 1);
+}
+.sv-sheet.is-collapsed {
+  /* Down by its own height, less the strip that keeps the handle in
+     reach — a percentage, so it works whatever the sheet contains. */
+  transform: translateY(calc(100% - 26px));
+}
+
+/* The handle is a button now, so it needs a real target: 44px tall,
+   full width, with the visible bar drawn as its ::before. */
+.sv-sheet-grip {
+  display: block;
+  width: 100%;
+  height: 26px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: grab;
+  position: relative;
+  touch-action: none; /* or the browser scrolls instead of dragging */
+}
+.sv-sheet-grip::before {
+  content: "";
+  position: absolute;
+  top: 9px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, .22);
+}
+.sv-sheet-grip:active { cursor: grabbing; }
+.sv-sheet-grip:active::before { background: rgba(0, 0, 0, .38); }
+
+/* The controls follow the sheet down, so a collapsed panel gives the map
+   back its full height rather than leaving the rail floating mid-screen. */
+.sv-content:has(.sv-sheet.is-collapsed) .sv-rail { bottom: 46px; }
+
+/* ── The map controls, one bar instead of three floaters ─────────────
+   First attempt stacked them down the left edge — layer, then day, then
+   status, three chips in a column — and that looked worse than the
+   problem it fixed. They are one control now: a single rounded bar with
+   the mode switch and the date sharing it, divided rather than
+   separated, and the status line tucked underneath only when there is
+   something to say.
+
+   One object reads as a control. Three floating pills read as debris. */
+/* The status line hangs under the bar, aligned to its left edge, sized
+   to its own text. */
+.sv-mapnote {
+  position: absolute;
+  left: 12px;
+  right: auto;
+  top: 166px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+  padding: 5px 10px;
+  font-size: 11.5px;
+}
+
+/* ── One control, drawn as one ────────────────────────────────────────
+   The mode switch and the date picker are siblings 150 lines apart in
+   the markup and cannot share a wrapper without moving JSX, so they are
+   joined visually instead: placed flush, each rounded on its outer side
+   only, with a hairline where they meet. The result reads as a single
+   bar rather than the column of loose chips I tried first, which looked
+   worse than what it replaced. */
+.sv-mapmode {
+  left: 12px;
+  top: 118px;
+  border-radius: 12px 0 0 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .16);
+  padding: 8px 12px;
+  background: var(--card);
+}
+.sv-daypick {
+  left: 155px;
+  top: 118px;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, .16);
+  padding: 8px 11px;
+  background: var(--card);
+  border-left: 1px solid var(--border);
+}
+/* Without the date half — Earnings mode — the switch is a pill again
+   rather than a shape with one squared end. */
+.sv-content:not(:has(.sv-daypick)) .sv-mapmode { border-radius: 12px; }
+
+/* ── The gap under "Ready to record" ──────────────────────────────────
+   Mine: making the grip draggable gave it a 26px hit area, and the
+   sheet's own 8px of top padding sat on top of that, so 34px of nothing
+   opened up above the title. The grip keeps its target by pulling the
+   sheet's padding back rather than by pushing the content down. */
+.sv-sheet { padding-top: 0; }
+.sv-sheet-grip { height: 22px; }
+.sv-sheet-grip::before { top: 8px; }
+.sv-sheet-title { margin-top: 2px; }
+
+/* ── The layer button belongs with the other map controls ─────────────
+   It was floating alone up near the search while locate and zoom sat in
+   a rail lower down — two separate clusters doing the same kind of job.
+   It sits directly above the locate button now, as one column. */
+.sv-layerbtn {
+  top: auto;
+  /* Above the rail, using the rail's MEASURED height. Adding up what I
+     assumed it contained put the button inside it: the zoom control is a
+     pair in one box at 89px, not a single 44, so the rail is 145 tall. */
+  bottom: calc(var(--sv-sheet-h, 236px) + 16px + var(--sv-rail-h, 145px) + 12px);
+  width: 44px;
+  height: 44px;
+}
+.sv-content:has(.sv-sheet.is-collapsed) .sv-layerbtn {
+  bottom: calc(46px + var(--sv-rail-h, 145px) + 12px);
+}
+
+/* The data credit, kept but made quiet — small, low-contrast, out of the
+   way. Required by ODbL and by OpenMapTiles' terms, so it stays legible
+   rather than being hidden; this is the same treatment every maps app
+   gives it. */
+.leaflet-control-attribution {
+  font-size: 9px;
+  padding: 1px 5px !important;
+  background: rgba(255, 255, 255, .72) !important;
+  color: #5c6470;
+}
+.leaflet-control-attribution a { color: #5c6470; }
+
+/* ══ Map chrome: controls left, context right ═════════════════════════
+   The two groups swap sides.
+
+   The controls — locate, zoom, layers — are things you PRESS, and they
+   go top-left where they sit as one column under the search. The mode
+   switch and the date are things you READ to know what the map is
+   showing; they go top-right, out of the way of the hand.
+
+   The middle of the map stays empty either way, which was the point of
+   moving any of it. */
+
+/* Controls: a single column down the left, top-anchored so it does not
+   drift with the sheet's height. */
+.sv-rail {
+  left: 12px;
+  right: auto;
+  top: 176px;
+  bottom: auto;
+  transform: none;
+}
+.sv-content.has-route .sv-rail { bottom: auto; top: 176px; }
+.sv-content:has(.sv-sheet.is-collapsed) .sv-rail { bottom: auto; top: 176px; }
+
+/* The layer switch caps the column, directly above locate. */
+.sv-layerbtn {
+  left: 12px;
+  right: auto;
+  top: 120px;
+  bottom: auto;
+}
+.sv-content:has(.sv-sheet.is-collapsed) .sv-layerbtn { bottom: auto; top: 120px; }
+
+/* Context: mode and date to the right, still joined as one bar but now
+   rounded the other way round — the date is the left half there. */
+.sv-mapmode {
+  left: auto;
+  right: 12px;
+  top: 168px;
+  border-radius: 12px;
+}
+.sv-daypick {
+  left: auto;
+  right: 12px;
+  top: 120px;
+  border-radius: 12px;
+  border-left: 0;
+}
+
+/* The status note follows the context group rather than sitting under
+   controls it has nothing to do with. Right-aligned, sized to its text. */
+.sv-mapnote {
+  left: auto;
+  right: 12px;
+  top: 210px;
+  width: max-content;
+  max-width: calc(100% - 80px);
+  text-align: right;
+}

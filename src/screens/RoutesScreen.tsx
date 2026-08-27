@@ -214,6 +214,70 @@ export function RoutesScreen() {
    *
    * Same approach the header already uses for --band-pull.
    */
+  /**
+   * Whether the bottom sheet is collapsed to its handle.
+   *
+   * It has always had a grip — the little bar that every sheet on every phone
+   * means "drag me" — and it did nothing. That is worse than having no handle:
+   * it promises an interaction and then refuses it, and the driver is left with
+   * a third of the map permanently covered with no way to see under it.
+   *
+   * Drag it down or tap the handle to collapse; either brings it back.
+   */
+  const [sheetCollapsed, setSheetCollapsed] = useState(false);
+  const dragRef = useRef<{ y: number; collapsed: boolean } | null>(null);
+
+  /** Drag on the handle. Pointer events, so one path covers finger and mouse. */
+  const gripHandlers = {
+    onPointerDown: (e: React.PointerEvent) => {
+      dragRef.current = { y: e.clientY, collapsed: sheetCollapsed };
+      (e.target as HTMLElement).setPointerCapture?.(e.pointerId);
+    },
+    onPointerMove: (e: React.PointerEvent) => {
+      const start = dragRef.current;
+      if (!start) return;
+      // 28px before it commits, so a tap is not read as a tiny drag.
+      const dy = e.clientY - start.y;
+      if (dy > 28) setSheetCollapsed(true);
+      else if (dy < -28) setSheetCollapsed(false);
+    },
+    onPointerUp: (e: React.PointerEvent) => {
+      const start = dragRef.current;
+      dragRef.current = null;
+      // Barely moved? Treat it as a tap and toggle — the handle should work
+      // for someone who taps it as well as someone who drags it.
+      if (start && Math.abs(e.clientY - start.y) <= 28) setSheetCollapsed((v) => !v);
+    },
+    onPointerCancel: () => { dragRef.current = null; },
+  };
+
+  /**
+   * The control rail's height, published as --sv-rail-h.
+   *
+   * The layer button sits above the rail, and I positioned it by adding up
+   * what I thought the rail contained — 44 + 12 + 44. The zoom control is a
+   * pair in one box and measures 89, not 44, so the rail is 145 tall and the
+   * button landed inside it. Measuring beats arithmetic about somebody else's
+   * component, and it keeps working if a control is ever added or removed.
+   */
+  const railRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = railRef.current;
+    if (!el) return;
+    const publish = () =>
+      document.documentElement.style.setProperty(
+        "--sv-rail-h",
+        `${Math.round(el.getBoundingClientRect().height)}px`,
+      );
+    publish();
+    const ro = new ResizeObserver(publish);
+    ro.observe(el);
+    return () => {
+      ro.disconnect();
+      document.documentElement.style.removeProperty("--sv-rail-h");
+    };
+  }, [view]);
+
   const sheetRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
     const el = sheetRef.current;
@@ -821,6 +885,13 @@ export function RoutesScreen() {
             center={[currentLocation.lat, currentLocation.lng]}
             zoom={13}
             zoomControl={false}
+            /* Leaflet stamps "Leaflet" in front of every attribution by
+               default. That one is a courtesy to the library, not a licence
+               term, so it goes. What stays is the data credit — OpenStreetMap
+               and OpenMapTiles require it under ODbL, and it is the reason
+               these tiles are free to use at all. Removing that would be
+               using the data in breach of the licence, not tidying a map. */
+            attributionControl={false}
             scrollWheelZoom
             className="strava-map"
             ref={setMap}
@@ -1046,7 +1117,7 @@ export function RoutesScreen() {
             <Layers size={18} />
           </button>
 
-          <div className="sv-rail">
+          <div className="sv-rail" ref={railRef}>
             <button className="sv-rail-btn" aria-label={t("a11y_centerOnMe")} onClick={recenter}>
               <LocateFixed size={19} />
             </button>
@@ -1063,8 +1134,14 @@ export function RoutesScreen() {
               lists people with what they are driving for and how far away they
               are, and tapping one flies the map to them. */}
           {view === "friends" ? (
-            <div className="sv-sheet sv-friendsheet" ref={sheetRef}>
-              <div className="sv-sheet-grip" />
+            <div className={`sv-sheet sv-friendsheet${sheetCollapsed ? " is-collapsed" : ""}`} ref={sheetRef}>
+              <button
+                type="button"
+                className="sv-sheet-grip"
+                aria-label={t(sheetCollapsed ? "sv_expandSheet" : "sv_collapseSheet")}
+                aria-expanded={!sheetCollapsed}
+                {...gripHandlers}
+              />
               <div className="sv-sheet-title">
                 <strong>{t("sv_friendsTab")}</strong>
                 {/* Only when there is something to count. With nobody out
@@ -1133,8 +1210,14 @@ export function RoutesScreen() {
               )}
             </div>
           ) : (
-          <div className="sv-sheet" ref={sheetRef}>
-            <div className="sv-sheet-grip" />
+          <div className={`sv-sheet${sheetCollapsed ? " is-collapsed" : ""}`} ref={sheetRef}>
+            <button
+              type="button"
+              className="sv-sheet-grip"
+              aria-label={t(sheetCollapsed ? "sv_expandSheet" : "sv_collapseSheet")}
+              aria-expanded={!sheetCollapsed}
+              {...gripHandlers}
+            />
             <div className="sv-sheet-title">
               <strong>{isTracking ? t("sv_recording") : t("sv_ready")}</strong>
               <span className={`sv-live ${isTracking ? "on" : ""}`}>{isTracking ? "● LIVE" : app ? `${app.logo} ${app.name}` : t("sv_gpsReady")}</span>

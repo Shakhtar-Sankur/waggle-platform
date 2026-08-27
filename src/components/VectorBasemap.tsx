@@ -63,10 +63,23 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
           // Handed over explicitly: the plugin looks for maplibregl on the
           // global too, and it is not there under a bundler either.
           maplibreGL: maplibregl,
-          attribution:
-            '&copy; <a href="https://openfreemap.org">OpenFreeMap</a> &copy; OpenMapTiles &copy; OpenStreetMap contributors',
+          // No `attribution` here on purpose. The layer's own option and the
+          // control added below both feed the same box, and the credit came
+          // out twice — "© OpenFreeMap © OpenMapTiles © OpenStreetMap,
+          // OpenFreeMap © OpenMapTiles Data from OpenStreetMap". One source.
         });
         layer.addTo(map);
+
+        // The attribution control is off on the MapContainer so Leaflet does
+        // not stamp its own name in front. The DATA credit is still required —
+        // ODbL for OpenStreetMap, and OpenMapTiles' own terms — so it is added
+        // back here on its own, without the prefix.
+        L.control
+          .attribution({ position: "bottomright", prefix: false })
+          .addAttribution(
+            '&copy; <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> &copy; OpenMapTiles &copy; OpenStreetMap',
+          )
+          .addTo(map);
 
         // Keep the basemap beneath everything Leaflet draws, so the route is
         // never hidden by the canvas.
