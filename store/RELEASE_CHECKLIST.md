@@ -1,27 +1,66 @@
-# Masaya Ako — Play Store Release Checklist
+# Waggle — Play Store Release Checklist
+
+App name **Waggle** · store listing **Gigzen Waggle** · package `com.gigzen.waggle`
 
 ## ✅ Already done (by tooling)
-- [x] App builds cleanly (web + Android)
-- [x] Signed **release AAB** produced: `android/app/build/outputs/bundle/release/app-release.aab`
-- [x] Strong upload keystore generated: `android/app/masayaako-upload.keystore`
-- [x] Signature verified (`jarsigner -verify` → "jar verified")
+- [x] App builds cleanly (web + Android), `tsc --noEmit` included
+- [x] Signed release APK produced and its identity read back from the built file
+- [x] Firebase registered for `com.gigzen.waggle` in project `buzz-buzz-2390c`
+- [x] Launcher icons regenerated at all five densities from the Waggle mark
+- [x] 24 languages, scripts verified rendering with no missing glyphs
 - [x] Store listing text, privacy policy, data-safety, content-rating drafts in `store/`
 
-## 🔴 CRITICAL — do this first: back up your signing key
-Your upload key lives at `android/app/masayaako-upload.keystore` and its password is in
-`android/local.properties`. **If you lose these, you can never update the app again**
-(you'd have to publish a brand-new listing).
+## 🔴 DO THIS BEFORE YOUR FIRST UPLOAD — replace the signing key
 
-- [ ] Copy `masayaako-upload.keystore` to a safe place (password manager / encrypted cloud).
-- [ ] Copy the password from `android/local.properties` into your password manager.
-- [ ] Confirm `.gitignore` excludes `*.keystore` and `local.properties` (it does) — **never commit them.**
+The current upload key is `android/app/masayaako-upload.keystore`, and its
+certificate reads:
 
-> Prefer a password not seen in this session? Regenerate before you ever publish:
-> ```
-> keytool -genkeypair -v -keystore masayaako-upload.keystore -alias masayaako \
->   -keyalg RSA -keysize 2048 -validity 10000
-> ```
-> Then update the 4 `release.*` lines in `android/local.properties` and rebuild.
+```
+CN=Masaya Ako, OU=Mobile, O=Masaya Ako, L=Manila, ST=Metro Manila, C=PH
+```
+
+Wrong brand, wrong company, wrong country — Gigzen Private Limited is in
+Bhubaneswar, India. Play shows this in App Signing, and **after the first
+upload the key is bound to the listing** and can only be changed by asking
+Google support. Right now it costs one command.
+
+This step is yours, not the tooling's: `keytool` prompts for a password, and a
+production signing key should not have a password that has ever been typed into
+an assistant session or written to a transcript.
+
+1. From `android/app/`, run — it will prompt for a password twice:
+
+   ```
+   keytool -genkeypair -v -keystore gigzen-upload.keystore -alias gigzen \
+     -keyalg RSA -keysize 4096 -validity 10000 \
+     -dname "CN=Gigzen Private Limited, OU=Mobile, O=Gigzen Private Limited, L=Bhubaneswar, ST=Odisha, C=IN"
+   ```
+
+2. Update these four lines in `android/local.properties` (gitignored):
+
+   ```
+   release.keystore=gigzen-upload.keystore
+   release.keystore.password=<the password you just set>
+   release.key.alias=gigzen
+   release.key.password=<the same password, unless you set a separate key password>
+   ```
+
+3. Rebuild and confirm the new certificate:
+
+   ```
+   cd android && ./gradlew assembleRelease
+   apksigner verify --print-certs app/build/outputs/apk/release/app-release.apk
+   ```
+
+   The DN should now say Gigzen Private Limited.
+
+- [ ] Generated `gigzen-upload.keystore`
+- [ ] Updated the four `release.*` lines
+- [ ] Verified the new DN in the built APK
+- [ ] **Backed the keystore up** to a password manager or encrypted cloud —
+      lose it and you can never update the app again
+- [ ] Confirmed `.gitignore` still excludes `*.keystore` and `local.properties`
+      (it does) — never commit either
 
 ## 🟡 Before you build the final AAB — connect the backend
 Right now `.env` is empty, so the app runs in **offline/demo mode** (each user is

@@ -630,7 +630,7 @@ const ta: Dict = {
   auth_hidePassword: "கடவுச்சொல்லை மறை",
   nav_home: "முகப்பு", nav_community: "சமூகம்", nav_routes: "வழிகள்", nav_messages: "செய்திகள்", nav_profile: "சுயவிவரம்",
   home_hello: "வணக்கம்", greet_morning: "காலை வணக்கம்", greet_afternoon: "மதிய வணக்கம்", greet_evening: "மாலை வணக்கம்",
-  home_workingApp: "இன்றைய பணி ஆப்", home_selectApp: "ஆப்பைத் தேர்ந்தெடுக்கவும்", common_change: "மாற்று",
+  home_workingApp: "இன்றைய பணி ஆப்", home_selectApp: "ஆப் தேர்வு", common_change: "மாற்று",
   home_journey: "இன்றைய பயணம்", home_setAddress: "வீட்டு முகவரியை அமைக்கவும்",
   stat_kmToday: "இன்றைய கி.மீ", stat_activeTime: "செயல் நேரம்", stat_earnings: "வருவாய்",
   home_startTracking: "கண்காணிப்பைத் தொடங்கு", home_stopTracking: "கண்காணிப்பை நிறுத்து",
