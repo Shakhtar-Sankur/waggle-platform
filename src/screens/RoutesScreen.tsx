@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import L from "leaflet";
 import { ChallengeIcon } from "../components/ChallengeIcon";
+import { VectorBasemap } from "../components/VectorBasemap";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
@@ -803,7 +804,13 @@ export function RoutesScreen() {
             className="strava-map"
             ref={setMap}
           >
-            <TileLayer key={tile.url} attribution={tile.attribution} url={tile.url} subdomains={tile.subdomains as never} />
+            {/* Satellite stays raster — imagery IS pixels, there is no vector
+                form of it. Everything else renders as vectors. */}
+            {mapStyle === "satellite" ? (
+              <TileLayer key={tile.url} attribution={tile.attribution} url={tile.url} subdomains={tile.subdomains as never} />
+            ) : (
+              <VectorBasemap />
+            )}
             <MapFollow lat={currentLocation.lat} lng={currentLocation.lng} follow={isTracking && !followPaused} />
             <Marker position={[currentLocation.lat, currentLocation.lng]} icon={meIcon} />
             {/* Your path belongs to "Me". In Friends mode it would just be
