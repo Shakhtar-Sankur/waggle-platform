@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import { WorkAppMark } from "./WorkAppMark";
 import { useMemo, useState } from "react";
 import { useT } from "../i18n";
-import { detectCountry } from "../i18n/region";
+import { resolveCountry } from "../i18n/region";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { WorkAppId } from "../types";
 import { localAppCount, searchWorkApps } from "../utils/workApps";
@@ -20,7 +20,7 @@ export function WorkAppPicker({ open, onClose }: WorkAppPickerProps) {
   const [query, setQuery] = useState("");
 
   // Platforms operating in the driver's country are listed first.
-  const country = useMemo(() => detectCountry(), []);
+  const country = useMemo(() => resolveCountry(), []);
   const apps = useMemo(() => searchWorkApps(query, country), [query, country]);
   const localCount = useMemo(() => localAppCount(country), [country]);
 

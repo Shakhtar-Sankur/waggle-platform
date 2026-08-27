@@ -1,6 +1,7 @@
 import { Capacitor } from "@capacitor/core";
 import { Geolocation } from "@capacitor/geolocation";
-import { MANILA_CENTER } from "../config/constants";
+import { defaultCenterFor } from "../config/geo";
+import { resolveCountryForLocation } from "../i18n/region";
 import type { LocationPoint } from "../types";
 import { translate } from "../i18n";
 
@@ -91,8 +92,18 @@ function toPoint(lat: number, lng: number, accuracy?: number): LocationPoint {
 }
 
 function fallbackPoint(): LocationPoint {
-  // Flagged, because this point is a guess and some callers must know that.
-  return { ...MANILA_CENTER, accuracy: 100, timestamp: Date.now(), fallback: true };
+  // Every unknown position used to be Manila, which is right for one country
+  // and wrong for the rest — a driver in Lagos who declines the location
+  // prompt opened the map on another continent.
+  //
+  // Timezone first, locale second. They disagree more than you would expect:
+  // a driver in Mumbai on an English handset reports en-US with
+  // Asia/Calcutta, and trusting the locale drops the map in New York. The
+  // timezone follows the phone; the locale follows the reader.
+  //
+  // Still flagged, because it is still a guess and some callers must know that.
+  const country = resolveCountryForLocation();
+  return { ...defaultCenterFor(country), accuracy: 100, timestamp: Date.now(), fallback: true };
 }
 
 function distanceKm(a: LocationPoint, b: LocationPoint) {

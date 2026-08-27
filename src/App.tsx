@@ -12,7 +12,7 @@ import { useLocationStore } from "./stores/useLocationStore";
 import { useNotificationStore } from "./stores/useNotificationStore";
 import { useProfileStore } from "./stores/useProfileStore";
 import { applyDirection, useLangStore } from "./i18n";
-import { countryToCurrency, detectCountry } from "./i18n/region";
+import { countryToCurrency, resolveCountry } from "./i18n/region";
 import { AuthScreen } from "./screens/AuthScreen";
 import { CommunityScreen } from "./screens/CommunityScreen";
 import { HomeScreen } from "./screens/HomeScreen";
@@ -50,7 +50,7 @@ export default function App() {
   // Language defaults to English and only changes when the user picks one manually.
   useEffect(() => {
     if (!autoRegion) return;
-    useProfileStore.getState().applyCurrency(countryToCurrency(detectCountry()));
+    useProfileStore.getState().applyCurrency(countryToCurrency(resolveCountry()));
   }, [autoRegion]);
 
   // Reset "today's" distance/earnings when the day rolls over (on open + on refocus).

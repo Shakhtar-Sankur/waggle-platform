@@ -1,4 +1,5 @@
 import type { Lang } from "./index";
+import { countryFromTimeZone } from "../config/geo";
 
 // Country (ISO-3166 alpha-2) → currency code (must exist in CURRENCIES; else falls back to USD).
 const COUNTRY_CURRENCY: Record<string, string> = {
@@ -63,7 +64,43 @@ export function detectCountry(): string {
   } catch {
     /* ignore */
   }
-  return "PH";
+  // Returns "" rather than a country. It used to answer "PH" when it had no
+  // idea, which is indistinguishable from actually detecting the Philippines —
+  // so every caller downstream treated a total absence of information as a
+  // confident answer. An empty string lets them fall back on their own terms.
+  return "";
+}
+
+/**
+ * The device's country, asking every signal it has before giving up.
+ *
+ * detectCountry() reads the locale's region, which a phone set to plain "en"
+ * simply does not carry — common on the cheap Android handsets most of this
+ * app's drivers use. The timezone almost always survives where the locale does
+ * not, so it is asked second.
+ *
+ * Use this rather than detectCountry() anywhere a missing answer would be
+ * papered over with a guess.
+ */
+export function resolveCountry(): string {
+  return detectCountry() || countryFromTimeZone();
+}
+
+/**
+ * The device's country when the question is WHERE IT IS, rather than what
+ * language it prefers — timezone first, locale second.
+ *
+ * The two signals disagree more often than they look like they should. A
+ * driver in Mumbai on an English handset reports locale en-US and timezone
+ * Asia/Calcutta: the locale answers "what language do I read", and reading
+ * that as a position drops the map in New York. The timezone is set by where
+ * the phone actually is, so for a map centre it is the better of the two.
+ *
+ * The reverse is true for currency, language and which work apps to list —
+ * those follow what the driver chose, so they use resolveCountry().
+ */
+export function resolveCountryForLocation(): string {
+  return countryFromTimeZone() || detectCountry();
 }
 
 export function countryToCurrency(country: string): string {
