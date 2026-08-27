@@ -15,8 +15,19 @@ android {
         applicationId "com.gigzen.waggle"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode 1 is already on Play (internal testing), and Play rejects a
-        // duplicate. Every upload from here needs its own, higher, number.
+        // These numbers carry over from Buzz on com.masayaako.driver, where
+        // versionCode 6 was the highest on Play and a duplicate would be
+        // rejected.
+        //
+        // That constraint no longer applies. The applicationId changed, so Play
+        // sees a DIFFERENT app: the old listing cannot be updated from here,
+        // and this listing starts empty and will accept any versionCode as its
+        // first upload. 7/1.6 is kept only so the numbering stays continuous
+        // for anyone reading the git history — starting again at 1/1.0 would be
+        // equally valid and arguably more honest for a new listing.
+        //
+        // Once something IS uploaded here, the usual rule returns: every later
+        // upload needs a higher versionCode than the highest already accepted.
         versionCode 7
         versionName "1.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
