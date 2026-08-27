@@ -15,9 +15,9 @@ android {
         applicationId "com.masayaako.driver"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        // versionCode 2 is already on Play (internal testing), and Play rejects a
+        // versionCode 1 is already on Play (internal testing), and Play rejects a
         // duplicate. Every upload from here needs its own, higher, number.
-        versionCode 6
+        versionCode 7
         versionName "1.6"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
