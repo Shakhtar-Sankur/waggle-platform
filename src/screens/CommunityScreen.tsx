@@ -1146,7 +1146,7 @@ function sharePost(body: string) {
   }
 }
 
-// Cross-post a Buzz update to Facebook. Meta shut down direct app-to-group
+// Cross-post a Waggle update to Facebook. Meta shut down direct app-to-group
 // posting in 2020, so the honest path is to hand the text to Facebook's own share
 // flow: on a phone the native share sheet opens Facebook (timeline OR a group the
 // user chooses); on desktop we open Facebook's web share dialog. Either way the

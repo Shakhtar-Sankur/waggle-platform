@@ -19,7 +19,7 @@
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/splash</item>
-        <!-- Android 12+ splash API: the bee on Buzz indigo, animated.
+        <!-- Android 12+ splash API: the mark on Waggle indigo, animated.
              It was a still mark on a flat colour for as long as the web view
              took to boot, which on a cheap handset reads as a hang. -->
         <item name="windowSplashScreenBackground">@color/ic_launcher_background</item>

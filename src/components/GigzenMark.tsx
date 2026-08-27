@@ -14,7 +14,7 @@ import { COMPANY_NAME, COMPANY_SHORT } from "../config/constants";
  * Every coloured version needed its own tone per surface, and each new
  * background meant another decision and another contrast measurement. This
  * gives maximum contrast by construction and stops the company mark competing
- * with Buzz's orange.
+ * with Waggle's orange.
  *
  * It is also what this artwork was drawn for: one closed path taking
  * currentColor, so it inverts with the theme and needs no second copy. At the
@@ -41,7 +41,7 @@ export function GigzenMark({ size = 16, className = "" }: { size?: number; class
 /**
  * "A Gigzen product" — the mark plus the line, as one unit.
  *
- * Buzz never said who makes it. A worker handing over their location and
+ * Waggle never said who makes it. A worker handing over their location and
  * their earnings deserves to know which company is on the other end, and it is
  * the same answer the legal pages now give.
  */

@@ -2,7 +2,7 @@
 <!--
   Kept only so nothing referencing @drawable/ic_launcher_background breaks.
   The adaptive icon uses @color/ic_launcher_background instead; this was the
-  Android Studio template's teal grid, which was never Buzz's colour and was
+  Android Studio template's teal grid, which was never Waggle's colour and was
   never on screen.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"

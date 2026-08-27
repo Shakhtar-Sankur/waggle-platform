@@ -743,6 +743,41 @@ select:focus {
   justify-content: space-between;
   gap: 12px;
   margin-bottom: 14px;
+  /* A flex row whose children both refuse to shrink will simply overrun its
+     own box — flex items default to min-width:auto, and nothing here clips.
+     On Notifications the heading (124.8px) plus "Mark all read" (138.7px)
+     plus the gap needed 275.5px in a 248px row, so the button hung 8.7px off
+     the right edge of the card it was supposed to be inside.
+
+     min-width: 0 lets the HEADING yield instead, which is the right one to
+     give: a truncated word is legible, a button sliced by the card edge is
+     not. It also has to hold in 43 languages, where "Mark all read" is
+     routinely longer than the English — fixing this by shrinking the button
+     to fit one language would just move the overflow to another. */
+  /* Wrap rather than truncate.
+
+     Truncating the heading did stop the overflow and cost a word: the title
+     became "Notification", minus its final letter and its bell. Shrinking the
+     button instead does not work either — the heading needs ~145px of the
+     248px row, which leaves 91px, and "Mark all read" with its icon cannot
+     be read at that width without dropping to a font size nobody can tap
+     confidently.
+
+     So the button drops to its own line when the two do not fit, and stays
+     beside the heading when they do. Nothing is cut, nothing shrinks, and it
+     holds in the languages where this label is longer than the English —
+     which is most of them. */
+  flex-wrap: wrap;
+}
+
+/* Neither half is squeezed; the row grows a line instead. */
+.section-heading h3 { flex: 0 1 auto; }
+
+/* Right-aligned whether it sits beside the heading or under it. */
+.section-heading > .button {
+  flex: 0 0 auto;
+  margin-left: auto;
+  white-space: nowrap;
 }
 
 .section-heading h3 {
@@ -2114,7 +2149,7 @@ select:focus {
 }
 
 /* "A Gigzen product". Deliberately quiet — it names the maker without
-   competing with the Buzz mark it sits beneath. */
+   competing with the Waggle mark it sits beneath. */
 .gigzen-byline {
   display: inline-flex;
   align-items: center;
@@ -2791,7 +2826,7 @@ html {
   width: 34px;
   height: 34px;
 }
-/* Buzz chat wallpaper — our own doodle tile, the way WhatsApp has one.
+/* Waggle chat wallpaper — our own doodle tile, the way WhatsApp has one.
    Motifs are all ours: bees, honeycomb cells, "buzz" arcs, a map pin and a
    dashed route, tying the bee brand to the driving. Kept at very low opacity
    on a warm honey base so it never competes with the message bubbles. */
@@ -3053,7 +3088,7 @@ html {
 }
 
 /* ---------------------------------------------------------------------------
-   Buzz wordmark — bee mark + name. The bee inherits currentColor so the
+   Waggle wordmark — bee mark + name. The bee inherits currentColor so the
    same artwork works orange-on-light and white-on-orange.
    --------------------------------------------------------------------------- */
 .wordmark {
@@ -5505,7 +5540,7 @@ body { font-weight: 400; }
 
 /* The company name reads as a wordmark inside the byline: capitals, with
    positive tracking so the letters do not jam together the way they would at
-   the surrounding text's spacing. Matches the Buzz website and the
+   the surrounding text's spacing. Matches the Waggle website and the
    portfolio, where the same name is set the same way. */
 .gigzen-word {
   text-transform: uppercase;
@@ -6431,12 +6466,12 @@ html { background: var(--ground, #fbf7f4); }
 .tag-fast { color: #067a52; }
 .tag-short { color: #b45309; }
 /* The driver's own recorded speed on these roads — the one signal here that
-   comes from Buzz and not from a public routing server. */
+   comes from Waggle and not from a public routing server. */
 .tag-seen { color: #1d4ed8; }
 
 /* ── ETA bubbles on the routes ────────────────────────────────────────
    The time attached to the road it belongs to. Every maps app does this
-   because it answers "which one" at a glance; the style here is Buzz's —
+   because it answers "which one" at a glance; the style here is Waggle's —
    the brand orange rather than a borrowed blue, heavier weight, and the
    unchosen routes as outlines rather than fills. */
 .eta-wrap { background: none; border: 0; }
@@ -6626,7 +6661,7 @@ html { background: var(--ground, #fbf7f4); }
    the first real message. And a delete icon sat permanently beside every
    bubble the driver had sent.
 
-   The pattern stays — it is Buzz's own and worth keeping — at a third of
+   The pattern stays — it is Waggle's own and worth keeping — at a third of
    the presence and a smaller repeat, so it reads as texture instead of
    content. */
 .wa-messages {
@@ -7376,7 +7411,7 @@ body[data-band="profile"] {
 
 /* ── The quote inside your own bubble ─────────────────────────────────
    I wrote this assuming an own-bubble is dark, the way WhatsApp's green
-   one is, and put white text on it. Buzz's own-bubble is pale amber —
+   one is, and put white text on it. Waggle's own-bubble is pale amber —
    rgb(255,233,201) — so the quote measured 1.18:1 against it. Not "a bit
    low": invisible. The name and the quoted line were both there and
    neither could be read.
@@ -7597,7 +7632,7 @@ body[data-band="profile"] {
 }
 
 /* The bee is half the logo, and it was taking --primary while the
-   wordmark beside it kept the brand ramp — so the footer read "🐝 Buzz"
+   wordmark beside it kept the brand ramp — so the footer read "🐝 Waggle"
    in two different colours. Pinned to match.
 
    The header keeps its own treatment: on a coloured band the whole mark
@@ -8490,7 +8525,7 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 }
 
 /* ── Screen titles, matched to the wordmark ───────────────────────────
-   "Messages" and "Profile" were set at 30px while "Buzz" on Home is 27.
+   "Messages" and "Profile" were set at 30px while "Waggle" on Home is 27.
    They sit in the same slot on the same bar, so the header appeared to
    change size depending on which screen you were on. */
 .app-header h1 { font-size: 27px; }

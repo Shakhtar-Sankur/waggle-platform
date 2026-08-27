@@ -1,3 +1,4 @@
+import { APP_NAME } from "../config/constants";
 import { translate } from "../i18n";
 import { Component, type ErrorInfo, type ReactNode } from "react";
 
@@ -27,7 +28,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     // Kept for local debugging; a crash-reporting SDK can be wired in here later.
-    console.error("Buzz crashed:", error, info.componentStack);
+    console.error(`${APP_NAME} crashed:`, error, info.componentStack);
   }
 
   private handleReload = () => {

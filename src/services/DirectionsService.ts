@@ -125,7 +125,7 @@ export function describeStep(step: DirectionStep): string {
  *
  * This is the part a general-purpose map cannot do. Nobody gives away live
  * traffic — not OSRM, not anyone free — so "the route with less traffic" is not
- * available to buy. But Buzz records every driver's real position and time, so
+ * available to buy. But Waggle records every driver's real position and time, so
  * the speed actually achieved on a given road is data it already owns.
  *
  * What comes back is honest about its own thinness: `familiarity` says how much

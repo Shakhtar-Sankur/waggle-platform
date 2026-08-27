@@ -478,7 +478,7 @@ export function RoutesScreen() {
       if (cancelled) return;
       // Score what came back against roads this driver has actually driven.
       // Nobody sells live traffic; their own recorded speed is the one signal
-      // Buzz owns that a general-purpose map does not.
+      // Waggle owns that a general-purpose map does not.
       setRouteOptions(found ? scoreAgainstHistory(found, dayPoints) : []);
       setChosenRoute(0);
       setRouting(false);
@@ -995,7 +995,7 @@ export function RoutesScreen() {
                 element that makes a screen read as a maps app rather than as a
                 map with a panel over it — the number is attached to the line,
                 so a glance answers "which one" without reading a list.
-                Buzz's own language: brand fill for the chosen route, outline
+                Waggle's own language: brand fill for the chosen route, outline
                 for the ones not taken, and the bee's orange rather than a
                 borrowed blue. */}
             {routeOptions.map((r, i) => {

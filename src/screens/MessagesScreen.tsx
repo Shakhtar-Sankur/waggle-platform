@@ -539,7 +539,7 @@ export function MessagesScreen() {
 
           <div className="wa-messages" ref={messagesRef}>
             {/* WhatsApp opens a thread with an end-to-end encryption notice.
-                Buzz is not end-to-end encrypted — messages sit in Postgres where
+                Waggle is not end-to-end encrypted — messages sit in Postgres where
                 row-level security decides who may read them, which is a real
                 protection and a different one. Writing "encrypted" here because
                 it looks reassuring would be the worst kind of lie to tell in a
