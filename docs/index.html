@@ -35,15 +35,18 @@
 :root {
   /* Warm ground. Not white: the app is orange and a cream page lets the
      product's own colour sit on something rather than glare off paper. */
-  --paper:   #FFF9F5;
+  --paper:   #FAFAFD;
   --paper-2: #FFFFFF;
-  --sand:    #FFEFE4;
-  --ink:     #1A1210;
-  --body:    #574B45;
-  /* Measured on the cream ground: #857069 came out at 4.40:1, just under the
-     4.5 needed for normal text. Close enough to look fine and still fail. */
-  --muted:   #7A6259;
-  --rule:    #F0DED2;
+  --sand:    #EEF0FA;
+  --ink:     #12131A;
+  --body:    #4A4C57;
+  /* The lesson here outlived the colour. On the old cream ground the muted
+     tone was #857069, which measured 4.40:1 — just under the 4.5 needed for
+     normal text, close enough to look fine and still fail. The palette is cool
+     now and this is its equivalent, kept deliberately darker than "looks about
+     right" for the same reason. Re-measure before lightening it. */
+  --muted:   #5B5D6B;
+  --rule:    #E3E5F0;
 
   /* The brand orange, and the darkened one that is safe as small text.
      #4F46E5 measures 3.4:1 on this cream — fine for a 96px number or a
@@ -151,7 +154,7 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
   transition: transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, background .22s ease;
 }
 .btn-primary { background: var(--flame-btn); color: #fff; box-shadow: 0 10px 26px -12px rgba(198,59,0,.6); }
-.btn-primary:hover { transform: translateY(-2px); background: #A93200; }
+.btn-primary:hover { transform: translateY(-2px); background: #3730A3; }
 .btn-ghost { border-color: color-mix(in srgb, var(--ink) 22%, transparent); color: var(--ink); }
 .btn-ghost:hover { border-color: var(--flame); color: var(--flame-ink); }
 @media (prefers-reduced-motion: reduce) { .btn:hover { transform: none; } }
@@ -162,7 +165,7 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
   content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
   background:
     radial-gradient(48% 44% at 88% 6%,  color-mix(in srgb, var(--flame) 22%, transparent) 0%, transparent 70%),
-    radial-gradient(42% 40% at 4% 88%,  color-mix(in srgb, #FFB067 34%, transparent) 0%, transparent 72%),
+    radial-gradient(42% 40% at 4% 88%,  color-mix(in srgb, #818CF8 34%, transparent) 0%, transparent 72%),
     radial-gradient(40% 36% at 70% 96%, color-mix(in srgb, var(--gz) 16%, transparent) 0%, transparent 74%);
 }
 .hero .wrap { position: relative; z-index: 1; display: grid; gap: clamp(36px, 5vw, 68px);
@@ -195,20 +198,20 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 .feature p { margin-top: 18px; max-width: 48ch; }
 
 /* ── the one bold block ────────────────────────────────────────────────── */
-/* White on #9E2A00 measures 7.4:1. The brand #4F46E5 could not carry white
+/* White on #3730A3 measures 7.4:1. The brand #4F46E5 could not carry white
    text at any size that matters — it is 3.35:1 — so the band is the deep
    tone and the bright one stays for fills and marks. */
-.band { background: linear-gradient(160deg, #B83400 0%, #9E2A00 58%, #7E1F00 100%); color: #FFEFE7; }
+.band { background: linear-gradient(160deg, #4338CA 0%, #3730A3 58%, #312E81 100%); color: #E8E9F8; }
 .band h2, .band h3 { color: #fff; }
-.band .eyebrow { color: #FFD9C8; }
+.band .eyebrow { color: #C7CAF0; }
 .band .eyebrow::before { background: #fff; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 30px; margin-top: 46px; }
 .stat .v { display: block; font-size: clamp(40px, 5.4vw, 62px); font-weight: 750; letter-spacing: -.04em;
            color: #fff; line-height: 1; font-variant-numeric: tabular-nums; }
-/* On the orange band this label sits on rgb(189,66,18); the old #FFD9C8 came
+/* On the orange band this label sits on rgb(189,66,18); the old #C7CAF0 came
    to 4.05 against it, under the 4.5 needed at 14.5px. The eyebrow keeps the
    deeper peach because it is large text and only needs 3. */
-.stat .k { display: block; margin-top: 10px; font-size: 14.5px; color: #FFF2EC; }
+.stat .k { display: block; margin-top: 10px; font-size: 14.5px; color: #EDEEFB; }
 
 /* ── cards ─────────────────────────────────────────────────────────────── */
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(258px, 1fr)); gap: 20px; margin-top: 44px; }
@@ -284,10 +287,10 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
    ══════════════════════════════════════════════════════════════════════════ */
 
 :root {
-  --honey:     #F5A524;
-  /* Gold is even weaker than the orange as text: #F5A524 measures 2.1:1 on
+  --honey:     #818CF8;
+  /* Gold is even weaker than the orange as text: #818CF8 measures 2.1:1 on
      the cream. Anything readable uses this instead, at 5.2:1. */
-  --honey-ink: #8A5300;
+  --honey-ink: #3730A3;
 }
 
 /* ── honeycomb ─────────────────────────────────────────────────────────────
@@ -351,7 +354,7 @@ section > .wrap, .band > .wrap { position: relative; z-index: 1; }
 .marq-in { display: flex; gap: 14px; width: max-content; animation: slide 34s linear infinite; }
 .marq span {
   padding: 9px 17px; border-radius: 999px; white-space: nowrap;
-  background: rgba(255,255,255,.10); color: #FFEFE7; font-size: 14.5px;
+  background: rgba(255,255,255,.10); color: #E8E9F8; font-size: 14.5px;
   border: 1px solid rgba(255,255,255,.20);
 }
 @keyframes slide { to { transform: translateX(-50%); } }
@@ -556,7 +559,7 @@ input[type=range] {
     <div class="wrap">
       <span class="eyebrow rv">Reach</span>
       <h2 class="rv">Built for wherever the work is</h2>
-      <p class="lede rv" style="margin-top:18px;max-width:52ch;color:#FFEFE7">
+      <p class="lede rv" style="margin-top:18px;max-width:52ch;color:#E8E9F8">
       Language and currency come from where the rider actually is. Right-to-left
       layouts included, not bolted on.</p>
       <!-- The list is the claim. "16 languages" is a number; showing them is
