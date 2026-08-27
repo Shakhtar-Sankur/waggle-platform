@@ -110,16 +110,25 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
         frame = requestAnimationFrame(nudge);
         settle = window.setTimeout(nudge, 350);
 
-        // The attribution control is off on the MapContainer so Leaflet does
-        // not stamp its own name in front. The DATA credit is still required —
-        // ODbL for OpenStreetMap, and OpenMapTiles' own terms — so it is added
-        // back here on its own, without the prefix.
-        L.control
-          .attribution({ position: "bottomright", prefix: false })
-          .addAttribution(
-            '&copy; <a href="https://openfreemap.org" target="_blank" rel="noreferrer">OpenFreeMap</a> &copy; OpenMapTiles &copy; OpenStreetMap',
-          )
-          .addTo(map);
+        // An EMPTY attribution control, deliberately.
+        //
+        // The control has to exist because MapContainer turns Leaflet's own
+        // off, and the DATA credit is required — ODbL for OpenStreetMap, and
+        // OpenMapTiles' own terms. But the string is not ours to write: the
+        // plugin reads the attribution out of the loaded style and adds it
+        // here itself.
+        //
+        // This used to add a hand-written credit as well, and the two stacked:
+        //
+        //   "© OpenFreeMap © OpenMapTiles © OpenStreetMap,
+        //    OpenFreeMap © OpenMapTiles Data from OpenStreetMap"
+        //
+        // The reason it survived a previous attempt to fix it is timing. The
+        // plugin's copy only appears once the STYLE has loaded, so for the
+        // first second there is exactly one credit and the box looks correct.
+        // It doubles later, which is not when anyone is looking at it — this
+        // was caught with tracking running, well after mount.
+        L.control.attribution({ position: "bottomright", prefix: false }).addTo(map);
 
         // Keep the basemap beneath everything Leaflet draws, so the route is
         // never hidden by the canvas.
