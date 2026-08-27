@@ -8906,3 +8906,113 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   max-width: calc(100% - 80px);
   text-align: right;
 }
+
+/* ── The date control, matched to the mode switch beside it ───────────
+   It sat noticeably taller and heavier than the Me/Earnings pill it
+   shares a row with — a native date field at its default size next to a
+   control that had been tuned. Same height, same type size, same
+   padding, so the two halves read as one bar. */
+.sv-daypick {
+  padding: 7px 10px;
+  font-size: 12px;
+}
+.sv-daypick input[type="date"] {
+  font-size: 12px;
+  font-weight: 650;
+  padding: 0;
+  height: 18px;
+  line-height: 18px;
+  max-width: 104px;
+}
+.sv-daypick .sv-today {
+  font-size: 11px;
+  padding: 2px 7px;
+}
+
+/* ── Profile: the brand marks and the destructive action, in violet ───
+   Asked for directly. The wordmark and bee were pinned to the brand ramp
+   so a logo would not change colour per screen; here they take violet
+   instead.
+
+   Note on Delete Account: it was red because red is what "this cannot be
+   undone" looks like everywhere, and colour is the only warning a button
+   carries before it is pressed. In violet it reads as an ordinary action
+   sitting under Log Out. The label and the confirmation dialog still
+   spell out what it does, so the guard is not gone — but it is one cue
+   lighter than it was. */
+.profile-page .wordmark svg,
+.profile-brand .wordmark svg { color: #6d28d9; }
+.profile-page .wordmark-text,
+.profile-brand .wordmark-text {
+  background-image: linear-gradient(135deg, #6d28d9 0%, #7c3aed 55%, #8b5cf6 100%);
+}
+.profile-page .button-outline.danger,
+.profile-page [class*="delete"],
+.profile-page .button-outline:has(svg) {
+  color: #6d28d9;
+  border-color: color-mix(in srgb, #6d28d9 45%, transparent);
+}
+.profile-page .button-outline.danger svg,
+.profile-page [class*="delete"] svg { color: #6d28d9; }
+
+/* ══ Map chrome: the final word on where things sit ═══════════════════
+   These positions had been set, overridden and re-set across several
+   passes, and the result was the mode switch and the date on the RIGHT
+   with the zoom rail on the LEFT — each rule correct on its own and the
+   combination backwards.
+
+   Declared once here, last in the file, so there is a single place that
+   decides. Left column is context (what am I looking at), right column
+   is control (change what I see). */
+
+/* Left: what you are looking at. */
+.sv-mapmode {
+  position: absolute;
+  left: 12px;
+  right: auto;
+  top: 118px;
+  bottom: auto;
+  border-radius: 12px 0 0 12px;
+}
+.sv-daypick {
+  position: absolute;
+  /* 139, not 151: the mode switch ends at 139 and a 12px gap left the two
+     halves reading as separate chips rather than one bar. */
+  left: 139px;
+  right: auto;
+  top: 118px;
+  bottom: auto;
+  border-radius: 0 12px 12px 0;
+  border-left: 1px solid var(--border);
+}
+.sv-mapnote {
+  position: absolute;
+  left: 12px;
+  right: auto;
+  top: 160px;
+  width: max-content;
+  max-width: calc(100% - 24px);
+}
+
+/* Right: the controls, one column, layer sitting above locate. */
+.sv-rail {
+  position: absolute;
+  right: 12px;
+  left: auto;
+  top: auto;
+  bottom: calc(var(--sv-sheet-h, 236px) + 16px);
+  transform: none;
+}
+.sv-layerbtn {
+  position: absolute;
+  right: 12px;
+  left: auto;
+  top: auto;
+  bottom: calc(var(--sv-sheet-h, 236px) + 16px + 145px + 12px);
+}
+.sv-content:has(.sv-sheet.is-collapsed) .sv-rail { bottom: 46px; }
+.sv-content:has(.sv-sheet.is-collapsed) .sv-layerbtn { bottom: calc(46px + 145px + 12px); }
+
+/* On the friends page there is no date and no note, so the switch is a
+   whole pill again rather than a shape with one squared end. */
+.sv-content.is-friends-page .sv-mapmode { border-radius: 12px; }

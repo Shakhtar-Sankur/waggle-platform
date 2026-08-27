@@ -6,8 +6,8 @@
   the centre ~72x72dp safe zone so no launcher mask (circle, squircle, rounded
   square) can clip it.
 
-  The stripes are painted in the BACKGROUND orange rather than masked out —
-  VectorDrawable has no <mask>, and the background layer is a flat #FF4400, so
+  The stripes are painted in the BACKGROUND indigo rather than masked out —
+  VectorDrawable has no <mask>, and the background layer is a flat #4F46E5, so
   the result is identical and much simpler.
 -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
@@ -39,7 +39,7 @@
 
     <!-- Stripes, in the background colour. They run wider than the body; the
          overflow lands on the identical orange background and is invisible. -->
-    <path android:fillColor="#FF4400" android:pathData="M32,46.5 h44 v5 h-44 z" />
-    <path android:fillColor="#FF4400" android:pathData="M32,57.0 h44 v5 h-44 z" />
-    <path android:fillColor="#FF4400" android:pathData="M32,67.5 h44 v5 h-44 z" />
+    <path android:fillColor="#4F46E5" android:pathData="M32,46.5 h44 v5 h-44 z" />
+    <path android:fillColor="#4F46E5" android:pathData="M32,57.0 h44 v5 h-44 z" />
+    <path android:fillColor="#4F46E5" android:pathData="M32,67.5 h44 v5 h-44 z" />
 </vector>

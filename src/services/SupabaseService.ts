@@ -1064,9 +1064,42 @@ export const SupabaseService = {
       p_title: title,
       p_is_group: isGroup,
     });
-    if (threadError) throw threadError;
-    const thread = Array.isArray(rows) ? rows[0] : rows;
-    if (!thread) throw new Error("create_thread returned no row.");
+
+    let thread = Array.isArray(rows) ? rows[0] : rows;
+
+    if (threadError || !thread) {
+      // The function is not there. A project that has not run
+      // chat_thread_atomic.sql answers PGRST202 / 404, and without this the
+      // whole feature is dead on that backend — you cannot make a group at
+      // all, which is worse than making one non-atomically.
+      //
+      // So: fall back to the two inserts this replaced. They carry the orphan
+      // risk the RPC exists to remove, which is why the RPC is tried first and
+      // why this path logs — but a driver on a not-yet-migrated backend gets a
+      // working app rather than a broken button.
+      const missing =
+        (threadError as { code?: string } | null)?.code === "PGRST202" ||
+        /not find the function|does not exist/i.test(threadError?.message ?? "");
+      if (threadError && !missing) throw threadError;
+      console.warn("create_thread RPC unavailable; falling back to two inserts.");
+
+      const { data: legacy, error: insertError } = await supabase!
+        .from("chat_threads")
+        .insert({ title, is_group: isGroup, created_by: userId })
+        .select("id, title, is_group, updated_at")
+        .single();
+      if (insertError) throw insertError;
+
+      const { error: memberError } = await supabase!
+        .from("chat_thread_members")
+        .insert({ thread_id: legacy.id, user_id: userId });
+      if (memberError) {
+        // Do not leave the orphan behind if we can help it.
+        await supabase!.from("chat_threads").delete().eq("id", legacy.id);
+        throw memberError;
+      }
+      thread = legacy;
+    }
 
     return {
       id: thread.id,
@@ -1124,7 +1157,37 @@ export const SupabaseService = {
       status: message.status,
       created_at: new Date(message.createdAt).toISOString(),
     });
-    if (insertError) throw insertError;
+
+    if (insertError) {
+      // 42703 is "column does not exist". A project that has not run
+      // chat_voice_notes.sql or chat_reply_reactions.sql rejects the WHOLE
+      // insert over one unknown column — so a reply, or a voice note, took the
+      // driver's message down with it rather than losing only the extra.
+      //
+      // Retry with just the fields every schema has. The reply loses its quote
+      // and a voice note loses its audio, which is a real loss and is why the
+      // migration should be run — but the words the driver typed still arrive,
+      // which is the part they cannot retype from memory.
+      const unknownColumn =
+        (insertError as { code?: string }).code === "42703" ||
+        /column .* does not exist/i.test(insertError.message ?? "");
+      if (!unknownColumn) throw insertError;
+
+      console.warn(
+        "chat_messages is missing optional columns; sending without reply/voice.",
+        insertError.message,
+      );
+      const { error: retryError } = await supabase!.from("chat_messages").insert({
+        id: message.id,
+        thread_id: message.threadId,
+        sender_id: message.senderId,
+        body: message.body,
+        attachment_url: message.attachmentUrl ?? null,
+        status: message.status,
+        created_at: new Date(message.createdAt).toISOString(),
+      });
+      if (retryError) throw retryError;
+    }
 
     const { error: updateError } = await supabase!
       .from("chat_threads")

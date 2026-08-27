@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The launch animation.
+
+  The splash was a still bee on a flat colour for however long the web view
+  took to boot — which on a cheap handset is long enough to look like the app
+  had hung. Something moving says "starting", not "stuck".
+
+  Deliberately small: the mark settles up to full size while the wings beat
+  twice. It is not a logo reveal, because a driver opening this at a traffic
+  light sees it several times a shift and a performance gets old on the third
+  viewing.
+
+  600ms, which is under the 1000ms Android allows for a splash icon — anything
+  longer and the system cuts it off mid-movement.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_bee_anim">
+
+    <!-- The mark settles into place rather than appearing at size. -->
+    <target android:name="bee">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <set>
+                <objectAnimator
+                    android:propertyName="scaleX"
+                    android:valueFrom="0.72"
+                    android:valueTo="1.0"
+                    android:duration="520"
+                    android:interpolator="@android:interpolator/overshoot" />
+                <objectAnimator
+                    android:propertyName="scaleY"
+                    android:valueFrom="0.72"
+                    android:valueTo="1.0"
+                    android:duration="520"
+                    android:interpolator="@android:interpolator/overshoot" />
+            </set>
+        </aapt:attr>
+    </target>
+
+    <!-- Two wingbeats. The pivots are at the wing roots, so they hinge from
+         the body rather than sliding. -->
+    <target android:name="wingLeft">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="rotation"
+                android:valueFrom="-38"
+                android:valueTo="-64"
+                android:duration="150"
+                android:repeatCount="3"
+                android:repeatMode="reverse"
+                android:interpolator="@android:interpolator/accelerate_decelerate" />
+        </aapt:attr>
+    </target>
+
+    <target android:name="wingRight">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="rotation"
+                android:valueFrom="38"
+                android:valueTo="64"
+                android:duration="150"
+                android:repeatCount="3"
+                android:repeatMode="reverse"
+                android:interpolator="@android:interpolator/accelerate_decelerate" />
+        </aapt:attr>
+    </target>
+</animated-vector>

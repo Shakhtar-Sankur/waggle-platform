@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  The splash bee, in a form that can move.
+
+  A copy of ic_launcher_bee rather than a rename of it: the adaptive launcher
+  icon must stay a plain VectorDrawable — an adaptive icon cannot animate, and
+  pointing it at an AnimatedVectorDrawable makes the launcher fall back to a
+  blank square on some devices. So the static one keeps its job and this one
+  carries the names the animator targets.
+
+  Everything sits inside a root group so the whole mark can be scaled as one,
+  and the stripes are drawn in the background indigo — VectorDrawable has no
+  <mask>, and the layer beneath is a flat fill, so the result is identical.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <group
+        android:name="bee"
+        android:pivotX="54"
+        android:pivotY="54"
+        android:scaleX="0.72"
+        android:scaleY="0.72">
+
+        <!-- Left wing -->
+        <group
+            android:name="wingLeft"
+            android:pivotX="32"
+            android:pivotY="31"
+            android:rotation="-38">
+            <path
+                android:fillColor="#FFFFFF"
+                android:fillAlpha="0.45"
+                android:pathData="M19,31 a13,7.5 0 1,0 26,0 a13,7.5 0 1,0 -26,0 z" />
+        </group>
+
+        <!-- Right wing -->
+        <group
+            android:name="wingRight"
+            android:pivotX="76"
+            android:pivotY="31"
+            android:rotation="38">
+            <path
+                android:fillColor="#FFFFFF"
+                android:fillAlpha="0.45"
+                android:pathData="M63,31 a13,7.5 0 1,0 26,0 a13,7.5 0 1,0 -26,0 z" />
+        </group>
+
+        <!-- Body capsule -->
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M54,34 a16,16 0 0,1 16,16 v14 a16,16 0 0,1 -16,16 a16,16 0 0,1 -16,-16 v-14 a16,16 0 0,1 16,-16 z" />
+
+        <!-- Stripes, in the background colour. -->
+        <path android:fillColor="#4F46E5" android:pathData="M32,46.5 h44 v5 h-44 z" />
+        <path android:fillColor="#4F46E5" android:pathData="M32,57.0 h44 v5 h-44 z" />
+        <path android:fillColor="#4F46E5" android:pathData="M32,67.5 h44 v5 h-44 z" />
+    </group>
+</vector>
