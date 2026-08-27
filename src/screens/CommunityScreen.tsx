@@ -100,6 +100,11 @@ export function CommunityScreen() {
   }, [user, loadCloudCommunity]);
   const toggleGroup = useCommunityStore((state) => state.toggleGroup);
   const openDirectThread = useChatStore((state) => state.openDirectThread);
+  /** Chats with something unread — the count of PEOPLE waiting, not messages,
+   *  because a badge reading 47 for one talkative driver tells you nothing. */
+  const unreadChats = useChatStore(
+    (state) => state.threads.filter((thread) => thread.unreadCount > 0).length,
+  );
 
   const messageDriver = async (workerId: string) => {
     await openDirectThread(workerId);
@@ -344,19 +349,34 @@ export function CommunityScreen() {
             <X size={17} />
           </button>
         </div>
-        <button
-          className="fb-round fb-searchbtn"
-          aria-label={t("fb_search")}
-          onClick={() => {
-            setSearchOpen(true);
-            window.setTimeout(() => searchRef.current?.focus(), 60);
-          }}
-        >
-          <Search size={19} />
-        </button>
-        <button className="fb-round" aria-label={t("a11y_messenger")} onClick={() => navigate("/messages")}>
-          <MessageCircle size={20} />
-        </button>
+        {/* Both actions in one group, pinned to the right edge — which is
+            where every app of this shape puts them, and where a right thumb
+            reaches without crossing the screen. They were sitting 72px short
+            of the corner because nothing pushed them there. */}
+        <div className="fb-actions">
+          <button
+            className="fb-round fb-searchbtn"
+            aria-label={t("fb_search")}
+            onClick={() => {
+              setSearchOpen(true);
+              window.setTimeout(() => searchRef.current?.focus(), 60);
+            }}
+          >
+            <Search size={19} />
+          </button>
+          <button
+            className="fb-round"
+            aria-label={t("a11y_messenger")}
+            onClick={() => navigate("/messages")}
+          >
+            <MessageCircle size={20} />
+            {/* Capped at 9+ so the badge stays a circle rather than growing
+                into a pill and shoving the icon off-centre. */}
+            {unreadChats > 0 ? (
+              <span className="fb-round-badge">{unreadChats > 9 ? "9+" : unreadChats}</span>
+            ) : null}
+          </button>
+        </div>
       </div>
 
       {/* Facebook top navigation tabs */}

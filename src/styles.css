@@ -8552,3 +8552,90 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
     box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
   }
 }
+
+/* ── Community's actions, in the corner where they belong ─────────────
+   Measured: the message button's right edge sat 72px short of the bar's,
+   because the row was left-packed and nothing pushed the buttons over.
+   They now sit against the gutter, which is both the convention and the
+   part of the row a right thumb reaches without crossing the screen. */
+.fb-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* Glass rather than flat fill: the bar behind them is a gradient, and a
+   solid circle on a gradient reads as a sticker. A translucent disc with
+   a hairline lets the colour through and belongs to the surface. */
+.fb-topbar .fb-round {
+  position: relative;
+  /* 44, not 40. The message button already carried a min-width:44px touch
+     rule that overrode a 40px width, so the two sat side by side at
+     different sizes. Matching them DOWN would have meant taking a control
+     below the touch floor to tidy a row, which is the wrong trade — the
+     search button comes up instead. min-* as well as width, so the same
+     rule cannot silently win again. */
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  background: rgba(255, 255, 255, .15);
+  border: 1px solid rgba(255, 255, 255, .22);
+  backdrop-filter: blur(8px);
+  color: #fff;
+  transition: background .16s ease, transform .12s ease;
+}
+.fb-topbar .fb-round:hover { background: rgba(255, 255, 255, .26); }
+/* A press that moves. On a phone this is the only feedback there is —
+   there is no cursor to change and no hover to rest in. */
+.fb-topbar .fb-round:active { transform: scale(.93); }
+
+/* The unread badge. Sits on the rim rather than inside, so it never
+   crowds the glyph, and carries a ring in the bar's own colour so it
+   reads as attached to the button rather than floating over it. */
+.fb-round-badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10.5px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 0 0 2px var(--band-b, #4c1d95);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── The avatar and the name sat on different lines ───────────────────
+   Measured: the avatar's top edge at y124, the name's ink at y130. Six
+   pixels, and enough to see.
+
+   Not a padding problem. Every item in the head row is 19px tall — name,
+   handle, dot, time — except the ⋯ button, which is 24. The row is
+   align-items:baseline, so that one taller item set the row's height and
+   the text sank within it, while the avatar stayed flush against the top.
+
+   The button keeps a real tap area and stops contributing height: 44px
+   box, negative block margin of (44-19)/2, so it overlaps the row rather
+   than growing it. That fixes the alignment and takes the control from a
+   24px target to 44 at the same time — it was under the floor anyway. */
+.tw-post-head .tw-more {
+  width: 44px;
+  height: 44px;
+  margin-block: -12.5px;
+  margin-inline: -10px;
+  display: grid;
+  place-items: center;
+  align-self: center;
+}
+
+/* With the row back to the height of its text, the avatar and the name
+   share a top edge — which is the alignment the layout was drawn for. */
+.tw-post { align-items: flex-start; }
