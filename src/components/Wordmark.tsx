@@ -76,8 +76,20 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
  * (used on the orange auth screen); the default draws the name in the brand
  * gradient for the light in-app chrome.
  */
-/** One size for the mark, everywhere it appears. */
-export const MARK_SIZE = 26;
+/**
+ * One size for the mark, everywhere it appears.
+ *
+ * 30, not 26, and the difference is the viewBox. The artwork occupies y9.5
+ * to y41 of a 48-unit box — 31.5 units, or 66% — so the drawn bee is
+ * two-thirds of whatever number is set here. At 26 that meant a 17.1px bee
+ * standing next to a 19.6px cap height, which is why it read as too small
+ * beside the word even though the box was the same size as the type.
+ *
+ * 30 * (31.5/48) = 19.7px of drawn bee against 27px Inter's 19.6px caps.
+ * Matched by measurement rather than by matching the numbers that are easy
+ * to see in the markup.
+ */
+export const MARK_SIZE = 30;
 
 export function Wordmark({
   size = 22,

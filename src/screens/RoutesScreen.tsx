@@ -581,7 +581,7 @@ export function RoutesScreen() {
     <main className="strava-screen">
       <div className="sv-nav">
         {/* Bee only. The app name lives on Home and Profile. */}
-        <BeeMark size={26} className="sv-nav-brand" />
+        <BeeMark size={30} className="sv-nav-brand" />
         <div className="sv-nav-tabs">
           <button className={view === "maps" ? "active" : ""} onClick={() => setView("maps")}>{t("sv_maps")}</button>
           <button className={view === "friends" ? "active" : ""} onClick={() => setView("friends")}>{t("sv_friendsTab")}</button>

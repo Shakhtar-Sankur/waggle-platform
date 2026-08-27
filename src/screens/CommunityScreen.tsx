@@ -310,7 +310,7 @@ export function CommunityScreen() {
           and Profile, and dropping it here gives the search box the width it
           needs to look like the primary control on this screen. */}
       <div className="fb-topbar">
-        <BeeMark size={26} className="fb-beemark" />
+        <BeeMark size={30} className="fb-beemark" />
         <div className="fb-search">
           <Search size={17} />
           <input

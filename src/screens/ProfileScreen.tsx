@@ -211,7 +211,7 @@ export function ProfileScreen() {
       <div className="profile-brand">
         {/* Default tone, not solid: the solid variant renders the bee in the
             text colour, which made the logo black here. The bee is orange. */}
-        <Wordmark size={24} />
+        <Wordmark size={27} />
       </div>
 
       <a className="gigzen-link" href={COMPANY_SITE} target="_blank" rel="noreferrer">

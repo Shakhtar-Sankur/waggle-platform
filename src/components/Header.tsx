@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { APP_NAME } from "../config/constants";
 import { useT } from "../i18n";
-import { BeeMark, Wordmark } from "./Wordmark";
+import { BeeMark, MARK_SIZE, Wordmark } from "./Wordmark";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { Button } from "./ui/Button";
 
@@ -75,7 +75,7 @@ export function Header({ title }: HeaderProps) {
           </h1>
         ) : (
           <h1 className="header-titled">
-            <BeeMark size={26} className="header-mark" />
+            <BeeMark size={MARK_SIZE} className="header-mark" />
             {titles[title] ?? title}
           </h1>
         )}
