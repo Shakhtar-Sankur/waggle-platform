@@ -35,3 +35,8 @@ agents/
 # undo, which is why this sits at the end of the file.
 !docs/*.apk
 .env.production
+
+# Supabase CLI local state. This was committed, and the link file inside it
+# pointed at the retired project — so every clone inherited a CLI aimed at a
+# dead database that reports success.
+supabase/.temp/

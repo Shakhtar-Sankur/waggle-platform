@@ -105,7 +105,7 @@ if (status !== 0) {
     "\n  x supabase secrets set failed (exit " + status + ").\n" +
       "    If it says you are not logged in or linked:\n" +
       "      npx.cmd supabase login\n" +
-      "      npx.cmd supabase link --project-ref rqzuuvlougzhynckvqzd\n",
+      "      npx.cmd supabase link --project-ref ypdaetbeexyepswyhbui\n",
   );
   process.exit(status);
 }

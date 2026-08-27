@@ -59,13 +59,20 @@ Install the Supabase CLI (<https://supabase.com/docs/guides/cli>), then:
 > |---|---|
 > | `ypdaetbeexyepswyhbui` | **production — deploy here** |
 > | `jqepegeifmnfofeyebrz` | test project, safe to experiment against |
-> | `rqzuuvlougzhynckvqzd` | **retired.** Nothing here is used by anyone. |
 >
-> `supabase/.temp/project-ref` currently reads `rqzuuvlougzhynckvqzd`, so a
-> `deploy` without re-linking ships the function to the dead project. It will
-> report success and push will still never arrive, with nothing visibly wrong.
-> Re-link before deploying, and confirm with `supabase projects list` that the
-> linked marker sits on the production row.
+> There was a third, `rqzuuvlougzhynckvqzd`. It is retired and being left to
+> pause and expire, and it should not appear anywhere in this repo again.
+>
+> It caused a specific trap worth remembering: the CLI's link file lived in
+> `supabase/.temp/`, that directory was COMMITTED, and it pointed at the dead
+> project. So a fresh clone inherited a CLI aimed at a database nobody uses,
+> and `deploy` reported success while nothing arrived. `.temp/` is gitignored
+> now and the stale link is gone, so the CLI errors with "not linked" instead
+> of silently picking the wrong target.
+>
+> Run `supabase link --project-ref ypdaetbeexyepswyhbui` before deploying, and
+> confirm with `supabase projects list` that the linked marker sits on the
+> production row rather than trusting the CLI's own success message.
 
 ```bash
 supabase login
