@@ -8399,3 +8399,156 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .settings-group > h4 {
   letter-spacing: .045em;
 }
+
+/* ── Screen titles, matched to the wordmark ───────────────────────────
+   "Messages" and "Profile" were set at 30px while "Buzz" on Home is 27.
+   They sit in the same slot on the same bar, so the header appeared to
+   change size depending on which screen you were on. */
+.app-header h1 { font-size: 27px; }
+
+/* ── Community says its own name ──────────────────────────────────────
+   The bee and the title sit together on the left; the search takes what
+   is left. At 375px that leaves the field around 200px, which still
+   holds a placeholder and a typed query comfortably. */
+.fb-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.fb-brand strong {
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: #fff;
+}
+/* The field yields the space rather than overflowing the row. */
+.fb-topbar .fb-search { min-width: 0; flex: 1 1 auto; }
+
+/* ── Community's search opens over the row ────────────────────────────
+   A mark, a page title, a search field and a button do not fit across
+   375px. Measured: adding the title left the field 87px wide, which
+   rendered as "Sea". Rather than dropping one of them, the search
+   collapses to a button and takes the whole row when opened — so it is
+   wider in use than it ever was, and the page keeps its name. */
+.fb-searchbtn { display: grid; }
+.fb-topbar .fb-search { display: none; }
+.fb-search-close { display: none; }
+
+.fb-topbar.is-searching .fb-brand,
+.fb-topbar.is-searching .fb-searchbtn { display: none; }
+.fb-topbar.is-searching .fb-search {
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.fb-topbar.is-searching .fb-search-close {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-right: -4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* ── Long titles and names, everywhere ────────────────────────────────
+   Checked across the app at 320px, which is the narrowest phone still in
+   use. These are the strings that grow: a driver's full name, a place
+   name from the geocoder, a group title somebody typed, and every one of
+   the sixteen languages where the word for "Community" or "Challenges"
+   is half again as long as the English.
+
+   Each gets room to shrink and an ellipsis rather than pushing its
+   neighbours off the row. */
+.app-header h1,
+.fb-brand strong,
+.wa-convo-title strong,
+.sv-sheet-title strong,
+.home-hero h2 {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The greeting is the one exception — it wraps to two lines rather than
+   truncating, because a driver's own name should never be cut. */
+.home-hero h2 { white-space: normal; overflow: visible; }
+
+.shell-row { min-width: 0; }
+.shell-row > h1 { flex: 1 1 auto; }
+
+/* Below 360px the working-app row ran out of space and clipped its own
+   label to "Today's Workin...". The label is the least useful part of
+   that row — the app's name and logo are right beside it — so it is what
+   gives way. */
+@media (max-width: 380px) {
+  .working-app-card span:not(.wam) { display: none; }
+  .fb-brand strong { font-size: 17px; }
+  .sv-nav-tabs button { font-size: 13px; }
+}
+
+/* ── Wide screens: centre the column ──────────────────────────────────
+   This is a phone app — Capacitor, Android, one thumb. On anything
+   wider it pinned itself to the left edge and left the rest of the
+   screen empty, which is what an unhandled viewport looks like rather
+   than a decision. Measured at 768px: the frame reported 758px wide
+   while the content drew in a column at the left.
+
+   Nothing is redesigned for a tablet, because nothing here wants a
+   second pane. The column simply takes its natural width and sits in
+   the middle, the way every phone-first app does when it finds itself
+   on a bigger display.
+
+   520px rather than 430: wide enough that the extra room is useful for
+   the feed and the chat, narrow enough that a line of body text stays
+   inside the 45-75 characters that are comfortable to read. */
+@media (min-width: 560px) {
+  .app-frame,
+  .strava-screen {
+    max-width: 520px;
+    margin-inline: auto;
+  }
+
+  /* The bottom nav is fixed, so it does not inherit the frame's centring
+     and has to be told separately — otherwise it stretches the full
+     width of a desktop window under a 520px column. */
+  .bottom-nav {
+    /* width AND max-width: with only max-width a fixed element shrinks to
+       its content, which left the nav 316px wide floating inside a 520px
+       column rather than sitting under it. */
+    width: 100%;
+    max-width: 520px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+  }
+
+  /* The compose button is portaled to <body> for reasons documented at
+     .fb-fab, so it is outside the frame too and would otherwise sit
+     against the window edge instead of the column's. */
+  .fb-fab {
+    /* Half the column, less the button and its gutter: 260 - 56 - 16.
+       The first attempt used 260 - 78 and put the button 6px outside the
+       column, which is the sort of arithmetic that looks right until it
+       is measured. */
+    left: 50%;
+    right: auto;
+    margin-left: 188px;
+  }
+
+  /* A soft edge so the column reads as the app rather than as content
+     that failed to fill the page. */
+  body { background: var(--muted); }
+  /* Reserve the scrollbar's width whether or not it is showing, so the
+     column does not shift by 10px between a page that scrolls and one
+     that does not. */
+  html { scrollbar-gutter: stable both-edges; }
+  .app-frame, .strava-screen {
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, .05);
+  }
+}

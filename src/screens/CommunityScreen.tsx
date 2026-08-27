@@ -139,6 +139,11 @@ export function CommunityScreen() {
      way to write a post — it brings the driver to the one that is already
      at the top, because two composers means two places a half-written post
      can be lost. */
+  /** The search field shares its row with the page title, so it opens over
+   *  the row rather than competing with it for width. */
+  const [searchOpen, setSearchOpen] = useState(false);
+  const searchRef = useRef<HTMLInputElement | null>(null);
+
   const composerRef = useRef<HTMLFormElement | null>(null);
   const jumpToComposer = () => {
     setComposeOpen(true);
@@ -306,19 +311,49 @@ export function CommunityScreen() {
 
   return (
     <main className="page-shell fb-page">
-      {/* Top bar. The bee alone, not the wordmark: the app name belongs on Home
-          and Profile, and dropping it here gives the search box the width it
-          needs to look like the primary control on this screen. */}
-      <div className="fb-topbar">
-        <BeeMark size={30} className="fb-beemark" />
+      {/* Top bar.
+          The page needs its name — every other screen says what it is, and
+          this one showed a bee, a search field and four tab labels that could
+          belong to anything. But a name, a mark, a search field and a button
+          do not fit across 375px: adding the title squeezed the field to 87px,
+          which rendered as "Sea".
+          So the search collapses to a button and takes the whole row when it
+          is opened. Nothing has to be sacrificed, and the field is wider when
+          in use than it ever was before. */}
+      <div className={`fb-topbar${searchOpen ? " is-searching" : ""}`}>
+        <span className="fb-brand">
+          <BeeMark size={30} className="fb-beemark" />
+          <strong>{t("nav_community")}</strong>
+        </span>
         <div className="fb-search">
           <Search size={17} />
           <input
+            ref={searchRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={t("fb_search")}
           />
+          {/* Closing clears, because leaving a stale query behind a collapsed
+              button hides the reason the feed looks filtered. */}
+          <button
+            type="button"
+            className="fb-search-close"
+            aria-label={t("a11y_close")}
+            onClick={() => { setQuery(""); setSearchOpen(false); }}
+          >
+            <X size={17} />
+          </button>
         </div>
+        <button
+          className="fb-round fb-searchbtn"
+          aria-label={t("fb_search")}
+          onClick={() => {
+            setSearchOpen(true);
+            window.setTimeout(() => searchRef.current?.focus(), 60);
+          }}
+        >
+          <Search size={19} />
+        </button>
         <button className="fb-round" aria-label={t("a11y_messenger")} onClick={() => navigate("/messages")}>
           <MessageCircle size={20} />
         </button>

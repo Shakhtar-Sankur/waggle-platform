@@ -1026,22 +1026,24 @@ export const SupabaseService = {
 
   async createThread(userId: string, title: string, isGroup: boolean): Promise<ChatThread> {
     assertSupabase();
-    const { data: thread, error: threadError } = await supabase!
-      .from("chat_threads")
-      .insert({
-        title,
-        is_group: isGroup,
-        created_by: userId,
-      })
-      .select("id, title, is_group, updated_at")
-      .single();
-    if (threadError) throw threadError;
-
-    const { error: memberError } = await supabase!.from("chat_thread_members").insert({
-      thread_id: thread.id,
-      user_id: userId,
+    // One call, one transaction. This used to be two inserts — the thread, then
+    // the creator's membership — and anything failing between them left a
+    // thread with no members. Every policy on chat_threads and chat_messages
+    // gates on membership, so such a thread is invisible to every client: it
+    // cannot be listed, opened, joined or deleted through the app, ever.
+    //
+    // Not theoretical. A database carrying load-test traffic had 290,934 of
+    // them against 12 real ones, from runs that were killed mid-way.
+    //
+    // create_thread is plpgsql, so the membership insert failing rolls the
+    // thread insert back with it. See supabase/chat_thread_atomic.sql.
+    const { data: rows, error: threadError } = await supabase!.rpc("create_thread", {
+      p_title: title,
+      p_is_group: isGroup,
     });
-    if (memberError) throw memberError;
+    if (threadError) throw threadError;
+    const thread = Array.isArray(rows) ? rows[0] : rows;
+    if (!thread) throw new Error("create_thread returned no row.");
 
     return {
       id: thread.id,
