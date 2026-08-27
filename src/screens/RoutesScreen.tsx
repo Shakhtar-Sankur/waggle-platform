@@ -30,7 +30,7 @@ import { LocationService } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
 import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
 import { describeStep, directionsBetween, scoreAgainstHistory, type Directions } from "../services/DirectionsService";
-import { searchPlaces, type PlaceHit } from "../services/PlacesService";
+import { distanceKm, searchPlaces, type PlaceHit } from "../services/PlacesService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
@@ -80,12 +80,22 @@ const TILES = {
 /* One label per map mode, so the switch and its aria-label cannot drift. */
 const MODE_KEY = {
   me: "sv_modeMe",
-  friends: "sv_modeFriends",
   earnings: "sv_modeEarnings",
 } as const;
 
 type MapStyle = keyof typeof TILES;
-type StravaView = "maps" | "challenges";
+/**
+  * Three pages, not two.
+  *
+  * "Friends" used to be one of three states of a cycling switch over the
+  * driver's own map, which meant it inherited a screen built for a different
+  * job: a record sheet, a date picker for YOUR history, a speed key for YOUR
+  * path. None of that means anything when you are looking at other people.
+  *
+  * Split, each page can have the controls its own question needs — and neither
+  * has to carry the other's.
+  */
+type StravaView = "maps" | "friends" | "challenges";
 
 /** One geocoded place. The shape lives with the search service now. */
 type SearchHit = PlaceHit;
@@ -286,7 +296,7 @@ export function RoutesScreen() {
      their pins, whether you wanted either or not. Separating them is not
      only tidier: your history and other people's live positions answer
      completely different questions, and only one of them is about today. */
-  const [mapMode, setMapMode] = useState<"me" | "friends" | "earnings">("me");
+  const [mapMode, setMapMode] = useState<"me" | "earnings">("me");
 
   /** Which day "Me" is showing. Local midnight, so it means the driver's day. */
   const [pathDay, setPathDay] = useState<Date>(() => {
@@ -352,9 +362,9 @@ export function RoutesScreen() {
 
   const routePositions = mapMode === "me" ? drawnPath : livePositions;
 
-  /* Three modes now, so the switch names where the next tap goes rather
-     than "the other one". */
-  const nextMode = mapMode === "me" ? "friends" : mapMode === "friends" ? "earnings" : "me";
+  /* Two modes on your own map — your path, or where the money came from.
+     Friends moved to a page of their own. */
+  const nextMode = mapMode === "me" ? "earnings" : "me";
 
   /* Where the money came from. Earnings accrue from distance travelled, so
      distance inside a cell is earnings from that cell — no new data, and the
@@ -415,10 +425,18 @@ export function RoutesScreen() {
   const connections = useCommunityStore((state) => state.connections);
   const friendWorkers = useMemo(
     () =>
-      onlineWorkers.filter(
-        (w) => connectionFor(connections, user?.id, w.id).state === "connected",
-      ),
-    [onlineWorkers, connections, user?.id],
+      onlineWorkers
+        .filter((w) => connectionFor(connections, user?.id, w.id).state === "connected")
+        // Nearest first. The roster came out in whatever order the query
+        // returned — 1km, <1km, 2km, 6km, 8km, 4km — and distance is the
+        // only thing on the row that decides whether somebody's position is
+        // any use to you. Reading it meant scanning all six.
+        .sort(
+          (a, b) =>
+            distanceKm(currentLocation, { lat: a.location.lat, lng: a.location.lng }) -
+            distanceKm(currentLocation, { lat: b.location.lat, lng: b.location.lng }),
+        ),
+    [onlineWorkers, connections, user?.id, currentLocation],
   );
 
   /** How many people you are actually connected to, driving or not.
@@ -544,6 +562,7 @@ export function RoutesScreen() {
         <BeeMark size={26} className="sv-nav-brand" />
         <div className="sv-nav-tabs">
           <button className={view === "maps" ? "active" : ""} onClick={() => setView("maps")}>{t("sv_maps")}</button>
+          <button className={view === "friends" ? "active" : ""} onClick={() => setView("friends")}>{t("sv_friendsTab")}</button>
           <button className={view === "challenges" ? "active" : ""} onClick={() => setView("challenges")}>{t("sv_challenges")}</button>
         </div>
       </div>
@@ -553,10 +572,11 @@ export function RoutesScreen() {
           underneath it. Measured before adding it — the zoom and layers buttons
           sat over the last 21px of every result line, and the record sheet
           covered the fourth and fifth rows entirely. */}
-      {view === "maps" ? (
+      {view === "maps" || view === "friends" ? (
         <div
           className={
             "sv-content maps" +
+            (view === "friends" ? " is-friends-page" : "") +
             (searchPin ? " has-route" : "") +
             (results.length ? " has-results" : "")
           }
@@ -881,7 +901,7 @@ export function RoutesScreen() {
               </>
             ) : null}
 
-            {mapMode === "friends" && friendWorkers.map((worker) => (
+            {view === "friends" && friendWorkers.map((worker) => (
               <Marker
                 key={worker.id}
                 position={[worker.location.lat, worker.location.lng]}
@@ -990,6 +1010,69 @@ export function RoutesScreen() {
             </div>
           </div>
 
+          {/* The friends page gets a roster instead of a record sheet. The
+              questions are different: on your own map it is "how is my shift
+              going", here it is "who is out, on what, and where" — so this
+              lists people with what they are driving for and how far away they
+              are, and tapping one flies the map to them. */}
+          {view === "friends" ? (
+            <div className="sv-sheet sv-friendsheet" ref={sheetRef}>
+              <div className="sv-sheet-grip" />
+              <div className="sv-sheet-title">
+                <strong>{t("sv_friendsTab")}</strong>
+                {/* Only when there is something to count. With nobody out
+                    the body below already says so, and a subtitle repeating
+                    it in different words reads like two separate problems. */}
+                {friendWorkers.length ? (
+                  <span className="sv-live">
+                    {t("sv_friendsSharing", { count: String(friendWorkers.length) })}
+                  </span>
+                ) : null}
+              </div>
+              {friendWorkers.length ? (
+                <ul className="sv-friendlist">
+                  {friendWorkers.map((worker) => {
+                    const workApp = getWorkApp(worker.app);
+                    const away = distanceKm(currentLocation, {
+                      lat: worker.location.lat,
+                      lng: worker.location.lng,
+                    });
+                    return (
+                      <li key={worker.id}>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFollowPaused(true);
+                            map?.setView([worker.location.lat, worker.location.lng], 15, { animate: true });
+                          }}
+                        >
+                          <span
+                            className="sv-friend-dot"
+                            style={{ background: workApp?.color ?? "#555" }}
+                            aria-hidden
+                          >
+                            {markOf(worker.app)}
+                          </span>
+                          <span className="sv-friend-who">
+                            <strong>{worker.name}</strong>
+                            <small>
+                              {workApp?.name ?? t("sv_modeMe")} &middot; {km(worker.distanceKm)}
+                            </small>
+                          </span>
+                          <span className="sv-friend-away">
+                            {away < 1 ? "<1" : Math.round(away)}
+                            <em>km</em>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="sv-friend-empty">{t("sv_noFriendsYet")}</p>
+              )}
+            </div>
+          ) : (
           <div className="sv-sheet" ref={sheetRef}>
             <div className="sv-sheet-grip" />
             <div className="sv-sheet-title">
@@ -1008,6 +1091,7 @@ export function RoutesScreen() {
               {isTracking ? <><Square size={18} fill="currentColor" /> {t("home_stopTracking")}</> : <><span className="sv-record-dot" /> {t("home_startTracking")}</>}
             </button>
           </div>
+          )}
         </div>
       ) : (
         <div className="sv-content challenges">

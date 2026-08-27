@@ -8204,3 +8204,81 @@ body[data-band="home"] {
    to the right edge at overlapping heights; the date picker owns that
    row, so the button drops below it. */
 .sv-layerbtn { top: 214px; }
+
+/* ── The friends page ─────────────────────────────────────────────────
+   Its own page now rather than a third state of a switch over the
+   driver's own map. That map's furniture — a record sheet, a date picker
+   for YOUR history, a speed key for YOUR path — answers questions nobody
+   asks while looking at other people, so none of it appears here. */
+
+/* Controls that belong to your own shift, hidden on the friends page. */
+.sv-content.is-friends-page .sv-daypick,
+.sv-content.is-friends-page .sv-speedkey,
+.sv-content.is-friends-page .sv-mapmode,
+.sv-content.is-friends-page .sv-mapnote { display: none; }
+
+.sv-friendsheet { max-height: 46vh; overflow-y: auto; }
+
+.sv-friendlist {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+}
+.sv-friendlist > li + li { border-top: 1px solid var(--border); }
+.sv-friendlist button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 2px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+}
+.sv-friendlist button:hover { background: var(--muted); }
+
+.sv-friend-dot {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  color: #fff;
+  font-weight: 800;
+  font-size: 13px;
+}
+.sv-friend-who { flex: 1; min-width: 0; }
+.sv-friend-who strong {
+  display: block;
+  font-size: 15px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sv-friend-who small {
+  display: block;
+  font-size: 12.5px;
+  color: var(--muted-foreground);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* How far away, which is the one number that decides whether their
+   position is useful to you at all. */
+.sv-friend-away {
+  flex-shrink: 0;
+  font-weight: 800;
+  font-size: 16px;
+  color: var(--primary-text);
+  font-variant-numeric: tabular-nums;
+}
+.sv-friend-away em { font-style: normal; font-size: 11px; font-weight: 600; margin-left: 2px; }
+
+.sv-friend-empty {
+  margin: 14px 2px 6px;
+  font-size: 13.5px;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+}
