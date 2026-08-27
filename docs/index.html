@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Waggle — every kilometre counts</title>
-<meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in sixteen languages, with the currency set from where you are. A GIGZEN product.">
+<meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in forty-three languages, with the currency set from where you are. A GIGZEN product.">
 <meta name="author" content="Gigzen Private Limited">
 <meta name="theme-color" content="#4F46E5">
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='11' fill='%234F46E5'/><path d='M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18' fill='none' stroke='white' stroke-width='4.6' stroke-linecap='round'/><circle cx='36.4' cy='15' r='4.1' fill='white'/></svg>"><rect width='48' height='48' rx='11' fill='%234F46E5'/><rect x='14' y='15' width='20' height='26' rx='10' fill='white'/><rect x='12' y='23' width='24' height='3' rx='1.5' fill='%234F46E5'/><rect x='12' y='29' width='24' height='3' rx='1.5' fill='%234F46E5'/><rect x='12' y='36' width='24' height='3' rx='1.5' fill='%234F46E5'/></svg>">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='11' fill='%234F46E5'/><path d='M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18' fill='none' stroke='white' stroke-width='4.6' stroke-linecap='round'/><circle cx='36.4' cy='15' r='4.1' fill='white'/></svg>">
 
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
@@ -52,13 +52,20 @@
      bright brand colour ends up illegible. */
   --flame:      #4F46E5;
   --flame-ink:  #3730A3;
-  --flame-deep: #9E2A00;
-  /* The button fill, and NOT --flame: white on #4F46E5 measures 3.32:1, which
-     would make the most important control on the page the least readable
-     thing on it. #C63B00 is 5.1:1 against white and still unmistakably the
-     brand orange. The bright tone stays for marks, rules and glows, where
-     nothing has to be read off it. */
-  --flame-btn:  #C63B00;
+  --flame-deep: #312E81;
+  /* The button fill. This used to be a DIFFERENT colour from --flame, because
+     white on the old brand orange measured 3.32:1 and that would have made the
+     most important control on the page the least readable thing on it.
+
+     Indigo does not have that problem: white on #4F46E5 measures 6.3:1, and on
+     #4338CA more still. So the special case is gone and the button is simply
+     the brand colour, one shade down for weight.
+
+     (The 3.32:1 in the old comment here was the ORANGE's figure. A global
+     colour replace rewrote the hex inside the prose and left the measurement,
+     which is how a comment ends up asserting something false about a value it
+     was never measured against.) */
+  --flame-btn:  #4338CA;
 
   /* Gigzen electric indigo — the parent mark, identical on every property. */
   --gz: #0A0C10;
@@ -393,21 +400,15 @@ input[type=range] {
 <nav id="nav">
   <div class="wrap">
     <a class="brand" href="#top">
-      <!-- The bee, matching the app icon: stripes cut OUT of the body with a
-           mask, so one artwork reads correctly orange-on-light and white-on-orange. -->
+      <!-- The W mark, matching the app icon: the letter and the waggle are the
+           same shape. Strokes and one fill, so there is no <mask> to keep in
+           step with anything — the previous bee needed one to cut its stripes
+           out, and that mask was the reason it could not be ported to Android
+           without being faked. Same path data as src/components/Wordmark.tsx. -->
       <svg class="bee" viewBox="0 0 48 48" aria-hidden="true">
-        <defs>
-          <mask id="beeMask">
-            <rect width="48" height="48" fill="black"/>
-            <rect x="14" y="15" width="20" height="26" rx="10" fill="white"/>
-            <rect x="12" y="23.2" width="24" height="2.8" rx="1.4" fill="black"/>
-            <rect x="12" y="29.4" width="24" height="2.8" rx="1.4" fill="black"/>
-            <rect x="12" y="35.6" width="24" height="2.8" rx="1.4" fill="black"/>
-          </mask>
-        </defs>
-        <ellipse cx="13.4" cy="13.2" rx="6.4" ry="3.6" transform="rotate(-32 13.4 13.2)" fill="#4F46E5" opacity=".38"/>
-        <ellipse cx="34.6" cy="13.2" rx="6.4" ry="3.6" transform="rotate(32 34.6 13.2)" fill="#4F46E5" opacity=".38"/>
-        <rect width="48" height="48" fill="#4F46E5" mask="url(#beeMask)"/>
+        <path d="M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18"
+              fill="none" stroke="#4F46E5" stroke-width="4.6" stroke-linecap="round"/>
+        <circle cx="36.4" cy="15" r="4.1" fill="#4F46E5"/>
       </svg>
       Waggle
     </a>
@@ -436,7 +437,7 @@ input[type=range] {
         <h1 class="rv">Every kilometre counts.<br><em>So count them.</em></h1>
         <p class="lede rv">An app for delivery riders. Earnings that follow the road,
         a map with the drivers you know on it, and the people working your streets —
-        in sixteen languages, with the currency set from where you are.</p>
+        in forty-three languages, with the currency set from where you are.</p>
         <div class="cta-row rv">
           <a class="btn btn-primary" href="#download">Download the APK</a>
           <a class="btn btn-ghost" href="#what">See what it does</a>
