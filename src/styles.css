@@ -8644,3 +8644,12 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 /* With the row back to the height of its text, the avatar and the name
    share a top edge — which is the alignment the layout was drawn for. */
 .tw-post { align-items: flex-start; }
+
+/* ── A driver we have not heard from in a moment ──────────────────────
+   They stay on the map rather than vanishing, but they must not look
+   live. Dimmed, and the row says when they were last seen — so an old
+   pin reads as an old pin instead of a current position. */
+.driver-marker-wrap.is-stale { opacity: .55; }
+.driver-marker-wrap.is-stale .driver-marker { filter: grayscale(.35); }
+.sv-friendlist li.is-stale .sv-friend-dot { opacity: .6; filter: grayscale(.4); }
+.sv-friendlist li.is-stale .sv-friend-away { color: var(--muted-foreground); }

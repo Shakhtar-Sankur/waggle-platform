@@ -105,8 +105,31 @@ function localTimeZone(): string | undefined {
 const WORKER_SELECT =
   "id, full_name, worker_locations(lat,lng,active_app,today_distance_km,today_earnings,rating,tags,updated_at)";
 
-/** "online" if a presence heartbeat landed in the last 90 seconds. */
-const PRESENCE_WINDOW = 1000 * 90;
+/**
+ * "online" if a heartbeat landed recently.
+ *
+ * The beat is every 45 seconds, and this was 90 — exactly two beats. So a
+ * driver dropped off the map after missing two: a tunnel, a dead zone, or the
+ * app backgrounding for a phone call was enough to erase them. On the Friends
+ * map that showed as nothing at all, which reads as "nobody is working" rather
+ * than "we have not heard from them for a moment".
+ *
+ * 150s allows two missed beats plus latency before the dot goes out. It is not
+ * generous — it is the smallest window that does not punish a normal gap.
+ */
+const PRESENCE_WINDOW = 1000 * 150;
+
+/**
+ * How long a driver stays ON the friends map after their dot goes out.
+ *
+ * Online is a dot; being on the map at all is a different question. Somebody
+ * last seen four minutes ago is still useful — that is where they were, and
+ * they are probably still near it — while an empty map tells you nothing and
+ * looks broken. They appear dimmed with a last-seen time instead of vanishing.
+ *
+ * Fifteen minutes, after which the position is old enough to mislead.
+ */
+export const RECENT_WINDOW = 1000 * 60 * 15;
 
 /** Shapes one profiles row, with its joined worker_locations, into a Worker. */
 function toWorker(profile: any): Worker {

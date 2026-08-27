@@ -31,7 +31,7 @@ import { snapToRoads } from "../services/MapMatchService";
 import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
 import { describeStep, directionsBetween, scoreAgainstHistory, type Directions } from "../services/DirectionsService";
 import { distanceKm, searchPlaces, type PlaceHit } from "../services/PlacesService";
-import { SupabaseService } from "../services/SupabaseService";
+import { RECENT_WINDOW, SupabaseService } from "../services/SupabaseService";
 import { useLangStore, useT } from "../i18n";
 import { countryToCurrency, reverseGeocodeCountry } from "../i18n/region";
 import { useAuthStore } from "../stores/useAuthStore";
@@ -40,7 +40,7 @@ import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { Challenge, ChallengeMetric, LocationPoint } from "../types";
-import { currency, duration, initials, km, weeklyGoalFrom } from "../utils/format";
+import { currency, duration, initials, km, timeAgo, weeklyGoalFrom } from "../utils/format";
 import { getWorkApp } from "../utils/workApps";
 
 /*
@@ -440,6 +440,25 @@ export function RoutesScreen() {
   );
   const onlineWorkers = workers.filter((worker) => worker.isOnline);
 
+  /**
+   * Drivers to show on the friends map: online now, OR seen in the last
+   * fifteen minutes.
+   *
+   * Filtering on `isOnline` alone meant the map emptied the moment a heartbeat
+   * was missed — and with a 45s beat that happens on any tunnel, lift or
+   * backgrounded call. A driver last seen four minutes ago is still worth
+   * showing; they are near where the pin is. Vanishing reads as "nobody is
+   * out", which is a different and wrong statement.
+   */
+  const recentWorkers = useMemo(
+    () =>
+      workers.filter(
+        (worker) =>
+          worker.isOnline || (worker.lastSeen != null && Date.now() - worker.lastSeen < RECENT_WINDOW),
+      ),
+    [workers],
+  );
+
   // Only drivers you are connected with appear on the map. Showing every
   // online driver's live position to everyone is a location-privacy problem,
   // not a feature — and a connection is the app's own definition of "someone
@@ -447,7 +466,7 @@ export function RoutesScreen() {
   const connections = useCommunityStore((state) => state.connections);
   const friendWorkers = useMemo(
     () =>
-      onlineWorkers
+      recentWorkers
         .filter((w) => connectionFor(connections, user?.id, w.id).state === "connected")
         // Nearest first. The roster came out in whatever order the query
         // returned — 1km, <1km, 2km, 6km, 8km, 4km — and distance is the
@@ -458,7 +477,7 @@ export function RoutesScreen() {
             distanceKm(currentLocation, { lat: a.location.lat, lng: a.location.lng }) -
             distanceKm(currentLocation, { lat: b.location.lat, lng: b.location.lng }),
         ),
-    [onlineWorkers, connections, user?.id, currentLocation],
+    [recentWorkers, connections, user?.id, currentLocation],
   );
 
   /** How many people you are actually connected to, driving or not.
@@ -500,6 +519,12 @@ export function RoutesScreen() {
   const topDrivers = useMemo(
     () => [...workers].sort((a, b) => b.distanceKm - a.distanceKm).slice(0, 5),
     [workers],
+  );
+
+  /** How many of the friends shown are actually beating right now. */
+  const liveFriendCount = useMemo(
+    () => friendWorkers.filter((worker) => worker.isOnline).length,
+    [friendWorkers],
   );
 
   const meIcon = useMemo(
@@ -928,7 +953,7 @@ export function RoutesScreen() {
                 key={worker.id}
                 position={[worker.location.lat, worker.location.lng]}
                 icon={L.divIcon({
-                  className: "driver-marker-wrap",
+                  className: worker.isOnline ? "driver-marker-wrap" : "driver-marker-wrap is-stale",
                   // The name rides above the circle in a small callout. It is
                   // positioned absolutely, so the wrapper stays 34x34 and the
                   // circle still sits exactly on the coordinate — iconAnchor
@@ -1045,9 +1070,15 @@ export function RoutesScreen() {
                 {/* Only when there is something to count. With nobody out
                     the body below already says so, and a subtitle repeating
                     it in different words reads like two separate problems. */}
+                {/* "sharing right now" is only true of the ones actually
+                    beating. With stale drivers in the list it claimed a
+                    liveness three of five did not have, so the count is of
+                    who is live and the label changes when it is a mixture. */}
                 {friendWorkers.length ? (
                   <span className="sv-live">
-                    {t("sv_friendsSharing", { count: String(friendWorkers.length) })}
+                    {liveFriendCount === friendWorkers.length
+                      ? t("sv_friendsSharing", { count: String(liveFriendCount) })
+                      : t("sv_friendsNearby", { count: String(friendWorkers.length) })}
                   </span>
                 ) : null}
               </div>
@@ -1060,7 +1091,7 @@ export function RoutesScreen() {
                       lng: worker.location.lng,
                     });
                     return (
-                      <li key={worker.id}>
+                      <li key={worker.id} className={worker.isOnline ? "" : "is-stale"}>
                         <button
                           type="button"
                           onClick={() => {
@@ -1077,8 +1108,15 @@ export function RoutesScreen() {
                           </span>
                           <span className="sv-friend-who">
                             <strong>{worker.name}</strong>
+                            {/* Platform, then either today's distance or when
+                                they were last heard from — not both. All three
+                                ran past the row and truncated to "last seen …",
+                                which is the one part that had to be readable. */}
                             <small>
-                              {workApp?.name ?? t("sv_modeMe")} &middot; {km(worker.distanceKm)}
+                              {workApp?.name ?? t("sv_modeMe")} &middot;{" "}
+                              {!worker.isOnline && worker.lastSeen
+                                ? t("wa_lastSeen", { time: timeAgo(worker.lastSeen) })
+                                : km(worker.distanceKm)}
                             </small>
                           </span>
                           <span className="sv-friend-away">

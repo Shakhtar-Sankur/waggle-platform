@@ -36,6 +36,7 @@ export const LANGUAGES: LanguageOption[] = [
 // English is the source of truth and the fallback for any missing key.
 // The legal text lives in ./legal.ts and is folded in here.
 const en = {
+  sv_friendsNearby: "{count} nearby",
   sv_friendsTab: "Friends", sv_friendsSharing: "{count} sharing right now", settings_grpRegion: "Region & language", settings_grpVehicle: "Your vehicle", settings_grpWork: "Work & earnings", settings_grpPrivacy: "Privacy", settings_currencyAuto: "Set from your location. Turn off auto to choose.",
   wa_photoReady: "Photo ready to send", wa_removePhoto: "Remove photo",
   wa_reply: "Reply", wa_react: "React", wa_replyingTo: "Replying to {name}", wa_cancelReply: "Cancel reply", wa_originalGone: "Original message deleted", wa_reactions: "Reactions",
@@ -387,6 +388,7 @@ export type TKey = keyof typeof en;
 type Dict = Partial<Record<TKey, string>>;
 
 const fil: Dict = {
+  sv_friendsNearby: "{count} ang malapit",
   sv_friendsTab: "Mga Kaibigan", sv_friendsSharing: "{count} ang nagbabahagi ngayon", settings_grpRegion: "Rehiyon at wika", settings_grpVehicle: "Iyong sasakyan", settings_grpWork: "Trabaho at kita", settings_grpPrivacy: "Privacy", settings_currencyAuto: "Batay sa iyong lokasyon. I-off ang auto para pumili.",
   wa_photoReady: "Handa nang ipadala ang larawan", wa_removePhoto: "Alisin ang larawan",
   wa_reply: "Sagutin", wa_react: "Mag-react", wa_replyingTo: "Sinasagot si {name}", wa_cancelReply: "Kanselahin ang pagsagot", wa_originalGone: "Binura ang orihinal na mensahe", wa_reactions: "Mga reaction",
@@ -437,6 +439,7 @@ const fil: Dict = {
 };
 
 const es: Dict = {
+  sv_friendsNearby: "{count} cerca",
   sv_friendsTab: "Amigos", sv_friendsSharing: "{count} compartiendo ahora", settings_grpRegion: "Región e idioma", settings_grpVehicle: "Tu vehículo", settings_grpWork: "Trabajo e ingresos", settings_grpPrivacy: "Privacidad", settings_currencyAuto: "Según tu ubicación. Desactiva el automático para elegir.",
   wa_photoReady: "Foto lista para enviar", wa_removePhoto: "Quitar foto",
   wa_reply: "Responder", wa_react: "Reaccionar", wa_replyingTo: "Respondiendo a {name}", wa_cancelReply: "Cancelar respuesta", wa_originalGone: "Mensaje original eliminado", wa_reactions: "Reacciones",
@@ -487,6 +490,7 @@ const es: Dict = {
 };
 
 const hi: Dict = {
+  sv_friendsNearby: "{count} आस-पास",
   sv_friendsTab: "दोस्त", sv_friendsSharing: "{count} अभी साझा कर रहे हैं", settings_grpRegion: "क्षेत्र और भाषा", settings_grpVehicle: "आपका वाहन", settings_grpWork: "काम और कमाई", settings_grpPrivacy: "गोपनीयता", settings_currencyAuto: "आपके स्थान से तय। चुनने के लिए ऑटो बंद करें।",
   wa_photoReady: "फ़ोटो भेजने के लिए तैयार", wa_removePhoto: "फ़ोटो हटाएँ",
   wa_reply: "जवाब दें", wa_react: "रिएक्ट करें", wa_replyingTo: "{name} को जवाब", wa_cancelReply: "जवाब रद्द करें", wa_originalGone: "मूल संदेश हटा दिया गया", wa_reactions: "रिएक्शन",
@@ -537,6 +541,7 @@ const hi: Dict = {
 };
 
 const bn: Dict = {
+  sv_friendsNearby: "{count} জন কাছাকাছি",
   sv_friendsTab: "বন্ধুরা", sv_friendsSharing: "{count} জন এখন শেয়ার করছেন", settings_grpRegion: "অঞ্চল ও ভাষা", settings_grpVehicle: "আপনার যানবাহন", settings_grpWork: "কাজ ও আয়", settings_grpPrivacy: "গোপনীয়তা", settings_currencyAuto: "আপনার অবস্থান থেকে নির্ধারিত। বেছে নিতে অটো বন্ধ করুন।",
   wa_photoReady: "ছবি পাঠানোর জন্য প্রস্তুত", wa_removePhoto: "ছবি সরান",
   wa_reply: "উত্তর দিন", wa_react: "রিঅ্যাক্ট করুন", wa_replyingTo: "{name}-কে উত্তর", wa_cancelReply: "উত্তর বাতিল করুন", wa_originalGone: "মূল বার্তাটি মুছে ফেলা হয়েছে", wa_reactions: "রিঅ্যাকশন",
@@ -587,6 +592,7 @@ const bn: Dict = {
 };
 
 const id: Dict = {
+  sv_friendsNearby: "{count} di dekat Anda",
   sv_friendsTab: "Teman", sv_friendsSharing: "{count} sedang berbagi", settings_grpRegion: "Wilayah & bahasa", settings_grpVehicle: "Kendaraan Anda", settings_grpWork: "Kerja & penghasilan", settings_grpPrivacy: "Privasi", settings_currencyAuto: "Diatur dari lokasi Anda. Matikan otomatis untuk memilih.",
   wa_photoReady: "Foto siap dikirim", wa_removePhoto: "Hapus foto",
   wa_reply: "Balas", wa_react: "Beri reaksi", wa_replyingTo: "Membalas {name}", wa_cancelReply: "Batalkan balasan", wa_originalGone: "Pesan asli dihapus", wa_reactions: "Reaksi",
@@ -637,6 +643,7 @@ const id: Dict = {
 };
 
 const ms: Dict = {
+  sv_friendsNearby: "{count} berdekatan",
   sv_friendsTab: "Rakan", sv_friendsSharing: "{count} sedang berkongsi", settings_grpRegion: "Wilayah & bahasa", settings_grpVehicle: "Kenderaan anda", settings_grpWork: "Kerja & pendapatan", settings_grpPrivacy: "Privasi", settings_currencyAuto: "Ditetapkan dari lokasi anda. Matikan auto untuk memilih.",
   wa_photoReady: "Foto sedia dihantar", wa_removePhoto: "Buang foto",
   wa_reply: "Balas", wa_react: "Beri reaksi", wa_replyingTo: "Membalas {name}", wa_cancelReply: "Batal balas", wa_originalGone: "Mesej asal dipadam", wa_reactions: "Reaksi",
@@ -781,6 +788,7 @@ const vi: Dict = {
 };
 
 const pt: Dict = {
+  sv_friendsNearby: "{count} por perto",
   sv_friendsTab: "Amigos", sv_friendsSharing: "{count} compartilhando agora", settings_grpRegion: "Região e idioma", settings_grpVehicle: "Seu veículo", settings_grpWork: "Trabalho e ganhos", settings_grpPrivacy: "Privacidade", settings_currencyAuto: "Definido pela sua localização. Desative o automático para escolher.",
   wa_photoReady: "Foto pronta para enviar", wa_removePhoto: "Remover foto",
   wa_reply: "Responder", wa_react: "Reagir", wa_replyingTo: "Respondendo a {name}", wa_cancelReply: "Cancelar resposta", wa_originalGone: "Mensagem original apagada", wa_reactions: "Reações",
