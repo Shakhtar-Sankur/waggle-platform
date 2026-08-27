@@ -38,33 +38,35 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
       fill="none"
       aria-hidden="true"
     >
-      {/* The waggle run.
+      {/* A W drawn as a wave: the letter and the waggle are the same shape.
 
-          The bee walks a STRAIGHT line while waggling side to side, so the
-          mark is a straight diagonal drawn as a wave: the path she takes and
-          the motion that names the app, in one stroke.
+          Four geometries were tried. The first drew the dance faithfully — two
+          lobes sharing the run's endpoints — which closes into an oval with a
+          chord through it and stops being a bee at any size: Ø, slashed zero,
+          no entry. Moving the loop off-axis produced a closed circle on a
+          stick, which is a magnifying glass. A bare diagonal wave fixed both
+          and failed differently: elegant at 150px, an ambiguous squiggle at
+          40px, and closer to an S than to anything named Waggle.
 
-          Two shapes were tried and thrown away first, and both failed for the
-          same reason — they were faithful to the dance and illegible as a
-          logo. The true figure-eight closes into an oval with the run as a
-          chord through it, which stops being a bee at any size and becomes Ø:
-          slashed zero, empty set, no entry. Moving the loop off-axis fixed
-          that and produced a closed circle on a stick, which is a magnifying
-          glass. Accuracy was never the problem in either case.
+          The size that decides an app icon is the small one. This is the only
+          version that survives it, and it does so without giving up the idea:
+          the rounded double-V still reads as the side-to-side motion, and the
+          bee still ends her run somewhere.
 
-          A wave along a diagonal has neither failure mode. It cannot close
-          into a counter, it has no circle to be mistaken for a lens, and it
-          reads as travel and energy to someone who will never hear the word
-          "waggle" explained. */}
+          A letterform was argued against before this, on the grounds that a
+          driver reading Tamil or Arabic gets nothing from Latin initials. That
+          objection holds against a typographic monogram and not against this:
+          a shape that HAPPENS to be a W costs a non-Latin reader nothing —
+          they get a distinctive silhouette either way — while a Latin reader
+          gets the name for free. The alternative gave everybody a squiggle. */}
       <path
-        d="M13.5 36.5 C 19.9 35.6, 23 31.8, 22.3 25.3 C 21.6 18.8, 24.6 15, 31 14"
+        d="M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18"
         stroke="currentColor"
         strokeWidth="4.6"
         strokeLinecap="round"
         fill="none"
       />
-      {/* The destination, seated ON the end of the run rather than beyond it,
-          so the two read as one object instead of a line and a loose dot.
+      {/* The destination, seated on the end of the final upstroke.
 
           The one element here for the DRIVER rather than for the bee. A wave
           on its own is a squiggle; a wave arriving at a weighted point is a
@@ -73,7 +75,7 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
 
           It costs nothing in truth: the waggle run already points at the food
           source, so marking its head is what the dance means. */}
-      <circle cx="31" cy="14" r="4.1" fill="currentColor" />
+      <circle cx="36.4" cy="15" r="4.1" fill="currentColor" />
     </svg>
   );
 }
@@ -86,18 +88,19 @@ export function BeeMark({ size = 28, className = "" }: { size?: number; classNam
 /**
  * One size for the mark, everywhere it appears.
  *
- * Re-measured for the dance, which fills less of its box than the hexagon did.
- * Including the stroke, the artwork spans roughly 9.2 to 38.8 on both axes of
- * the 48-unit viewBox — 29.6 units, or 62%, where the hexagon was 66%. Holding
- * the old 30 would have shrunk the drawn mark from 19.7px to 18.5px, which is
- * the kind of drift that makes a header look subtly wrong without anyone being
- * able to say why.
+ * Re-measured for the W, which is a LETTER standing next to letters, so it is
+ * matched on cap height rather than on overall box like the hexagon was.
  *
- * 32 * (29.6/48) = 19.7px of drawn mark against 27px Jakarta's 19.6px caps —
- * the same measured result as before, arrived at through the new geometry
- * rather than by keeping the old number.
+ * Including the node, the mark spans y10.9 to y37.3 of the 48-unit viewBox —
+ * 26.4 units. Jakarta's cap height at the header's 27px was MEASURED in the
+ * browser at 21.0px, not the 19.6px this comment claimed for years; that
+ * figure came from Inter and survived the font change unnoticed. 38 *
+ * (26.4/48) = 20.9px against 21.0px of cap.
+ *
+ * Worth re-measuring rather than trusting: at the inherited 19.6 the answer
+ * came out 36, which is a mark visibly shorter than the word beside it.
  */
-export const MARK_SIZE = 32;
+export const MARK_SIZE = 38;
 
 export function Wordmark({
   size = 22,
