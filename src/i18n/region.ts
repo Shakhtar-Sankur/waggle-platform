@@ -40,6 +40,9 @@ const COUNTRY_LANG: Record<string, Lang> = {
   PH: "fil",
   IN: "hi",
   BD: "bn",
+  // Urdu, now that the app has it. Pakistan was previously reading through to
+  // the device language and landing on English for most handsets.
+  PK: "ur",
   ID: "id",
   MY: "ms",
   TH: "th",
@@ -110,17 +113,40 @@ export function countryToCurrency(country: string): string {
 const LANG_PREFIX: Record<string, Lang> = {
   es: "es", fil: "fil", tl: "fil", hi: "hi", bn: "bn", id: "id", ms: "ms", th: "th",
   vi: "vi", pt: "pt", fr: "fr", de: "de", zh: "zh", ja: "ja", ko: "ko", ar: "ar",
+  // India's other languages, and Urdu. `pa` covers pa-IN and pa-PK alike; both
+  // are Punjabi, and the driver can switch script by picking another language.
+  ta: "ta", te: "te", mr: "mr", kn: "kn", ml: "ml", gu: "gu", pa: "pa", ur: "ur",
 };
 
-export function countryToLang(country: string): Lang {
-  const cc = country.toUpperCase();
-  if (COUNTRY_LANG[cc]) return COUNTRY_LANG[cc];
-  // Fall back to the device UI language when the country isn't mapped.
-  const lang = (navigator.language || "en").toLowerCase();
+/** The device UI language, if it is one the app speaks. */
+function deviceLang(): Lang | null {
+  const lang = (navigator.language || "").toLowerCase();
   for (const prefix of Object.keys(LANG_PREFIX)) {
     if (lang.startsWith(prefix)) return LANG_PREFIX[prefix];
   }
-  return "en";
+  return null;
+}
+
+export function countryToLang(country: string): Lang {
+  const cc = country.toUpperCase();
+
+  // The DEVICE language wins over the country default — but only when it is a
+  // language other than English.
+  //
+  // This ordering exists for India. The country map can only name one language
+  // per country, and for a country with twenty-two of them that is a guess:
+  // a phone set to ta-IN was answered "hi" because IN → hi was consulted first
+  // and the driver's own setting was never read at all. Their phone already
+  // says what they read; the country map is for when it does not.
+  //
+  // English is excluded deliberately, because it is the default a cheap handset
+  // ships with rather than a choice anyone made. Reading en-PH as "this driver
+  // wants English" would have taken Filipino away from the launched market.
+  const device = deviceLang();
+  if (device && device !== "en") return device;
+
+  if (COUNTRY_LANG[cc]) return COUNTRY_LANG[cc];
+  return device ?? "en";
 }
 
 // Optional GPS refinement: turn coordinates into a country code via a free,
