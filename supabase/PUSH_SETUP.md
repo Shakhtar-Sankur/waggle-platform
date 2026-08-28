@@ -6,25 +6,71 @@ This wires real push notifications end-to-end:
 Local/in-app notifications already work without any of this. Follow these steps
 only when you want notifications delivered while the app is closed.
 
-## Where this stands (checked 2026-08-20)
+## Where this stands (re-checked 2026-08-28)
 
 | Step | State |
 |---|---|
-| 1. Firebase project + `google-services.json` | **NEEDS REDOING** — project `buzz-buzz-2390c` exists, but its Android app is registered under the old package `com.masayaako.driver`. The app is now `com.gigzen.waggle`. See the box below. |
-| 2. Service account key | user-side, cannot be verified from here |
-| 3. Deploy `send-push` + set 4 secrets | **not done** |
-| 4. `private.push_config` row | not verified (needs service-role access) |
+| 1. Firebase Android app for `com.gigzen.waggle` | **done** — added to project `buzz-buzz-2390c`, new `google-services.json` in `android/app/`, `processReleaseGoogleServices` passes |
+| 2. Service account key | **user-side** — a Firebase private key. Cannot be handled here, see below |
+| 3. Deploy `send-push` + set its secrets | **NOT DONE** — this is the only thing stopping push |
+| 4. `device_tokens` table on production | **done** — verified present |
 | 5. `VITE_ENABLE_PUSH=true` | **done** — set in `.env.production` |
 
-Step 3 was checked directly: `POST /functions/v1/send-push` on production returns
-`{"code":"NOT_FOUND","message":"Requested function was not found"}` — byte-identical
-to the response for a function name invented at random. A *deployed* function
-answers `401` to an unauthenticated call, so this is conclusive rather than
-inferred: the function does not exist on production.
+Step 3 verified again on 2026-08-28: `POST /functions/v1/send-push` against
+production still answers `{"code":"NOT_FOUND"}`, which is what an undeployed
+function returns — a deployed one answers `401` to an unauthenticated call.
 
-**This is the whole reason push does not arrive.** Step 4 is worth checking too,
-but a config row would only point at a URL that 404s, so step 3 is the blocker.
-The app, the trigger and the Firebase side are all already in place.
+### Why this step cannot be done for you
+
+Two of its inputs are credentials:
+
+- **`FCM_PRIVATE_KEY`** is the private key out of a Firebase *service account*
+  JSON. It signs requests as your project. It should be pasted straight from
+  the downloaded file into `supabase secrets set` and nowhere else — not into a
+  chat, a commit, or a file in this repo.
+- **Deploying** needs the Supabase CLI authenticated as you (`supabase login`,
+  which opens a browser).
+
+Everything that does not need a credential is already done: the function's code
+is written, `device_tokens` exists on production, the client requests a token
+and saves it, and `VITE_ENABLE_PUSH` is on.
+
+### The four commands
+
+From the repo root, once:
+
+```
+npm i -g supabase                # the CLI is not installed here
+supabase login                   # opens a browser
+supabase link --project-ref ypdaetbeexyepswyhbui
+```
+
+Then get the service account: Firebase console → project `buzz-buzz-2390c` →
+Project settings → **Service accounts** → *Generate new private key*. That
+downloads a JSON file containing `project_id`, `client_email` and `private_key`.
+
+```
+supabase secrets set FCM_PROJECT_ID="<project_id from the JSON>"
+supabase secrets set FCM_CLIENT_EMAIL="<client_email from the JSON>"
+supabase secrets set FCM_PRIVATE_KEY="<private_key from the JSON, newlines and all>"
+supabase secrets set PUSH_WEBHOOK_SECRET="<any long random string you choose>"
+
+supabase functions deploy send-push
+```
+
+`SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are injected by the platform —
+do not set those yourself.
+
+Delete the downloaded JSON afterwards; the secrets now live in Supabase.
+
+### Confirming it worked
+
+```
+curl -i -X POST https://ypdaetbeexyepswyhbui.supabase.co/functions/v1/send-push
+```
+
+**401** means deployed (the function is refusing an unauthenticated caller,
+which is correct). **404 NOT_FOUND** means it still is not there.
 
 ---
 

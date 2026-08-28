@@ -123,7 +123,18 @@ export function HomeScreen() {
           <Stat icon={<Clock3 size={22} />} value={duration(elapsedMinutes)} label={t("stat_activeTime")} />
           <Stat icon={<Wallet size={22} />} value={currencyPrecise(earnings)} label={t("stat_earnings")} highlight />
         </div>
-        <p className="micro-copy">{t("home_rateLine", { rate: currencyPrecise(baseRate) })}</p>
+        {/* dir="auto" because this line is mostly NOT letters: a currency
+            amount, a slash, a unit, a separator. In an RTL language the bidi
+            algorithm reorders that around the surrounding direction, and
+            "$0.70/km · resets at midnight" rendered as
+            "km · resets at midnight/$0.70" in Urdu — the price torn off the
+            front and dropped at the end.
+
+            "auto" takes direction from the first strong character, so this
+            reads left-to-right while the numbers are Latin and flips on its
+            own once the string is translated into an RTL script. The same fix
+            is on the legal line in AuthScreen, for the same reason. */}
+        <p className="micro-copy" dir="auto">{t("home_rateLine", { rate: currencyPrecise(baseRate) })}</p>
         <div className="tracking-actions">
           <Button onClick={isTracking ? stopTracking : startTracking}>
             {isTracking ? t("home_stopTracking") : t("home_startTracking")}
@@ -137,7 +148,7 @@ export function HomeScreen() {
           <h3><Target size={19} /> {t("home_dailyGoal")}</h3>
           <strong>{currencyPrecise(earnings)}</strong>
           <p>{t("home_of")} {currency(dailyGoal)} {t("home_target")}</p>
-          <small className="micro-copy">{duration(elapsedMinutes)} {t("home_trackedToday")}</small>
+          <small className="micro-copy" dir="auto">{duration(elapsedMinutes)} {t("home_trackedToday")}</small>
         </div>
       </section>
 
@@ -172,7 +183,7 @@ export function HomeScreen() {
           </div>
           <div className="income-goal">
             <div className="progress-track"><span style={{ width: `${goalProgress}%` }} /></div>
-            <p className="micro-copy">{goalProgress}% {t("income_goalLine", { goal: currency(dailyGoal) })}</p>
+            <p className="micro-copy" dir="auto">{goalProgress}% {t("income_goalLine", { goal: currency(dailyGoal) })}</p>
           </div>
         </section>
       ) : (
