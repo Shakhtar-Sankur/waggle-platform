@@ -218,7 +218,19 @@ select:focus {
 
 .app-frame {
   min-height: 100vh;
-  padding-bottom: 96px;
+  /* NO padding-bottom here. It used to carry 96px to clear the bottom nav, and
+     .page-shell carries 104px for the same job — they nest, so every screen got
+     ~200px of clearance for an 81px bar.
+
+     The result was ~110px of dead scroll under the last card: you could keep
+     scrolling Community past the final post into an empty band with nothing in
+     it, which reads as the feed having failed to load rather than having ended.
+     Measured at 193px of space below the last post on a 375x812 screen.
+
+     .page-shell is the right place to keep it: every screen that HAS a bottom
+     nav uses it (Home, Community, Messages, Profile, Notifications), and the
+     four that do not — Auth, Terms, Privacy, Routes — have no nav to clear.
+     Routes is position:fixed anyway. */
 }
 
 /* The header was a filled orange bar with a title and three icons — a web
