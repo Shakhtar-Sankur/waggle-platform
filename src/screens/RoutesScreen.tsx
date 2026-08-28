@@ -913,7 +913,13 @@ export function RoutesScreen() {
               <>
                 {/* The casing underneath, so the coloured run reads as one
                     route rather than as loose pieces of different colours. */}
-                <Polyline positions={routePositions} pathOptions={{ color: "#7c2d12", weight: 11, opacity: 0.22 }} />
+                {/* A neutral dark, not a colour. This was #7c2d12, a brown
+                    mixed to sit under the orange brand — and a casing must not
+                    tint the run it carries. The speed ramp above it spans red
+                    to green, so anything with a hue in it pulls one band
+                    toward itself and pushes another away. Slate at 22% reads
+                    as depth under all four. */}
+                <Polyline positions={routePositions} pathOptions={{ color: "#1e2233", weight: 11, opacity: 0.22 }} />
                 {speedRuns.length ? (
                   speedRuns.map((run, i) => (
                     <Polyline
