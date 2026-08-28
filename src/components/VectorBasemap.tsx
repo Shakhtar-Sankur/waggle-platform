@@ -92,20 +92,28 @@ export function VectorBasemap({ dark = false }: { dark?: boolean }) {
         // the late one when fonts or the sheet animate in. Both are cheap, and
         // resizing to the size it already has is a no-op.
         const nudge = () => {
-          // invalidateSize() alone does NOT work here, and the reason is worth
-          // recording: Leaflet only emits `resize` when the measured size has
-          // actually CHANGED. The container's box is correct from the start —
-          // it is MapLibre's own viewport that is stale — so invalidateSize
-          // measures the same numbers, decides nothing happened, and stays
-          // silent. The plugin listens for that event, so it never resizes,
-          // and the map stays blank. Tried it; nothing moved.
+          // Call MapLibre's OWN resize(). Nothing on the Leaflet side does it.
           //
-          // Firing the event directly is what the plugin is actually waiting
-          // for. Same-size payload on purpose: the point is the notification,
-          // not the numbers.
-          map.invalidateSize({ animate: false });
-          const size = map.getSize();
-          map.fire("resize", { oldSize: size, newSize: size });
+          // Two earlier attempts failed, and both looked reasonable:
+          //
+          //   invalidateSize()      no-op. Leaflet only emits `resize` when the
+          //                        measured size CHANGED, and the container's
+          //                        box was right all along — it is MapLibre's
+          //                        internal viewport that is stale.
+          //   map.fire("resize")   reaches the plugin, and the plugin does not
+          //                        do what I assumed. Its handler is
+          //                        `_resize: function(e) { this._transitionEnd(e); }`
+          //                        which re-centres and jumps the zoom. It
+          //                        never touches _glMap.resize().
+          //
+          // What actually rescued the map by hand was a WINDOW resize event —
+          // because MapLibre GL attaches its own window listener (trackResize
+          // is on by default) and resizes itself. So the thing to call is the
+          // GL map's resize, and the plugin hands it over via getMaplibreMap().
+          const gl = (layer as unknown as {
+            getMaplibreMap?: () => { resize?: () => void } | undefined;
+          }).getMaplibreMap?.();
+          gl?.resize?.();
         };
         frame = requestAnimationFrame(nudge);
         settle = window.setTimeout(nudge, 350);
