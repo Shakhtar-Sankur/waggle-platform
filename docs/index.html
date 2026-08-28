@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Waggle — every kilometre counts</title>
-<meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in forty-three languages, with the currency set from where you are. A GIGZEN product.">
+<meta name="description" content="An Android app for delivery riders. Earnings that follow the road, a map with the drivers you know on it, and the people working your streets — in forty-three languages, with the currency set from where you are. A Gigzen product.">
 <meta name="author" content="Gigzen Private Limited">
 <meta name="theme-color" content="#4F46E5">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'><rect width='48' height='48' rx='11' fill='%234F46E5'/><path d='M11 15 C 12.5 30, 15 35, 17.5 35 C 20 35, 22.5 26, 24 22 C 25.5 26, 28 35, 30.5 35 C 33 34, 35 28, 36 18' fill='none' stroke='white' stroke-width='4.6' stroke-linecap='round'/><circle cx='36.4' cy='15' r='4.1' fill='white'/></svg>">
 
 <style>
 /* ══════════════════════════════════════════════════════════════════════════
-   BUZZ — its own design language
+   WAGGLE — its own design language
    ══════════════════════════════════════════════════════════════════════════
    Three Gigzen properties, three characters, on purpose. They should be
    recognisable as siblings through the mark alone, never because they share
@@ -33,8 +33,10 @@
 *,*::before,*::after { box-sizing: border-box; }
 
 :root {
-  /* Warm ground. Not white: the app is orange and a cream page lets the
-     product's own colour sit on something rather than glare off paper. */
+  /* Cool ground. Not pure white: the app is indigo, and a very slightly
+     tinted page lets the product's own colour sit on something rather than
+     glare off paper. (This said "the app is orange" until the rebrand; the
+     reasoning survived the colour change, the description had not.) */
   --paper:   #FAFAFD;
   --paper-2: #FFFFFF;
   --sand:    #EEF0FA;
@@ -48,7 +50,7 @@
   --muted:   #5B5D6B;
   --rule:    #E3E5F0;
 
-  /* The brand orange, and the darkened one that is safe as small text.
+  /* The brand indigo, and the darkened one that is safe as small text.
      #4F46E5 measures 3.4:1 on this cream — fine for a 96px number or a
      button fill, not for a 14px label. Every text use takes --flame-ink,
      which measures 6.0:1. This distinction is the single most common way a
@@ -128,6 +130,27 @@ section[id] .eyebrow::before {
 
 /* ── the Gigzen lockup ─────────────────────────────────────────────────── */
 .gz-mark { height: 20px; width: auto; display: block; }
+
+/* The parent lockup in the header, beside the product name. A left rule
+   separates the two marks so "Waggle" and "Gigzen" do not read as one
+   compound name. */
+.byline { display: inline-flex; align-items: center; gap: 6px; margin-left: 9px;
+  padding-left: 11px; border-left: 1px solid var(--rule);
+  font-weight: 500; font-size: 13px; color: var(--muted); letter-spacing: 0; }
+.byline-lab { font-size: 12px; }
+/* Size only — the COLOUR is deliberately left to .gz-mark further down, which
+   paints the parent mark the flat #0A0C10 the lockup uses everywhere on this
+   light ground (and near-white on the dark Populace page). Tinting this one
+   indigo would have made the header lockup disagree with the footer one. */
+.gz-byline { height: 14px; width: 14px; flex: none; }
+.gword-nav { color: var(--ink); font-weight: 600; letter-spacing: -.01em; }
+@media (max-width: 560px) {
+  .byline { margin-left: 7px; padding-left: 8px; font-size: 12px; }
+  .byline-lab { display: none; }
+}
+@media (max-width: 380px) {
+  .byline { margin-left: 5px; padding-left: 6px; gap: 5px; font-size: 11.5px; }
+}
 
 /* ── nav ───────────────────────────────────────────────────────────────── */
 nav {
@@ -268,6 +291,15 @@ footer .wrap { display: flex; flex-wrap: wrap; gap: 30px; justify-content: space
 .gword { color: #0A0C10; -webkit-text-fill-color: #0A0C10; background: none;
   font-weight: 700; letter-spacing: .04em; }
 .gz-mark { color: #0A0C10; }
+
+/* The brand is "Gigzen", never "GIGZEN".
+   .brandword exempts the single word where the rest of a label should stay
+   uppercase. The hero eyebrow does NOT use it: exempting one word there left
+   "ANDROID · A Gigzen PRODUCT", which reads as a mistake rather than a brand
+   rule, so that label drops the uppercase for all of it. */
+.brandword { text-transform: none !important; letter-spacing: .02em; }
+.eyebrow-brandline { text-transform: none; letter-spacing: .06em; }
+
 
 /* ══════════════════════════════════════════════════════════════════════════
    THE BEE SYSTEM
@@ -414,6 +446,19 @@ input[type=range] {
         <circle cx="36.4" cy="15" r="4.1" fill="#4F46E5"/>
       </svg>
       Waggle
+      <!-- The parent lockup, same construction as the one on the Populace site
+           so the two products read as one company. align-items:center on the
+           row and display:block on the svg — an inline svg sits on the text
+           baseline and rides visibly high otherwise. It compacts rather than
+           disappearing on small screens: a phone is the width where "who makes
+           this" is least obvious, so it is the last thing that should be cut. -->
+      <span class="byline">
+        <span class="byline-lab">by</span>
+        <svg class="gz-mark gz-byline" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z" fill="currentColor"/>
+        </svg>
+        <span class="gword-nav">Gigzen</span>
+      </span>
     </a>
     <div class="navlinks">
       <a href="#why">Why</a>
@@ -436,7 +481,7 @@ input[type=range] {
     </svg>
     <div class="wrap">
       <div>
-        <span class="eyebrow rv">Android · A GIGZEN product</span>
+        <span class="eyebrow eyebrow-brandline rv">Android · A Gigzen product</span>
         <h1 class="rv">Every kilometre counts.<br><em>So count them.</em></h1>
         <p class="lede rv">An app for delivery riders. Earnings that follow the road,
         a map with the drivers you know on it, and the people working your streets —
@@ -533,7 +578,7 @@ input[type=range] {
           default, not something you have to go and configure.</p>
         </div>
         <div class="feature-media rv">
-          <div class="phone"><img class="hexable" src="shots/map.jpg" alt="The Waggle map, showing streets around Cuttack with the Friends panel open." loading="lazy"></div>
+          <div class="phone"><img class="hexable" src="shots/map.jpg" alt="The Waggle map, showing a day's driving recorded across Mumbai and matched to the roads, from Powai through Kurla to Bandra." loading="lazy"></div>
         </div>
       </div>
 
@@ -684,10 +729,12 @@ input[type=range] {
         <svg class="gz-mark" viewBox="0 0 64 64" aria-hidden="true">
           <path d="M33.19 2 L60.1 14.82 L48.54 20.68 L33.66 13.4 L16.25 23.06 L15.14 23.85 L15.14 40.15 L33.19 47.91 L49.02 39.84 L49.34 38.73 L48.54 38.25 L30.34 33.66 L30.5 30.97 L44.43 24.01 L61.05 29.86 L61.05 46.64 L33.5 62 L2.95 46.64 L2.95 17.51 L33.03 2.16 Z" fill="currentColor"/>
         </svg>
-        <span class="gword">GIGZEN</span>
+        <span class="gword">Gigzen</span>
       </span>
-      <p class="fine" style="margin-top:12px">Waggle is a product of<br>
-      <b style="color:var(--ink)">Gigzen Private Limited</b><br>Bhubaneswar, Odisha, India</p>
+      <!-- Short name in the interface, full name on the record — the same
+           convention the other product follows (Populace / Gigzen Populace). -->
+      <p class="fine" style="margin-top:12px">Full name · <b style="color:var(--ink)">Gigzen Waggle</b><br>
+      A product of <b style="color:var(--ink)">Gigzen Private Limited</b><br>Bhubaneswar, Odisha, India</p>
     </div>
     <div>
       <p class="fine">

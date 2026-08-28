@@ -5560,9 +5560,14 @@ body { font-weight: 400; }
    positive tracking so the letters do not jam together the way they would at
    the surrounding text's spacing. Matches the Waggle website and the
    portfolio, where the same name is set the same way. */
+/* The brand is written "Gigzen", never "GIGZEN".
+   This used to set the name in capitals as a wordmark. It is the company's
+   name, not a label, and it now reads the same here as it does on the two
+   websites, in the Studio and on the store listing. The letter-spacing goes
+   with it: tracking that wide is a device for capitals and looks loose on
+   mixed case. */
 .gigzen-word {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.01em;
   font-weight: 700;
 }
 
