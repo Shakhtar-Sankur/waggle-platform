@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { MANILA_CENTER } from "../config/constants";
-import { LocationService } from "../services/LocationService";
+import { LocationService, MAX_PLAUSIBLE_KMH } from "../services/LocationService";
 import { SupabaseService } from "../services/SupabaseService";
 import type { LocationPoint } from "../types";
 import { useAuthStore } from "./useAuthStore";
@@ -54,8 +54,8 @@ function weekKey(): string {
 
 /** Consumer GPS drifts ~5–15 m while stationary; below this we treat it as noise. */
 const MIN_MOVE_KM = 0.015; // 15 m
-/** Anything faster than this is a GPS glitch, not a delivery. */
-const MAX_PLAUSIBLE_KMH = 200;
+/* MAX_PLAUSIBLE_KMH now lives in LocationService, because the replay of a past
+   day needs the same threshold and two copies would drift apart. */
 
 let stopWatching: (() => void) | null = null;
 let trackingStartedAt: number | null = null;

@@ -26,7 +26,7 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { CircleMarker, MapContainer, Marker, Polyline, ScaleControl, TileLayer, useMap } from "react-leaflet";
 import { BeeMark } from "../components/Wordmark";
 import { MANILA_CENTER } from "../config/constants";
-import { LocationService } from "../services/LocationService";
+import { LocationService, SESSION_GAP_MS } from "../services/LocationService";
 import { snapToRoads } from "../services/MapMatchService";
 import { BAND_COLOUR, earningsGrid, findStops, heatColour, speedSegments } from "../services/RouteInsights";
 import { describeStep, directionsBetween, scoreAgainstHistory, type Directions } from "../services/DirectionsService";
@@ -575,9 +575,41 @@ export function RoutesScreen() {
     const timer = window.setInterval(() => void loadCloudCommunity(), 10000);
     return () => window.clearInterval(timer);
   }, [user, loadCloudCommunity, view]);
+  /* The figures under the map describe the day you are LOOKING AT.
+     They used to read totalDistanceKm and elapsedMinutes straight out of the
+     live tracking store whatever date was selected, so picking a past day drew
+     that day's route on the map — 57 km of it — and reported "0.00 km · 0m ·
+     --" directly underneath. Two halves of one screen describing different days
+     without saying which. The map already loads the day's raw points to draw
+     it, so the same points answer the question.
+
+     Today deliberately still comes from the store: it is being appended to as
+     the driver moves, and a figure that only updates when the day is re-read
+     would freeze mid-shift. */
+  const dayStats = useMemo(() => {
+    if (isToday || dayPoints.length < 2) return null;
+    // routeDistanceKm drops the joins between sessions; see LocationService.
+    const km = LocationService.routeDistanceKm(dayPoints);
+    /* Time is summed per interval, not taken as last minus first. A day holds
+       every session the driver recorded, so first-to-last also counts the hours
+       the app was closed between them — one real day measured 7h 15m that way
+       against about 3h 45m actually spent driving. Tracking writes a fix every
+       few seconds, so an interval longer than SESSION_GAP_MS is the app being
+       shut, not a driver sitting still, and is not active time. */
+    let ms = 0;
+    for (let i = 1; i < dayPoints.length; i += 1) {
+      const d = dayPoints[i].timestamp - dayPoints[i - 1].timestamp;
+      if (Number.isFinite(d) && d > 0 && d <= SESSION_GAP_MS) ms += d;
+    }
+    return { km, minutes: Math.round(ms / 60000) };
+  }, [isToday, dayPoints]);
+
+  const shownDistanceKm = dayStats ? dayStats.km : totalDistanceKm;
+  const shownMinutes = dayStats ? dayStats.minutes : elapsedMinutes;
+
   const pace =
-    totalDistanceKm > 0.05 && elapsedMinutes > 0
-      ? `${(elapsedMinutes / totalDistanceKm).toFixed(1)}`
+    shownDistanceKm > 0.05 && shownMinutes > 0
+      ? `${(shownMinutes / shownDistanceKm).toFixed(1)}`
       : "--";
 
   const topDrivers = useMemo(
@@ -1230,20 +1262,33 @@ export function RoutesScreen() {
               {...gripHandlers}
             />
             <div className="sv-sheet-title">
-              <strong>{isTracking ? t("sv_recording") : t("sv_ready")}</strong>
-              <span className={`sv-live ${isTracking ? "on" : ""}`}>{isTracking ? "● LIVE" : app ? `${app.logo} ${app.name}` : t("sv_gpsReady")}</span>
+              {/* On a past day the title is that day's date rather than "Ready
+                  to record" — you cannot record into a day that has gone, and
+                  the old title made the panel look like it was describing a
+                  session about to start. The date needs no translation. */}
+              <strong>
+                {dayStats
+                  ? pathDay.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })
+                  : isTracking ? t("sv_recording") : t("sv_ready")}
+              </strong>
+              <span className={`sv-live ${isTracking ? "on" : ""}`}>
+                {dayStats ? t("sv_myPath") : isTracking ? "● LIVE" : app ? `${app.logo} ${app.name}` : t("sv_gpsReady")}
+              </span>
             </div>
             <div className="sv-stats">
-              <SvStat icon={<MapPin size={16} />} value={totalDistanceKm.toFixed(2)} unit="km" label={t("sv_distance")} />
-              <SvStat icon={<Timer size={16} />} value={duration(elapsedMinutes)} label={t("sv_time")} />
+              <SvStat icon={<MapPin size={16} />} value={shownDistanceKm.toFixed(2)} unit="km" label={t("sv_distance")} />
+              <SvStat icon={<Timer size={16} />} value={duration(shownMinutes)} label={t("sv_time")} />
               <SvStat icon={<Gauge size={16} />} value={pace} unit="/km" label={t("sv_pace")} />
             </div>
-            <button
-              className={`sv-record ${isTracking ? "stop" : ""}`}
-              onClick={isTracking ? stopTracking : startTracking}
-            >
-              {isTracking ? <><Square size={18} fill="currentColor" /> {t("home_stopTracking")}</> : <><span className="sv-record-dot" /> {t("home_startTracking")}</>}
-            </button>
+            {/* The record button belongs to today only. */}
+            {!dayStats && (
+              <button
+                className={`sv-record ${isTracking ? "stop" : ""}`}
+                onClick={isTracking ? stopTracking : startTracking}
+              >
+                {isTracking ? <><Square size={18} fill="currentColor" /> {t("home_stopTracking")}</> : <><span className="sv-record-dot" /> {t("home_startTracking")}</>}
+              </button>
+            )}
           </div>
           )}
         </div>

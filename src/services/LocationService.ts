@@ -5,6 +5,26 @@ import { resolveCountryForLocation } from "../i18n/region";
 import type { LocationPoint } from "../types";
 import { translate } from "../i18n";
 
+/**
+ * Above this, a pair of fixes is not travel — it is a GPS glitch, or the join
+ * between two separate recording sessions.
+ *
+ * Defined here rather than in the tracking store because both need it and the
+ * store already imports this module; two copies of a threshold like this drift
+ * apart, and then the live path and the replayed path disagree about the same
+ * journey.
+ */
+export const MAX_PLAUSIBLE_KMH = 200;
+
+/**
+ * Silence longer than this between two fixes means the app was not running.
+ *
+ * Tracking writes a fix every few seconds, so any real gap is small; five
+ * minutes is generous enough to survive a long tunnel and short enough to catch
+ * the driver who stopped at lunchtime and started again in the evening.
+ */
+export const SESSION_GAP_MS = 5 * 60 * 1000;
+
 export const LocationService = {
   async currentPosition(): Promise<LocationPoint> {
     if (Capacitor.isNativePlatform()) {
@@ -73,10 +93,45 @@ export const LocationService = {
     return () => navigator.geolocation.clearWatch(watchId);
   },
 
+  /**
+   * Distance along a trace, skipping the joins between separate sessions.
+   *
+   * This used to add every consecutive pair. That is correct for a live route,
+   * where each fix has already been filtered as it arrived, and wrong for a day
+   * read back out of route_points — a day holds every session the driver
+   * recorded, and summing it end to end draws a straight line from wherever
+   * they stopped to wherever they next pressed Start.
+   *
+   * Measured on one real day in the database: 57.53 km naive, of which 9.56 km
+   * was four such joins, the largest a 7.42 km line across a 3.5 hour gap. The
+   * driver did not travel it, and since earnings are distance x rate, that is
+   * not a cosmetic error.
+   *
+   * TWO rules, because one is not enough. Speed alone — the test the live
+   * tracker uses on arriving fixes — misses these entirely: 7.42 km across 3.5
+   * hours is 2 km/h, which is a perfectly plausible speed, so the filter passed
+   * it and the total stayed at 57.53 km. What actually marks a join is the GAP.
+   * Tracking writes a fix every few seconds, so a silence longer than
+   * SESSION_GAP_MS means the app was shut, not that the driver crawled.
+   *
+   * So: a segment is skipped if it spans more than SESSION_GAP_MS, or if it
+   * implies more than MAX_PLAUSIBLE_KMH (a GPS glitch inside one session).
+   * Both are no-ops on a live route, whose fixes are seconds apart and already
+   * filtered. A pair with no usable timestamps is counted — there is nothing to
+   * judge it by.
+   */
   routeDistanceKm(points: LocationPoint[]) {
     let total = 0;
     for (let i = 1; i < points.length; i += 1) {
-      total += distanceKm(points[i - 1], points[i]);
+      const a = points[i - 1];
+      const b = points[i];
+      const km = distanceKm(a, b);
+      const ms = b.timestamp - a.timestamp;
+      if (Number.isFinite(ms) && ms > 0) {
+        if (ms > SESSION_GAP_MS) continue;                              // separate sessions
+        if (km / (ms / 3600000) > MAX_PLAUSIBLE_KMH) continue;          // glitch
+      }
+      total += km;
     }
     return total;
   },
