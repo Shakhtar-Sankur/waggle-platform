@@ -33,6 +33,24 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   EC: "USD", SV: "USD", PA: "USD",
   // Spanish-speaking Latin America, in the money the driver is actually paid in.
   AR: "ARS", CO: "COP", CL: "CLP", PE: "PEN",
+
+  /* The remaining thirty-four of the seventy-two countries the app covers.
+     Every one of these previously fell through to the USD default, which is the
+     quiet kind of wrong: a driver in Copenhagen saw "$12.40" for a day that
+     earned 12.40 kroner, and nothing on screen said the app had guessed. */
+  // Nordics and central Europe, outside the euro
+  DK: "DKK", SE: "SEK", NO: "NOK", PL: "PLN", CZ: "CZK", RO: "RON", CH: "CHF",
+  // Eastern Europe and central Asia
+  TR: "TRY", RU: "RUB", UA: "UAH", KZ: "KZT",
+  // Middle East and North Africa. AE and SA were already here.
+  IL: "ILS", EG: "EGP", MA: "MAD", QA: "QAR", KW: "KWD", BH: "BHD",
+  OM: "OMR", JO: "JOD", LB: "LBP",
+  // Sub-Saharan Africa. NG and ZA were already here.
+  KE: "KES", TZ: "TZS", UG: "UGX", GH: "GHS",
+  // Asia-Pacific
+  HK: "HKD", TW: "TWD", NZ: "NZD", LK: "LKR", NP: "NPR", KH: "KHR", MM: "MMK",
+  // Latin America not on the dollar
+  CR: "CRC", DO: "DOP", UY: "UYU",
 };
 
 // Country → app UI language. Falls through to the device UI language, then English.
@@ -65,6 +83,14 @@ const COUNTRY_LANG: Record<string, Lang> = {
   JP: "ja",
   KR: "ko",
   AE: "ar", SA: "ar", EG: "ar", QA: "ar", KW: "ar", BH: "ar", OM: "ar", JO: "ar", MA: "ar", DZ: "ar",
+  // Lebanon was falling through to English. Same reasoning as the rest of the
+  // region; a Lebanese handset already gets Arabic from the device language,
+  // this decides the fallback for an English one.
+  LB: "ar",
+  // Switzerland was falling through to English too. German is the largest of
+  // its four, and the device language is consulted first, so a French or
+  // Italian handset in Geneva or Lugano is already served before this line.
+  CH: "de",
   ES: "es", MX: "es", AR: "es", CO: "es", CL: "es", PE: "es", VE: "es", EC: "es", GT: "es", BO: "es", DO: "es", HN: "es", PY: "es", SV: "es", NI: "es", CR: "es", PA: "es", UY: "es",
 };
 

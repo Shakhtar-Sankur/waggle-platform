@@ -128,6 +128,16 @@ export function RoutesScreen() {
   useBrandBand("routes");
   const t = useT();
   const currentLocation = useLocationStore((state) => state.currentLocation);
+  /* Whether currentLocation is a real fix or the fallback centre. Without this
+     the friends list happily prints a distance measured FROM the fallback: a
+     driver who refuses the location permission was told every friend was
+     5141 km away, which is correct arithmetic on a made-up position and a
+     confident lie to the person reading it.
+
+     The point's own flag, not the permission state — permission only becomes
+     "granted" when TRACKING starts, so keying off it hid the distance for
+     every driver who had simply not pressed Start yet. */
+  const ownPositionKnown = currentLocation.fallback !== true;
   const route = useLocationStore((state) => state.route);
   const isTracking = useLocationStore((state) => state.isTracking);
   const totalDistanceKm = useLocationStore((state) => state.totalDistanceKm);
@@ -643,6 +653,11 @@ export function RoutesScreen() {
       .then(async (point) => {
         if (cancelled || !point) return;
         map.setView([point.lat, point.lng], 14, { animate: true });
+        /* Keep it, so "how far away is this friend" has something real to
+           measure from. Not updatePosition — that is the tracking path and
+           would fold this into the day's distance. Fallback points are stored
+           too: they carry the flag, and the friends list checks it. */
+        if (!point.fallback) useLocationStore.getState().setCurrentLocation(point);
         // Refine the currency from the actual country the driver is in.
         // (Language stays English by default — users pick their language manually.)
         //
@@ -1240,8 +1255,17 @@ export function RoutesScreen() {
                             </small>
                           </span>
                           <span className="sv-friend-away">
-                            {away < 1 ? "<1" : Math.round(away)}
-                            <em>km</em>
+                            {/* No own position, no distance. An em dash says
+                                "not known" — a number here would be measured
+                                from the fallback centre. */}
+                            {ownPositionKnown ? (
+                              <>
+                                {away < 1 ? "<1" : Math.round(away)}
+                                <em>km</em>
+                              </>
+                            ) : (
+                              "—"
+                            )}
                           </span>
                         </button>
                       </li>
@@ -1249,7 +1273,15 @@ export function RoutesScreen() {
                   })}
                 </ul>
               ) : (
-                <p className="sv-friend-empty">{t("sv_noFriendsYet")}</p>
+                /* The same distinction the banner above already makes, which
+                   this panel did not: "no friends yet" and "your friends are
+                   not sharing right now" are different situations and only one
+                   of them is something you can act on. A driver with one
+                   accepted friend who last shared a fortnight ago was being
+                   told to go and make friends. */
+                <p className="sv-friend-empty">
+                  {acceptedFriendCount === 0 ? t("sv_noFriendsYet") : t("sv_noFriends")}
+                </p>
               )}
             </div>
           ) : (

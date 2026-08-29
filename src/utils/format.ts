@@ -34,6 +34,47 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "COP", symbol: "$", label: "Colombian Peso", locale: "es-CO" },
   { code: "CLP", symbol: "$", label: "Chilean Peso", locale: "es-CL" },
   { code: "PEN", symbol: "S/", label: "Peruvian Sol", locale: "es-PE" },
+
+  /* The other thirty-four.
+     The app claims 72 countries, and 34 of them had no currency at all — they
+     fell through to the USD default, so a driver in Copenhagen was shown $ and
+     one in Warsaw was shown $. The country map cannot fix that on its own: a
+     code with no entry here falls back to USD anyway, so the two lists have to
+     grow together. */
+  { code: "DKK", symbol: "kr", label: "Danish Krone", locale: "da-DK" },
+  { code: "SEK", symbol: "kr", label: "Swedish Krona", locale: "sv-SE" },
+  { code: "NOK", symbol: "kr", label: "Norwegian Krone", locale: "nb-NO" },
+  { code: "PLN", symbol: "zł", label: "Polish Złoty", locale: "pl-PL" },
+  { code: "CZK", symbol: "Kč", label: "Czech Koruna", locale: "cs-CZ" },
+  { code: "RON", symbol: "lei", label: "Romanian Leu", locale: "ro-RO" },
+  { code: "CHF", symbol: "CHF", label: "Swiss Franc", locale: "de-CH" },
+  { code: "TRY", symbol: "₺", label: "Turkish Lira", locale: "tr-TR" },
+  { code: "RUB", symbol: "₽", label: "Russian Ruble", locale: "ru-RU" },
+  { code: "UAH", symbol: "₴", label: "Ukrainian Hryvnia", locale: "uk-UA" },
+  { code: "KZT", symbol: "₸", label: "Kazakhstani Tenge", locale: "kk-KZ" },
+  { code: "ILS", symbol: "₪", label: "Israeli New Shekel", locale: "he-IL" },
+  { code: "EGP", symbol: "E£", label: "Egyptian Pound", locale: "ar-EG" },
+  { code: "MAD", symbol: "د.م.", label: "Moroccan Dirham", locale: "ar-MA" },
+  { code: "QAR", symbol: "ر.ق", label: "Qatari Riyal", locale: "ar-QA" },
+  { code: "KWD", symbol: "د.ك", label: "Kuwaiti Dinar", locale: "ar-KW" },
+  { code: "BHD", symbol: "د.ب", label: "Bahraini Dinar", locale: "ar-BH" },
+  { code: "OMR", symbol: "ر.ع.", label: "Omani Rial", locale: "ar-OM" },
+  { code: "JOD", symbol: "د.ا", label: "Jordanian Dinar", locale: "ar-JO" },
+  { code: "LBP", symbol: "ل.ل", label: "Lebanese Pound", locale: "ar-LB" },
+  { code: "KES", symbol: "KSh", label: "Kenyan Shilling", locale: "en-KE" },
+  { code: "TZS", symbol: "TSh", label: "Tanzanian Shilling", locale: "sw-TZ" },
+  { code: "UGX", symbol: "USh", label: "Ugandan Shilling", locale: "en-UG" },
+  { code: "GHS", symbol: "₵", label: "Ghanaian Cedi", locale: "en-GH" },
+  { code: "HKD", symbol: "HK$", label: "Hong Kong Dollar", locale: "zh-HK" },
+  { code: "TWD", symbol: "NT$", label: "New Taiwan Dollar", locale: "zh-TW" },
+  { code: "NZD", symbol: "NZ$", label: "New Zealand Dollar", locale: "en-NZ" },
+  { code: "LKR", symbol: "Rs", label: "Sri Lankan Rupee", locale: "si-LK" },
+  { code: "NPR", symbol: "रू", label: "Nepalese Rupee", locale: "ne-NP" },
+  { code: "KHR", symbol: "៛", label: "Cambodian Riel", locale: "km-KH" },
+  { code: "MMK", symbol: "K", label: "Myanmar Kyat", locale: "my-MM" },
+  { code: "CRC", symbol: "₡", label: "Costa Rican Colón", locale: "es-CR" },
+  { code: "DOP", symbol: "RD$", label: "Dominican Peso", locale: "es-DO" },
+  { code: "UYU", symbol: "$U", label: "Uruguayan Peso", locale: "es-UY" },
 ];
 
 let activeCurrency: CurrencyOption = CURRENCIES[0];

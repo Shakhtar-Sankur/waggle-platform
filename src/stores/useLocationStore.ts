@@ -27,6 +27,15 @@ interface LocationState {
   startTracking: () => Promise<void>;
   stopTracking: () => void;
   updatePosition: (point: LocationPoint) => void;
+  /**
+   * Record where the driver is without treating it as travel.
+   *
+   * updatePosition is the tracking path: it gates the fix, appends it to the
+   * route, adds the delta to the day's distance and syncs it. A screen that
+   * merely wants to know where "here" is — to centre a map, or to measure how
+   * far away a friend is — must not do any of that.
+   */
+  setCurrentLocation: (point: LocationPoint) => void;
   tickElapsed: () => void;
   resetRoute: () => void;
   ensureToday: () => void;
@@ -36,6 +45,10 @@ const initialPoint: LocationPoint = {
   ...MANILA_CENTER,
   accuracy: 80,
   timestamp: Date.now(),
+  // This is a guess until a real fix replaces it, and callers that measure
+  // FROM it need to know — the friends list was reporting distances computed
+  // against this point as though they were real.
+  fallback: true,
 };
 
 // Local calendar day, e.g. "2026-07-12". Used so "today's" distance/earnings reset daily.
@@ -144,6 +157,7 @@ export const useLocationStore = create<LocationState>()(
         });
         syncLocation(point, totalDistanceKm);
       },
+      setCurrentLocation: (point) => set({ currentLocation: point }),
       tickElapsed: () => {
         if (!get().isTracking || !trackingStartedAt) return;
         const elapsedMinutes = Math.floor((Date.now() - trackingStartedAt) / 60000);
