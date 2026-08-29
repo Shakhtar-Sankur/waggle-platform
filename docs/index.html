@@ -167,7 +167,36 @@ nav .wrap { display: flex; align-items: center; justify-content: space-between; 
 .navlinks { display: flex; align-items: center; gap: 26px; }
 .navlinks a { color: var(--body); text-decoration: none; font-size: 15px; font-weight: 550; }
 .navlinks a:hover { color: var(--flame-ink); }
-@media (max-width: 760px) { .navlinks { display: none; } }
+/* ── the small-screen menu ────────────────────────────────────────────────
+   These links used to simply vanish below 760px. They now fold into a panel
+   behind a burger, so the page keeps its navigation on a phone — which is the
+   device this product is actually for. */
+.burger {
+  display: none; margin-left: auto; width: 42px; height: 38px;
+  align-items: center; justify-content: center; cursor: pointer;
+  color: var(--ink); background: var(--paper-2);
+  border: 1px solid var(--rule); border-radius: 11px;
+  transition: border-color .2s, background .2s;
+}
+.burger:hover { border-color: var(--flame); }
+.burger svg { width: 20px; height: 20px; display: block; }
+nav .wrap { position: relative; }
+@media (max-width: 760px) {
+  .burger { display: inline-flex; }
+  .navlinks {
+    display: none; position: absolute; left: 0; right: 0; top: 100%;
+    flex-direction: column; align-items: stretch; gap: 0;
+    padding: 6px 20px 14px;
+    background: color-mix(in srgb, var(--paper) 97%, transparent);
+    backdrop-filter: saturate(180%) blur(18px);
+    -webkit-backdrop-filter: saturate(180%) blur(18px);
+    border-bottom: 1px solid var(--rule);
+    box-shadow: 0 18px 40px -28px rgba(18, 19, 26, .45);
+  }
+  .navlinks.open { display: flex; }
+  .navlinks a { padding: 14px 2px; font-size: 16px; border-bottom: 1px solid var(--rule); }
+  .navlinks a:last-child { border-bottom: 0; }
+}
 
 /* ── buttons ───────────────────────────────────────────────────────────── */
 .btn {
@@ -460,7 +489,17 @@ input[type=range] {
         <span class="gword-nav">Gigzen</span>
       </span>
     </a>
-    <div class="navlinks">
+    <!-- Below 760px the links were display:none with nothing in their place,
+         which left a phone with no way to reach any section of the page —
+         including Download, which is the one thing this page is for. -->
+    <button class="burger" id="burger" type="button" aria-label="Menu"
+            aria-expanded="false" aria-controls="navlinks">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor"
+              stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="navlinks" id="navlinks">
       <a href="#why">Why</a>
       <a href="#what">What it does</a>
       <a href="#earnings">Earnings</a>
@@ -616,9 +655,16 @@ input[type=range] {
         <div class="marq-in"><span>English</span><span>Filipino</span><span>Español</span><span>हिन्दी</span><span>বাংলা</span><span>தமிழ்</span><span>తెలుగు</span><span>मराठी</span><span>ಕನ್ನಡ</span><span>മലയാളം</span><span>ગુજરાતી</span><span>ਪੰਜਾਬੀ</span><span>اردو</span><span>Bahasa Indonesia</span><span>Bahasa Melayu</span><span>ไทย</span><span>Tiếng Việt</span><span>Português</span><span>Français</span><span>Deutsch</span><span>中文</span><span>日本語</span><span>한국어</span><span>العربية</span><span>Nederlands</span><span>Italiano</span><span>Polski</span><span>Română</span><span>Čeština</span><span>Svenska</span><span>Dansk</span><span>Norsk</span><span>Suomi</span><span>Ελληνικά</span><span>Türkçe</span><span>Русский</span><span>Українська</span><span>עברית</span><span>Kiswahili</span><span>ខ្មែរ</span><span>မြန်မာ</span><span>සිංහල</span><span>नेपाली</span><span>English</span><span>Filipino</span><span>Español</span><span>हिन्दी</span><span>বাংলা</span><span>தமிழ்</span><span>తెలుగు</span><span>मराठी</span><span>ಕನ್ನಡ</span><span>മലയാളം</span><span>ગુજરાતી</span><span>ਪੰਜਾਬੀ</span><span>اردو</span><span>Bahasa Indonesia</span><span>Bahasa Melayu</span><span>ไทย</span><span>Tiếng Việt</span><span>Português</span><span>Français</span><span>Deutsch</span><span>中文</span><span>日本語</span><span>한국어</span><span>العربية</span><span>Nederlands</span><span>Italiano</span><span>Polski</span><span>Română</span><span>Čeština</span><span>Svenska</span><span>Dansk</span><span>Norsk</span><span>Suomi</span><span>Ελληνικά</span><span>Türkçe</span><span>Русский</span><span>Українська</span><span>עברית</span><span>Kiswahili</span><span>ខ្មែរ</span><span>မြန်မာ</span><span>සිංහල</span><span>नेपाली</span></div>
       </div>
       <div class="stats">
-        <div class="stat rv"><span class="v">43</span><span class="k">languages &middot; 16 at full parity</span></div>
-        <div class="stat rv"><span class="v">27</span><span class="k">currencies</span></div>
-        <div class="stat rv"><span class="v">49</span><span class="k">countries</span></div>
+        <!-- Measured against the code, not carried forward: countryToCurrency
+             was probed for every country the app names. 27 currencies against
+             72 countries meant 34 of them silently fell back to US dollars;
+             both the mapping and this number are fixed now. "16 at full parity"
+             went the same way it went on the company site — it was not true of
+             the languages that cover the core screens rather than the whole
+             app. -->
+        <div class="stat rv"><span class="v">43</span><span class="k">languages &middot; right-to-left included</span></div>
+        <div class="stat rv"><span class="v">61</span><span class="k">currencies</span></div>
+        <div class="stat rv"><span class="v">72</span><span class="k">countries</span></div>
         <div class="stat rv"><span class="v">0</span><span class="k">ads, ever</span></div>
       </div>
     </div>
@@ -754,6 +800,27 @@ input[type=range] {
 <script>
 (() => {
   document.documentElement.classList.add("js");
+
+  /* The small-screen menu. Closes on any link — every one of these jumps to an
+     anchor further down this page, and a panel left open over the destination
+     is the wrong thing to be looking at once you arrive. Also on Escape, and
+     when the viewport grows back past the breakpoint, so the panel cannot be
+     left in the DOM as .open waiting to reappear. */
+  const burger = document.getElementById("burger");
+  const navlinks = document.getElementById("navlinks");
+  if (burger && navlinks) {
+    const close = () => {
+      navlinks.classList.remove("open");
+      burger.setAttribute("aria-expanded", "false");
+    };
+    burger.addEventListener("click", () => {
+      const open = navlinks.classList.toggle("open");
+      burger.setAttribute("aria-expanded", open ? "true" : "false");
+    });
+    navlinks.addEventListener("click", (e) => { if (e.target.tagName === "A") close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+    window.matchMedia("(min-width: 761px)").addEventListener("change", (m) => { if (m.matches) close(); });
+  }
 
   /* Reveal. Anything above the fold is shown immediately and a timer shows
      everything regardless after 1.5s — a page that depends on an observer
