@@ -23,6 +23,58 @@ export const PHOTO_BUCKET = "post-photos";
 /** Voice notes live apart from pictures, so their access rules do too. */
 export const VOICE_BUCKET = "chat-voice";
 
+/** Everything after this in a Supabase public object URL is `bucket/path`. */
+const PUBLIC_OBJECT_MARKER = "/storage/v1/object/public/";
+
+/**
+ * Resolve stored media against the storage host we are talking to TODAY.
+ *
+ * Uploads store what `getPublicUrl()` returns, which is an absolute URL with
+ * the storage host baked into it — so the database is full of rows like
+ *
+ *   http://127.0.0.1:54321/storage/v1/object/public/post-photos/x.mp4
+ *
+ * and every one of them is a promise that that host will answer forever. It
+ * will not. Moving the project, putting a CDN in front of storage, or taking a
+ * custom domain silently 404s the media on every historical post, and the row
+ * still looks perfectly fine in the database. This is not hypothetical: the
+ * local stack's port moved and all four reels died instantly.
+ *
+ * So nothing trusts the stored host. If the value carries one, the
+ * bucket-and-path after the marker is lifted out and re-signed against the
+ * current client; if it is already a bare path, it is used as-is. Old rows and
+ * new rows both come out pointing at wherever storage actually is now, with no
+ * migration and nothing to remember.
+ *
+ * Left alone deliberately: anything that is not a Supabase object URL. Avatars
+ * can be gravatar or a social login's CDN, and rewriting those would break
+ * them.
+ */
+export function resolveMediaUrl(stored?: string | null): string | undefined {
+  if (!stored) return undefined;
+  if (!supabase) return stored;
+
+  const marker = stored.indexOf(PUBLIC_OBJECT_MARKER);
+  let bucketAndPath: string;
+
+  if (marker !== -1) {
+    bucketAndPath = stored.slice(marker + PUBLIC_OBJECT_MARKER.length);
+  } else if (/^https?:\/\//i.test(stored)) {
+    return stored;                      // someone else's URL; not ours to rewrite
+  } else {
+    bucketAndPath = stored.replace(/^\/+/, "");
+  }
+
+  const slash = bucketAndPath.indexOf("/");
+  if (slash <= 0) return stored;        // no bucket segment — leave it be
+
+  const bucket = bucketAndPath.slice(0, slash);
+  const path = bucketAndPath.slice(slash + 1);
+  if (!path) return stored;
+
+  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+}
+
 export interface UploadedPhoto {
   url: string;
   thumbUrl: string;
@@ -422,9 +474,10 @@ export const SupabaseService = {
         author,
         initials: initials(author),
         body: post.body,
-        imageUrl: post.image_url ?? undefined,
-        videoUrl: post.video_url ?? undefined,
-      imageThumbUrl: post.image_thumb_url ?? undefined,
+        // Re-resolved rather than trusted: see resolveMediaUrl.
+        imageUrl: resolveMediaUrl(post.image_url),
+        videoUrl: resolveMediaUrl(post.video_url),
+      imageThumbUrl: resolveMediaUrl(post.image_thumb_url),
         likes: Number(likeCount),
         likedByMe: likedIds.has(post.id),
         reposts: repostCounts.get(post.id) ?? 0,
@@ -562,8 +615,8 @@ export const SupabaseService = {
       author,
       initials: initials(author),
       body: data.body,
-      imageUrl: data.image_url ?? undefined,
-      imageThumbUrl: data.image_thumb_url ?? undefined,
+      imageUrl: resolveMediaUrl(data.image_url),
+      imageThumbUrl: resolveMediaUrl(data.image_thumb_url),
       reposts: 0,
       repostedByMe: false,
       likes: 0,
@@ -1014,9 +1067,9 @@ export const SupabaseService = {
       body: message.body,
       replyToId: message.reply_to ?? undefined,
       reactions: byMessage.get(message.id),
-      attachmentUrl: message.attachment_url ?? undefined,
-      attachmentThumbUrl: message.attachment_thumb_url ?? undefined,
-      voiceUrl: message.voice_url ?? undefined,
+      attachmentUrl: resolveMediaUrl(message.attachment_url),
+      attachmentThumbUrl: resolveMediaUrl(message.attachment_thumb_url),
+      voiceUrl: resolveMediaUrl(message.voice_url),
       voiceSeconds: message.voice_seconds == null ? undefined : Number(message.voice_seconds),
       // Stored as jsonb. A client older than the column gets undefined and
       // draws a flat bar rather than throwing on a missing array.
