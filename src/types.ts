@@ -169,6 +169,38 @@ export interface FeedPost {
   createdAt: number;
 }
 
+/** One picture, posted by one driver, alive for twenty-four hours. */
+export interface Story {
+  id: string;
+  userId: string;
+  author: string;
+  initials: string;
+  imageUrl: string;
+  imageThumbUrl?: string;
+  caption?: string;
+  createdAt: number;
+  expiresAt: number;
+  /** Whether the signed-in driver has already opened it — drives the ring. */
+  seen: boolean;
+}
+
+/**
+ * Every live story by one author, oldest first.
+ *
+ * The row of rings is per PERSON, not per story: five pictures from one driver
+ * is one ring you tap once, not five rings in a row. Grouping in the service
+ * rather than in the screen means the viewer, the ring and the unseen dot all
+ * read the same shape and cannot disagree about what "seen" means.
+ */
+export interface StoryGroup {
+  userId: string;
+  author: string;
+  initials: string;
+  stories: Story[];
+  /** True only when every story in the group has been seen. */
+  allSeen: boolean;
+}
+
 export interface PostComment {
   id: string;
   postId: string;

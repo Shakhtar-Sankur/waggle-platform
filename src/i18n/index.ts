@@ -164,6 +164,18 @@ const en = {
   profile_logOut: "Log Out",
   profile_deleteAccount: "Delete Account",
   settings_autoRegion: "Auto currency (by location)",
+  /* Stories. English only for now: the other 42 dictionaries fall back to
+     these, which is the same deal every new string gets here. */
+  st_title: "Stories",
+  st_yours: "Your story",
+  st_add: "Add story",
+  st_delete: "Delete story",
+  st_prev: "Previous story",
+  st_next: "Next story",
+  st_minsAgo: "{n}m ago",
+  st_hoursAgo: "{n}h ago",
+  st_close: "Close",
+
   settings_language: "Language",
   /* Shown beside a language that does not yet translate the whole app. Kept to
      one short word because it is appended inside a native <option>, where there

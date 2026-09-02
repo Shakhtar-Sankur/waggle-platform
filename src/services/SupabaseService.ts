@@ -12,6 +12,8 @@ import type {
   LocationPoint,
   PostComment,
   ProfileSettings,
+  Story,
+  StoryGroup,
   UserSession,
   Worker,
 } from "../types";
@@ -548,6 +550,100 @@ export const SupabaseService = {
    * demanding the full type forced it to invent them, which is how a parameter
    * ends up carrying fields the function never reads.
    */
+  /**
+   * Live stories, grouped by author, oldest picture first within each group.
+   *
+   * Expiry is not filtered here on purpose — the read policy in stories.sql
+   * already makes an expired row invisible to Postgres. Repeating the check in
+   * the client would be a second place to get it wrong, and the version that
+   * matters is the one the database enforces.
+   */
+  async listStories(viewerId: string): Promise<StoryGroup[]> {
+    if (!supabase) return [];
+
+    const { data, error } = await supabase
+      .from("stories")
+      .select("id, user_id, image_url, image_thumb_url, caption, created_at, expires_at, profiles!stories_user_id_fkey(full_name)")
+      .order("created_at", { ascending: true })
+      .limit(300);
+    if (error) throw error;
+
+    const rows = data ?? [];
+    if (!rows.length) return [];
+
+    // One query for everything this viewer has seen, rather than one per story.
+    const { data: seenRows } = await supabase
+      .from("story_views")
+      .select("story_id")
+      .eq("viewer_id", viewerId);
+    const seen = new Set((seenRows ?? []).map((r: any) => r.story_id));
+
+    const groups = new Map<string, StoryGroup>();
+    for (const row of rows as any[]) {
+      const author = row.profiles?.full_name ?? "Driver";
+      const story: Story = {
+        id: row.id,
+        userId: row.user_id,
+        author,
+        initials: initials(author),
+        imageUrl: resolveMediaUrl(row.image_url) ?? row.image_url,
+        imageThumbUrl: resolveMediaUrl(row.image_thumb_url),
+        caption: row.caption ?? undefined,
+        createdAt: new Date(row.created_at).getTime(),
+        expiresAt: new Date(row.expires_at).getTime(),
+        seen: seen.has(row.id),
+      };
+      const g = groups.get(story.userId);
+      if (g) g.stories.push(story);
+      else groups.set(story.userId, { userId: story.userId, author, initials: story.initials, stories: [story], allSeen: false });
+    }
+
+    const out = [...groups.values()];
+    for (const g of out) g.allSeen = g.stories.every((s) => s.seen);
+
+    /* Yours first, then anyone with something unseen, then the rest. A driver
+       opens this to find what is new; making them hunt past rings they have
+       already watched is the one thing the ordering can get wrong. */
+    return out.sort((a, b) => {
+      if (a.userId === viewerId) return -1;
+      if (b.userId === viewerId) return 1;
+      if (a.allSeen !== b.allSeen) return a.allSeen ? 1 : -1;
+      return b.stories[b.stories.length - 1].createdAt - a.stories[a.stories.length - 1].createdAt;
+    });
+  },
+
+  async createStory(userId: string, photo: PickedPhoto, caption?: string): Promise<void> {
+    assertSupabase();
+    const { url, thumbUrl } = await this.uploadPhoto(userId, photo);
+    const { error } = await supabase!.from("stories").insert({
+      user_id: userId,
+      image_url: url,
+      image_thumb_url: thumbUrl,
+      caption: caption?.trim() ? caption.trim().slice(0, 200) : null,
+    });
+    if (error) throw error;
+  },
+
+  /**
+   * Record that this driver has seen a story.
+   *
+   * Ignores a duplicate-key conflict rather than checking first: opening the
+   * same story twice is normal, and the primary key already says a viewer sees
+   * a story once. A round trip to ask permission to do something the database
+   * will decide anyway is a round trip on a driver's connection.
+   */
+  async markStorySeen(storyId: string, viewerId: string): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase.from("story_views").insert({ story_id: storyId, viewer_id: viewerId });
+    if (error && error.code !== "23505") throw error;
+  },
+
+  async deleteStory(storyId: string): Promise<void> {
+    assertSupabase();
+    const { error } = await supabase!.from("stories").delete().eq("id", storyId);
+    if (error) throw error;
+  },
+
   async uploadPhoto(
     userId: string,
     photo: Pick<PickedPhoto, "full" | "thumb">,

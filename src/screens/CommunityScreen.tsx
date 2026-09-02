@@ -34,13 +34,14 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { BeeMark } from "../components/Wordmark";
+import { Stories } from "../components/Stories";
 import { MediaService, type PickedPhoto, type PickedVideo } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { useT, usePlural } from "../i18n";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useChatStore } from "../stores/useChatStore";
 import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
-import type { ConnectionState, Worker } from "../types";
+import type { ConnectionState, StoryGroup, Worker } from "../types";
 import { currency, initials, km, timeAgo } from "../utils/format";
 import { isTrending, rankReels } from "../utils/reelRank";
 import { getWorkApp } from "../utils/workApps";
@@ -70,6 +71,19 @@ export function CommunityScreen() {
   const plural = usePlural();
   const user = useAuthStore((state) => state.user);
   const posts = useCommunityStore((state) => state.posts);
+  /* Stories live in the screen rather than the community store: they expire on
+     their own, so a cached copy is wrong within hours and there is nothing for
+     the rest of the app to read. Reloaded when the viewer closes, which is the
+     only moment the seen-state can have changed. */
+  const [storyGroups, setStoryGroups] = useState<StoryGroup[]>([]);
+  const reloadStories = useMemo(
+    () => () => {
+      if (!user || !SupabaseService.enabled) return;
+      void SupabaseService.listStories(user.id).then(setStoryGroups).catch(() => undefined);
+    },
+    [user],
+  );
+  useEffect(reloadStories, [reloadStories]);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
   const loaded = useCommunityStore((state) => state.loaded);
   const workers = useCommunityStore((state) => state.workers);
@@ -396,6 +410,9 @@ export function CommunityScreen() {
 
       {tab === "home" ? (
         <div className="fb-body">
+          {/* Above the feed, and hidden while searching — a row of faces is
+              noise when the driver is looking for a name. */}
+          {!query.trim() ? <Stories groups={storyGroups} onChanged={reloadStories} /> : null}
           {/* People matching the search box. Anyone registered shows up here,
               connected or not, and tapping a row opens their profile. */}
           {query.trim().length >= 2 ? (
