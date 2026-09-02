@@ -9,7 +9,7 @@ import { Modal } from "../components/ui/Modal";
 import { GigzenByline } from "../components/GigzenMark";
 import { Wordmark } from "../components/Wordmark";
 import { COMPANY_SITE } from "../config/constants";
-import { LANGUAGES, useLangStore, useT, type Lang } from "../i18n";
+import { FULL_COVERAGE, LANGUAGES, coverageOf, useLangStore, useT, type Lang } from "../i18n";
 import { resolveCountry } from "../i18n/region";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
@@ -313,8 +313,15 @@ function SettingsModal({
           <label>
             <span>{t("settings_language")}</span>
             <select value={lang} onChange={(event) => setLang(event.target.value as Lang)}>
+              {/* Twenty-seven of the forty-three cover the core screens and
+                  fall back to English for the rest. Saying so here costs one
+                  clause and stops the surprise happening after the choice. */}
               {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>{l.label}</option>
+                <option key={l.code} value={l.code}>
+                  {coverageOf(l.code) < FULL_COVERAGE
+                    ? `${l.label} — ${t("settings_langPartial")}`
+                    : l.label}
+                </option>
               ))}
             </select>
           </label>

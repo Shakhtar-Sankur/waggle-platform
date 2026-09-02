@@ -27,6 +27,37 @@ export interface LanguageOption {
 // this is a dictionary rather than an engineering job.
 export const RTL_LANGS: Lang[] = ["ar", "ur", "he"];
 
+/**
+ * How much of the app a language actually translates, 0–1.
+ *
+ * Forty-three languages are offered and they are not equally finished: eight
+ * are complete, eight more sit above 93%, and twenty-seven cover the core
+ * screens at roughly 110 of the 373 keys. Everything missing falls back to
+ * English, so a driver who picks Tamil gets a screen that is part Tamil and
+ * part English — which is a perfectly reasonable thing to ship, and an
+ * unreasonable thing to ship SILENTLY. The picker says so now.
+ *
+ * Measured from the dictionaries at run time rather than from a hand-kept list,
+ * because a hand-kept list is wrong the first time somebody finishes a
+ * translation and forgets to update it. Finish Tamil and the marker disappears
+ * on its own.
+ */
+export function coverageOf(lang: Lang): number {
+  const base = Object.keys(dictionaries.en).length;
+  if (!base) return 1;
+  return Object.keys(dictionaries[lang] ?? {}).length / base;
+}
+
+/**
+ * Above this, a language is "done" as far as the picker is concerned.
+ *
+ * 0.9 and not 1.0 deliberately: the eight languages sitting at 93–94% are
+ * missing a handful of strings apiece, and flagging those alongside the ones
+ * missing seventy percent of the app would tell the reader nothing useful about
+ * either.
+ */
+export const FULL_COVERAGE = 0.9;
+
 export const LANGUAGES: LanguageOption[] = [
   { code: "en", label: "English" },
   { code: "fil", label: "Filipino" },
@@ -134,6 +165,13 @@ const en = {
   profile_deleteAccount: "Delete Account",
   settings_autoRegion: "Auto currency (by location)",
   settings_language: "Language",
+  /* Shown beside a language that does not yet translate the whole app. Kept to
+     one short word because it is appended inside a native <option>, where there
+     is no room and no styling. The languages it marks are the ones least likely
+     to have translated it — so it will usually appear in English beside a
+     non-English name, which is the honest outcome: the label is itself an
+     example of the fallback it is warning about. */
+  settings_langPartial: "partly translated",
   settings_currency: "Currency",
   settings_vehicle: "My Vehicle",
   settings_homeAddress: "Home Address",
