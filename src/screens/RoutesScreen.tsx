@@ -329,7 +329,20 @@ export function RoutesScreen() {
       // Provider and ranking both live in PlacesService now — this used to be
       // ninety lines of fetching, de-duplicating and sorting inside the
       // component, which made "swap the geocoder" a rewrite of a screen.
-      const hits = await searchPlaces(q, currentLocation);
+      /* Bias on where the driver is LOOKING, not where the phone believes it
+         is. PlacesService draws a ~165km box around this point, so the point
+         being wrong quietly poisons every result: searching "Bandra" while the
+         map showed Mumbai returned Bandra in Bihar, then Madhya Pradesh three
+         times, and no Mumbai result at all — because location permission was
+         refused, currentLocation had fallen back to the default centre, and
+         the box was drawn around a city the driver was nowhere near.
+
+         The map centre is the better anchor even when GPS works: someone who
+         has panned to another part of town is searching THERE. currentLocation
+         stays as the fallback for the moment before the map exists. */
+      const centre = map?.getCenter();
+      const near = centre ? { lat: centre.lat, lng: centre.lng } : currentLocation;
+      const hits = await searchPlaces(q, near);
       if (!hits.length) {
         setSearchMsg(t("sv_searchNoResult"));
       } else if (hits.length === 1) {
@@ -482,6 +495,15 @@ export function RoutesScreen() {
 
   useEffect(() => {
     if (!searchPin) { setRouteOptions([]); return; }
+    /* Directions need a real starting point. Without the location permission
+       currentLocation is the fallback centre, and routing from it produced a
+       confident "4322 min" for a destination four kilometres away — it had
+       measured Manila to Bandra West. A number that wrong is worse than no
+       number: the pin is still dropped and the map still moves, so the driver
+       gets what they searched for without a route invented from a guess.
+       Same rule as the friends list, which shows an em dash rather than a
+       distance measured from nowhere. */
+    if (!ownPositionKnown) { setRouteOptions([]); setRouting(false); return; }
     let cancelled = false;
     setRouting(true);
     directionsBetween(currentLocation, searchPin).then((found) => {
