@@ -10,7 +10,7 @@ import { GigzenByline } from "../components/GigzenMark";
 import { Wordmark } from "../components/Wordmark";
 import { COMPANY_SITE } from "../config/constants";
 import { FULL_COVERAGE, LANGUAGES, coverageOf, useLangStore, useT, type Lang } from "../i18n";
-import { resolveCountry } from "../i18n/region";
+import { resolveCountryForLocation } from "../i18n/region";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
@@ -70,7 +70,7 @@ export function ProfileScreen() {
   // 30+ platforms would swamp this screen, so show the ones operating in the
   // driver's country (plus whatever they already picked) and hide the rest
   // behind a toggle.
-  const country = useMemo(() => resolveCountry(), []);
+  const country = useMemo(() => resolveCountryForLocation(), []);
   const orderedApps = useMemo(() => workAppsForCountry(country), [country]);
   const nearbyCount = useMemo(() => localAppCount(country), [country]);
   const appChoices = useMemo(() => {

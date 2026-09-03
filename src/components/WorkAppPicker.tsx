@@ -2,7 +2,7 @@ import { Search } from "lucide-react";
 import { WorkAppMark } from "./WorkAppMark";
 import { useMemo, useState } from "react";
 import { useT } from "../i18n";
-import { resolveCountry } from "../i18n/region";
+import { resolveCountryForLocation } from "../i18n/region";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { WorkApp, WorkAppId } from "../types";
 import { localAppCount, searchWorkApps } from "../utils/workApps";
@@ -20,7 +20,10 @@ export function WorkAppPicker({ open, onClose }: WorkAppPickerProps) {
   const [query, setQuery] = useState("");
 
   // Platforms operating in the driver's country are listed first.
-  const country = useMemo(() => resolveCountry(), []);
+  // Which platforms exist here is a fact about here, not about what the
+  // handset reads. This asked the locale, so an Indian driver on an en-US
+  // phone was shown US platforms under the heading "Available where you are".
+  const country = useMemo(() => resolveCountryForLocation(), []);
   const apps = useMemo(() => searchWorkApps(query, country), [query, country]);
   const localCount = useMemo(() => localAppCount(country), [country]);
 

@@ -13,7 +13,7 @@ import { useLocationStore } from "./stores/useLocationStore";
 import { useNotificationStore } from "./stores/useNotificationStore";
 import { useProfileStore } from "./stores/useProfileStore";
 import { applyDirection, useLangStore } from "./i18n";
-import { countryToCurrency, resolveCountry } from "./i18n/region";
+import { countryToCurrency, resolveCountryForLocation } from "./i18n/region";
 import { AuthScreen } from "./screens/AuthScreen";
 import { CommunityScreen } from "./screens/CommunityScreen";
 import { HomeScreen } from "./screens/HomeScreen";
@@ -47,11 +47,15 @@ export default function App() {
     void initSession();
   }, [initSession]);
 
-  // Auto currency from the user's region (device locale; refined by GPS on the map).
-  // Language defaults to English and only changes when the user picks one manually.
+  /* Auto currency from where the driver IS, refined by GPS once the map has a
+     fix. Timezone first, locale second: this used to read the locale, so a
+     driver in Mumbai on an en-US handset — which is most of them — saw $10/km
+     under a toggle that says "by location", and kept seeing it until the day
+     they happened to open the map. The timezone follows the phone.
+     Language is deliberately not decided here; that one IS a preference. */
   useEffect(() => {
     if (!autoRegion) return;
-    useProfileStore.getState().applyCurrency(countryToCurrency(resolveCountry()));
+    useProfileStore.getState().applyCurrency(countryToCurrency(resolveCountryForLocation()));
   }, [autoRegion]);
 
   // Reset "today's" distance/earnings when the day rolls over (on open + on refocus).

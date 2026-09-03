@@ -60,7 +60,7 @@ export const WORK_APPS: WorkApp[] = [
   { id: "moveit", name: "MoveIt", logo: "🚚", color: "#a9734b", regions: ["PH"] },
   { id: "foodpanda", name: "foodpanda", logo: "🐼", color: "#e82176", regions: ["PH", "TH", "MY", "SG", "BD", "PK", "HK", "TW"] },
   { id: "gojek", name: "Gojek", logo: "🟩", color: "#00aa13", regions: ["ID", "SG", "VN"] },
-  { id: "lalamove", name: "Lalamove", logo: "🧡", color: "#f16622", regions: ["PH", "SG", "MY", "TH", "VN", "HK", "TW", "BR", "MX", "IN"] },
+  { id: "lalamove", name: "Lalamove", logo: "🧡", color: "#f16622", regions: ["PH", "SG", "MY", "TH", "VN", "HK", "TW", "BR", "MX"] },
   { id: "shopeefood", name: "ShopeeFood", logo: "🍜", color: "#ee4d2d", regions: ["ID", "VN", "TH", "PH", "MY"] },
   { id: "maxim", name: "Maxim", logo: "🚙", color: "#ffd400", regions: ["ID", "PH", "MY", "RU", "NG"] },
 
@@ -78,7 +78,7 @@ export const WORK_APPS: WorkApp[] = [
 
   // --- Global / West / Middle East ---
   { id: "uber", name: "Uber", logo: "🚖", color: "#000000", regions: ["IN", "US", "GB", "BR", "MX", "ZA", "AU", "CA", "FR", "DE", "ES", "PT", "AE", "SA", "NG", "JP"] },
-  { id: "ubereats", name: "Uber Eats", logo: "🍔", color: "#06c167", regions: ["US", "GB", "CA", "AU", "FR", "DE", "ES", "PT", "BR", "MX", "JP", "IN", "AE"] },
+  { id: "ubereats", name: "Uber Eats", logo: "🍔", color: "#06c167", regions: ["US", "GB", "CA", "AU", "FR", "DE", "ES", "PT", "BR", "MX", "JP", "AE"] },
   { id: "amazon", name: "Amazon Flex", logo: "📦", color: "#ff9900", regions: ["IN", "US", "GB", "DE", "FR", "ES", "CA", "AU", "JP", "MX", "BR"] },
   { id: "doordash", name: "DoorDash", logo: "🚪", color: "#ff3008", regions: ["US", "CA", "AU", "NZ", "JP"] },
   { id: "deliveroo", name: "Deliveroo", logo: "🦘", color: "#00ccbc", regions: ["GB", "FR", "IT", "ES", "AE", "SG", "HK", "BE", "IE"] },

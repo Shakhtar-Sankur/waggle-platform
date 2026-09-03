@@ -136,8 +136,17 @@ export function resolveCountry(): string {
  * that as a position drops the map in New York. The timezone is set by where
  * the phone actually is, so for a map centre it is the better of the two.
  *
- * The reverse is true for currency, language and which work apps to list —
- * those follow what the driver chose, so they use resolveCountry().
+ * USE THIS FOR ANYTHING THAT IS A FACT ABOUT WHERE THE DRIVER IS — the map
+ * centre, the currency, and which work apps to offer. It used to be the map
+ * alone, and that was wrong in a way a driver could see: Ravi, home address
+ * Andheri East and timezone Asia/Calcutta, opened a screen headed "Auto
+ * currency (by location)" reading "Set from your location" and was shown
+ * $10/km, because his handset is set to en-US like a great many handsets sold
+ * in India. He cannot drive for DoorDash either, whatever language he reads in.
+ *
+ * Only LANGUAGE still uses resolveCountry(). What somebody reads really is a
+ * preference their locale expresses, and it is the one question the locale is
+ * actually answering.
  */
 export function resolveCountryForLocation(): string {
   return countryFromTimeZone() || detectCountry();
