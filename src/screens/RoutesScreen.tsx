@@ -311,6 +311,10 @@ export function RoutesScreen() {
   // Location search (OpenStreetMap Nominatim — free, no API key).
   const [locQuery, setLocQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  /** The text selectResult wrote, so the type-ahead can ignore its own echo. */
+  const typedBySelection = useRef<string | null>(null);
+  /** Query → hits, for the length of this visit. Backspacing is free. */
+  const suggestCache = useRef(new Map<string, SearchHit[]>());
   const [searchMsg, setSearchMsg] = useState("");
   const [results, setResults] = useState<SearchHit[]>([]);
   const [searchPin, setSearchPin] = useState<SearchHit | null>(null);
@@ -363,9 +367,65 @@ export function RoutesScreen() {
     setFollowPaused(true);
     setSearchPin(hit);
     setResults([]);
+    // Choosing a result writes its name into the box, which would otherwise
+    // read as fresh typing and immediately re-open the suggestions underneath
+    // the thing just chosen. Remembering the text we wrote lets the type-ahead
+    // ignore exactly that one change.
+    typedBySelection.current = hit.label;
     setLocQuery(hit.label);
     map?.setView([hit.lat, hit.lng], 16, { animate: true });
   };
+
+  /**
+   * Suggestions while typing.
+   *
+   * Nominatim asks for no more than one request a second and searchPlaces makes
+   * two per query — a bounded local search and a global one — so a request per
+   * keystroke would be both rude and useless: six of the eight would be
+   * obsolete before they landed.
+   *
+   * Four things keep it to roughly one search per pause in typing:
+   *   debounce      nothing fires until the driver stops for 450ms
+   *   floor         under three characters is not a query, it is a prefix
+   *   abort         a new keystroke cancels the request in flight, so the
+   *                 network is never carrying two answers to the same box
+   *   cache         re-typing, backspacing and re-adding a letter is free
+   *
+   * Submitting still runs the full search — this only fills the list early.
+   */
+  useEffect(() => {
+    const q = locQuery.trim();
+
+    /* Ignore the echo of our own write, ONCE. Leaving the guard armed meant the
+       text of whatever was last selected could never be searched again — retype
+       "Linking Road" deliberately and no suggestions would ever come back. */
+    if (typedBySelection.current === locQuery) { typedBySelection.current = null; return; }
+    if (q.length < 3) { if (!q) setResults([]); return; }
+
+    const cached = suggestCache.current.get(q);
+    if (cached) { setResults(cached); return; }
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const centre = map?.getCenter();
+        const near = centre ? { lat: centre.lat, lng: centre.lng } : currentLocation;
+        const hits = await searchPlaces(q, near, controller.signal);
+        if (controller.signal.aborted) return;
+        suggestCache.current.set(q, hits);
+        setResults(hits.slice(0, 6));
+      } catch {
+        /* Aborted, offline, or the geocoder said no. The driver can still press
+           search, so there is nothing to announce for a suggestion that simply
+           did not arrive. */
+      }
+    }, 450);
+
+    return () => { window.clearTimeout(timer); controller.abort(); };
+    // map is deliberately absent: re-running every suggestion because the
+    // driver panned would fire a search per frame of a drag.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locQuery]);
 
   /**
    * Leaving a page drops what belonged to it.
@@ -901,7 +961,13 @@ export function RoutesScreen() {
                   </ol>
                 </>
               ) : (
-                <p className="sv-directions-meta">{t("sv_noRoute")}</p>
+                /* Two different absences, and they are not interchangeable.
+                   Without a fix on the driver no route was ever requested, so
+                   claiming none was found blames the roads for a permission
+                   the app never got. */
+                <p className="sv-directions-meta">
+                  {ownPositionKnown ? t("sv_noRoute") : t("sv_routeNeedsLocation")}
+                </p>
               )}
             </div>
           ) : null}

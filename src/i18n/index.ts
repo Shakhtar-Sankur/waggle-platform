@@ -175,6 +175,11 @@ const en = {
   st_minsAgo: "{n}m ago",
   st_hoursAgo: "{n}h ago",
   st_close: "Close",
+  /* Shown where the turn list would be when the app has no fix on the driver.
+     Distinct from sv_noRoute — "no road route found" is a claim that somebody
+     looked, and with no starting point nobody did. Saying the wrong one sends a
+     driver hunting for a road problem that does not exist. */
+  sv_routeNeedsLocation: "Turn on location to get directions here",
 
   settings_language: "Language",
   /* Shown beside a language that does not yet translate the whole app. Kept to
