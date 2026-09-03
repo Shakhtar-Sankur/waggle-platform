@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { useT } from "../i18n";
 import { resolveCountry } from "../i18n/region";
 import { useProfileStore } from "../stores/useProfileStore";
-import type { WorkAppId } from "../types";
+import type { WorkApp, WorkAppId } from "../types";
 import { localAppCount, searchWorkApps } from "../utils/workApps";
 import { Modal } from "./ui/Modal";
 
@@ -41,27 +41,63 @@ export function WorkAppPicker({ open, onClose }: WorkAppPickerProps) {
         />
       </div>
 
-      {/* Platforms operating where the driver is come first. */}
-      {!query && localCount > 0 ? (
-        <p className="app-group-label">{t("picker_nearYou")}</p>
-      ) : null}
+      {/* workAppsForCountry returns local platforms first, then the rest — so
+          the first localCount entries are the ones that actually operate here.
+          The heading used to sit above the WHOLE grid, which meant a driver in
+          New York read "Available where you are" over Angkas, a Manila
+          motorcycle service, and BigBasket, an Indian grocer. The list was
+          right; the label was covering things it did not describe.
 
+          While a search is running the split is dropped: the driver typed a
+          name, and the answer is matches, not geography. */}
       {apps.length ? (
-        <div className="app-choice-grid scrollable">
-          {apps.map((app) => (
-            <button
-              className={`app-choice ${activeApp === app.id ? "selected" : ""}`}
-              key={app.id}
-              onClick={() => selectApp(app.id)}
-            >
-              <WorkAppMark app={app} size={30} />
-              <strong>{app.name}</strong>
-            </button>
-          ))}
-        </div>
+        <>
+          {!query && localCount > 0 ? (
+            <>
+              <p className="app-group-label">{t("picker_nearYou")}</p>
+              <AppGrid apps={apps.slice(0, localCount)} activeApp={activeApp} onPick={selectApp} />
+              {apps.length > localCount ? (
+                <>
+                  <p className="app-group-label">{t("picker_elsewhere")}</p>
+                  <AppGrid apps={apps.slice(localCount)} activeApp={activeApp} onPick={selectApp} />
+                </>
+              ) : null}
+            </>
+          ) : (
+            <AppGrid apps={apps} activeApp={activeApp} onPick={selectApp} />
+          )}
+        </>
       ) : (
         <p className="app-choice-empty">{t("picker_noMatch")}</p>
       )}
     </Modal>
+  );
+}
+
+/** One grid of platform tiles. Extracted only so the two halves of the split
+ *  list cannot drift apart in styling or behaviour. */
+function AppGrid({
+  apps,
+  activeApp,
+  onPick,
+}: {
+  apps: WorkApp[];
+  /** null when the driver has not chosen one yet — a new account has no app. */
+  activeApp: WorkAppId | null;
+  onPick: (id: WorkAppId) => void;
+}) {
+  return (
+    <div className="app-choice-grid scrollable">
+      {apps.map((app) => (
+        <button
+          className={`app-choice ${activeApp === app.id ? "selected" : ""}`}
+          key={app.id}
+          onClick={() => onPick(app.id)}
+        >
+          <WorkAppMark app={app} size={30} />
+          <strong>{app.name}</strong>
+        </button>
+      ))}
+    </div>
   );
 }

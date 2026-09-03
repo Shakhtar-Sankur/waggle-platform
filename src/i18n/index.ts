@@ -295,6 +295,10 @@ const en = {
   consent_agree: "I Agree & Continue",
   picker_search: "Search platforms",
   picker_nearYou: "Available where you are",
+  /* The rest of the catalogue. Needed because "Available where you are" was
+     sitting above the WHOLE list, so a driver in New York was told Angkas — a
+     Manila motorcycle service — operated on their street. */
+  picker_elsewhere: "Everywhere else",
   picker_noMatch: "No platform matches that name.",
   profile_showAllApps: "Show all platforms ({count} more)",
   profile_showFewerApps: "Show fewer",
