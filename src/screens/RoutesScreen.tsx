@@ -402,17 +402,24 @@ export function RoutesScreen() {
     if (typedBySelection.current === locQuery) { typedBySelection.current = null; return; }
     if (q.length < 3) { if (!q) setResults([]); return; }
 
-    const cached = suggestCache.current.get(q);
-    if (cached) { setResults(cached); return; }
+    /* The key is the text AND roughly where it was typed, to about 11km.
+       Keyed on text alone, these suggestions followed the driver between
+       cities: search "Lombard" in one place, drive to another, type it again
+       and the first city's answer came straight back out of the cache. The
+       results are location-biased, so the location belongs in the key. */
+    const centre = map?.getCenter();
+    const near = centre ? { lat: centre.lat, lng: centre.lng } : currentLocation;
+    const cacheKey = `${q}@${near.lat.toFixed(1)},${near.lng.toFixed(1)}`;
+
+    const cached = suggestCache.current.get(cacheKey);
+    if (cached) { setResults(cached.slice(0, 6)); return; }
 
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       try {
-        const centre = map?.getCenter();
-        const near = centre ? { lat: centre.lat, lng: centre.lng } : currentLocation;
         const hits = await searchPlaces(q, near, controller.signal);
         if (controller.signal.aborted) return;
-        suggestCache.current.set(q, hits);
+        suggestCache.current.set(cacheKey, hits);
         setResults(hits.slice(0, 6));
       } catch {
         /* Aborted, offline, or the geocoder said no. The driver can still press

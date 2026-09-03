@@ -67,6 +67,18 @@ export function distanceKm(a: Near, b: Near): number {
 const NEARBY_KM = 60;
 
 /**
+ * How close counts as "the city I am standing in", which is a different and
+ * much tighter question than "is this relevant to me".
+ *
+ * NEARBY_KM is 60km because a driver's day covers a metro area. That radius is
+ * wrong for deciding whether a search FOUND anything local: from Fisherman's
+ * Wharf, the hamlet of Lombard in Napa County is 50km away and therefore
+ * "nearby" — so a retry gated on NEARBY_KM concluded it had found the driver's
+ * street and never fired, which is exactly the bug it was written to fix.
+ */
+const SAME_CITY_KM = 15;
+
+/**
  * Rank hits for a driver standing at `near`.
  *
  * In order:
@@ -147,6 +159,30 @@ interface NominatimRow {
 }
 
 /**
+ * Words that already say "this is a road", in the languages this app ships in.
+ * If the driver typed one of these there is nothing to add, and appending
+ * "street" to "Lombard Street" only makes the query worse.
+ */
+const ROAD_WORDS = new Set([
+  "street", "st", "road", "rd", "avenue", "ave", "lane", "ln", "drive", "dr",
+  "boulevard", "blvd", "highway", "hwy", "expressway", "freeway", "way", "walk",
+  "circle", "court", "ct", "place", "pl", "terrace", "square", "sq", "parkway",
+  "pkwy", "bridge", "flyover", "bypass", "crossing", "cross", "main",
+  // India, where most of the driver base is: these are as common as "street".
+  "marg", "path", "gali", "sarani", "chowk", "nagar", "pura", "puram", "sadak",
+  // Elsewhere in the app's languages.
+  "calle", "rua", "strasse", "straße", "rue", "via", "jalan", "kalye", "thanon",
+]);
+
+/** Does the query already name a road type? */
+function mentionsRoad(query: string): boolean {
+  return query
+    .toLowerCase()
+    .split(/[^\p{L}\p{N}]+/u)
+    .some((w) => ROAD_WORDS.has(w));
+}
+
+/**
  * OpenStreetMap's own geocoder. Free, no key, worldwide, and the reason this
  * app can search Kolkata, Madrid and New York today without an account.
  *
@@ -166,31 +202,54 @@ export const NominatimProvider: PlacesProvider = {
     const d = 1.5; // ~165km box around the driver
     const viewbox = [near.lng - d, near.lat + d, near.lng + d, near.lat - d].join(",");
 
-    const fetchHits = async (bounded: 0 | 1): Promise<NominatimRow[]> => {
+    const fetchHits = async (bounded: 0 | 1, term = query): Promise<NominatimRow[]> => {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?format=json&limit=12&addressdetails=1` +
-          `&viewbox=${viewbox}&bounded=${bounded}&q=${encodeURIComponent(query)}`,
+          `&viewbox=${viewbox}&bounded=${bounded}&q=${encodeURIComponent(term)}`,
         { headers: { Accept: "application/json" }, signal },
       );
       const body = await response.json();
       return Array.isArray(body) ? body : [];
     };
 
+    const toHits = (rows: NominatimRow[]): PlaceHit[] =>
+      rows.map((r) => {
+        const parts = (r.display_name || "").split(",").map((s) => s.trim());
+        const isAdmin = r.class === "boundary" && r.type === "administrative";
+        return {
+          lat: Number(r.lat),
+          lng: Number(r.lon),
+          label: r.name || parts[0] || query,
+          sub: parts.slice(1, 4).join(", "),
+          isMajorPlace: isAdmin || (r.class === "place" && MAJOR_TYPES.includes(r.type ?? "")),
+          isPlace: isAdmin || (r.class === "place" && PLACE_TYPES.includes(r.type ?? "")),
+        };
+      });
+
     // In parallel, so the driver is not waiting twice.
     const [nearby, worldwide] = await Promise.all([fetchHits(1), fetchHits(0)]);
+    const hits = toHits([...nearby, ...worldwide]);
 
-    return [...nearby, ...worldwide].map((r) => {
-      const parts = (r.display_name || "").split(",").map((s) => s.trim());
-      const isAdmin = r.class === "boundary" && r.type === "administrative";
-      return {
-        lat: Number(r.lat),
-        lng: Number(r.lon),
-        label: r.name || parts[0] || query,
-        sub: parts.slice(1, 4).join(", "),
-        isMajorPlace: isAdmin || (r.class === "place" && MAJOR_TYPES.includes(r.type ?? "")),
-        isPlace: isAdmin || (r.class === "place" && PLACE_TYPES.includes(r.type ?? "")),
-      };
-    });
+    /* A bare road name is ambiguous to OpenStreetMap in a way it is not to the
+       person standing on it. "Lombard" from Fisherman's Wharf returns exactly
+       one row — a hamlet in Napa County, 50km north — and Lombard Street, two
+       blocks from the driver, is not in the response AT ALL. No amount of
+       ranking recovers a result that was never returned, and drivers type road
+       names without the road word constantly.
+
+       So when nothing came back from anywhere near the driver, and they did not
+       already say what kind of road they meant, ask once more with "street"
+       added. Only on that miss: the ordinary search still costs two requests,
+       which matters against a free geocoder that asks for one call a second. */
+    if (!mentionsRoad(query) && !hits.some((h) => distanceKm(near, h) <= SAME_CITY_KM)) {
+      const retried = toHits(await fetchHits(1, `${query} street`));
+      // Appended rather than prepended. rankHits decides what wins, and a real
+      // distant match for what the driver actually typed — "Madrid" from
+      // Mumbai — must still be able to beat a street the retry invented.
+      return [...hits, ...retried];
+    }
+
+    return hits;
   },
 };
 
