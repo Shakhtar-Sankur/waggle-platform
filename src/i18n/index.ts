@@ -425,6 +425,17 @@ const en = {
   notif_newMessage: "New message",
   notif_gpsActive: "GPS tracking active",
   notif_gpsActiveBody: "Your route and earnings update from live GPS.",
+  // The Android foreground-service notification, which sits in the shade for
+  // the whole trip. It is the driver's assurance that recording is still
+  // running with the screen off — and, equally, that it is running at all, so
+  // it says plainly what is being collected.
+  track_notifTitle: "Recording your trip",
+  track_notifBody: "Waggle is tracking your distance in the background.",
+  // Shown when fix after fix is too imprecise to count. The driver's distance
+  // has stopped moving and they are entitled to know why, and that it is the
+  // signal rather than the app.
+  notif_gpsWeak: "Weak GPS signal",
+  notif_gpsWeakBody: "Your location is too imprecise to record distance. Move somewhere with a clearer view of the sky.",
   notif_sessionEnded: "Session ended",
   notif_sessionEndedBody: "App detection and tracking stopped.",
   notif_workAppUpdated: "Work app updated",

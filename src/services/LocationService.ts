@@ -4,6 +4,7 @@ import { defaultCenterFor } from "../config/geo";
 import { resolveCountryForLocation } from "../i18n/region";
 import type { LocationPoint } from "../types";
 import { translate } from "../i18n";
+import { TripTracking } from "./TripTracking";
 
 /**
  * Above this, a pair of fixes is not travel — it is a GPS glitch, or the join
@@ -63,6 +64,27 @@ export const LocationService = {
       if (permission.location === "denied") {
         throw new Error(translate("err_locationDenied"));
       }
+
+      /* Hand the trip to a foreground service rather than watching from here.
+         An in-process watch stops the moment the screen goes off — Android 10+
+         cuts location to any app with no visible activity and no location
+         service — so the driver who pockets their phone and drives for four
+         hours used to come back to the distance they had when it locked, with
+         the panel still reading "Recording activity". The service keeps
+         collecting and buffering; this side drains it. See TripTrackingService. */
+      try {
+        await TripTracking.start({
+          title: translate("track_notifTitle"),
+          text: translate("track_notifBody"),
+        });
+        return drainFromService(onUpdate);
+      } catch {
+        /* The service would not start. Rather than tell the driver nothing and
+           record nothing, fall through to the in-process watch below: it is
+           worse — it stops at the lock screen — but it is not silence, and the
+           screen-on case still works. */
+      }
+
       const watchId = await Geolocation.watchPosition(
         {
           enableHighAccuracy: true,
@@ -142,8 +164,65 @@ export const LocationService = {
   },
 };
 
-function toPoint(lat: number, lng: number, accuracy?: number): LocationPoint {
-  return { lat, lng, accuracy, timestamp: Date.now() };
+function toPoint(lat: number, lng: number, accuracy?: number, timestamp?: number): LocationPoint {
+  // `timestamp` is optional because a live fix arrives as it happens, so "now"
+  // is the truth. A fix replayed out of the service buffer is NOT now — it may
+  // be an hour old — and must carry the time it was observed. See TripFix.
+  return { lat, lng, accuracy, timestamp: timestamp ?? Date.now() };
+}
+
+/**
+ * How often to collect what the foreground service has recorded.
+ *
+ * Only meaningful while the app is on screen: a backgrounded WebView has its
+ * timers throttled to nothing, which is exactly why the service buffers instead
+ * of pushing. Two seconds keeps the on-screen distance honest while the driver
+ * is looking at it, and costs one bridge call.
+ */
+const DRAIN_INTERVAL_MS = 2000;
+
+/**
+ * Feed the store from the foreground service's buffer.
+ *
+ * Polling rather than an event per fix, deliberately. A live event and a
+ * buffered copy of the same fix are impossible to reconcile — the fix is
+ * counted, then drained and counted again — and since earnings are distance
+ * times rate, double-counting is not a cosmetic bug. One path in, one answer.
+ *
+ * The visibility listener is what makes the pocket case work: while the phone
+ * is locked nothing here runs, the service quietly fills its buffer, and the
+ * first thing that happens on unlock is a drain of everything missed, each fix
+ * still carrying the time it was recorded.
+ */
+function drainFromService(onUpdate: (point: LocationPoint) => void): () => void {
+  let stopped = false;
+
+  const drain = async () => {
+    if (stopped) return;
+    try {
+      const { fixes } = await TripTracking.drain();
+      for (const fix of fixes) {
+        onUpdate(toPoint(fix.lat, fix.lng, fix.accuracy, fix.timestamp));
+      }
+    } catch {
+      /* The bridge is asleep or the service is gone. The buffer is not cleared
+         on a failed drain, so nothing is lost — the next one collects it. */
+    }
+  };
+
+  const timer = window.setInterval(() => void drain(), DRAIN_INTERVAL_MS);
+  const onVisibility = () => {
+    if (document.visibilityState === "visible") void drain();
+  };
+  document.addEventListener("visibilitychange", onVisibility);
+  void drain();
+
+  return () => {
+    stopped = true;
+    window.clearInterval(timer);
+    document.removeEventListener("visibilitychange", onVisibility);
+    void TripTracking.stop().catch(() => undefined);
+  };
 }
 
 function fallbackPoint(): LocationPoint {

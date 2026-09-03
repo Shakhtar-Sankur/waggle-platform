@@ -24,6 +24,22 @@
 
         </activity>
 
+        <!--
+          Keeps a trip recording while the phone is locked. Without it, Android
+          10+ stops delivering fixes the moment the app leaves the screen, and a
+          driver's distance — and therefore their pay — quietly stops climbing
+          while the panel still says it is recording.
+
+          stopWithTask=false so ending the session is a deliberate act. Swiping
+          the app away mid-trip should not silently discard the rest of it; the
+          notification stays, and the driver stops the trip when it is over.
+        -->
+        <service
+            android:name=".TripTrackingService"
+            android:foregroundServiceType="location"
+            android:exported="false"
+            android:stopWithTask="false" />
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"
@@ -42,4 +58,22 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.CAMERA" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!--
+      Recording a trip with the screen off.
+
+      ACCESS_BACKGROUND_LOCATION is deliberately NOT here. It grants location
+      when the user has asked for nothing, which this app never does — there is
+      no tracking without a trip and no trip without the driver pressing Start —
+      and Google Play gates it behind a written declaration and a manual review.
+      A location foreground service started while the app is visible gives
+      full-rate access with the screen off, which is the whole requirement, and
+      needs neither.
+
+      FOREGROUND_SERVICE_LOCATION is the Android 14+ half: from targetSdk 34 the
+      typed permission must be held to start a typed service, and this app
+      targets 36.
+    -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
 </manifest>
