@@ -148,6 +148,9 @@ const en = {
   home_trackedToday: "tracked today",
   income_title: "Daily Income",
   income_live: "Updating live as you deliver",
+  // Shown after a shift ends, when the figures are today's total rather
+  // than a running count.
+  income_sinceToday: "Today so far",
   income_perHour: "per hour",
   income_delivered: "delivered",
   income_perKm: "per km",

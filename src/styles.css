@@ -4403,6 +4403,19 @@ body::before {
   fill: var(--foreground);
 }
 .goal-info h3 {
+  /* Same treatment as .section-heading h3, which this was missing. Left as a
+     plain block, the icon sat on the text BASELINE — so its centre rode about
+     six pixels above the centre of the words beside it, and the heading read as
+     slightly dropped. Every other icon-and-title pair on this screen is an
+     inline-flex row centred on the cross axis; this one is now too.
+
+     flex, not inline-flex: .section-heading h3 can be inline because it sits in
+     its own row, but this heading is followed by the amount. Making it inline
+     pulled "₹39" up onto the same line as "Daily Goal". flex aligns the icon
+     identically and stays block-level, so the amount keeps its own line. */
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 16px;
   margin-bottom: 4px;
 }

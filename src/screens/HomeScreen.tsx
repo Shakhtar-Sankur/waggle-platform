@@ -38,7 +38,13 @@ export function HomeScreen() {
   const goalProgress = Math.min(100, Math.round((earnings / dailyGoal) * 100));
   // The income dashboard is only visible while a delivery session is actively running.
   // The moment tracking stops, it returns to the "starts when you deliver" state.
-  const deliveringStarted = isTracking;
+  /* Shown whenever there is income to show, not only while recording.
+     Gated on isTracking alone, this told a driver who had just finished a shift
+     that "your income starts when you deliver" — on the same screen as ₹39
+     EARNINGS and a daily goal reading ₹39. Stopping tracking made the app
+     forget money it had already counted, and of the two cards contradicting
+     each other the wrong one was the reassuring one. */
+  const deliveringStarted = isTracking || totalDistanceKm > 0;
   const perHour = elapsedMinutes >= 1 ? earnings / (elapsedMinutes / 60) : 0;
   const hour = new Date().getHours();
   const greetKey = hour < 12 ? "greet_morning" : hour < 18 ? "greet_afternoon" : "greet_evening";
@@ -157,9 +163,10 @@ export function HomeScreen() {
           <div className="section-heading">
             <div>
               <h3><TrendingUp size={19} /> {t("income_title")}</h3>
-              <p>{t("income_live")}</p>
+              <p>{t(isTracking ? "income_live" : "income_sinceToday")}</p>
             </div>
-            <span className="live-pill">● LIVE</span>
+            {/* LIVE is a claim about this second, not about the day. */}
+            {isTracking ? <span className="live-pill">● LIVE</span> : null}
           </div>
           <div className="income-amount">{currencyPrecise(earnings)}</div>
           <div className="income-metrics">
