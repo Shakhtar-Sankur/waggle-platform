@@ -1,4 +1,4 @@
-import { Clock3, MapPin, Settings, Target, TrendingUp, Wallet } from "lucide-react";
+import { Clock3, MapPin, Settings, TrendingUp, Wallet } from "lucide-react";
 import { WorkAppMark } from "../components/WorkAppMark";
 import type { ReactNode } from "react";
 import { useEffect, useState } from "react";
@@ -148,15 +148,15 @@ export function HomeScreen() {
         </div>
       </section>
 
-      <section className="dashboard-card glass-card goal-card">
-        <GoalRing pct={goalProgress} />
-        <div className="goal-info">
-          <h3><Target size={19} /> {t("home_dailyGoal")}</h3>
-          <strong>{currencyPrecise(earnings)}</strong>
-          <p>{t("home_of")} {currency(dailyGoal)} {t("home_target")}</p>
-          <small className="micro-copy" dir="auto">{duration(elapsedMinutes)} {t("home_trackedToday")}</small>
-        </div>
-      </section>
+      {/* The Daily Goal card was removed. It showed the earnings figure, the
+          percentage and the target — all three of which the income card below
+          already carries, including its own progress bar and "N% of your
+          ₹1,500 daily goal". With Today's Journey above it, one screen printed
+          the same rupee figure three times, the distance twice, the rate twice
+          and the goal twice. Three cards were doing two jobs: the day's totals,
+          and what is happening now. The ring was the only thing here that was
+          not a repeat, and a decorative ring is not worth a third recital of
+          the same number. */}
 
       {deliveringStarted ? (
         <section className="dashboard-card glass-card income-card">
@@ -177,16 +177,24 @@ export function HomeScreen() {
               <strong>{elapsedMinutes >= 1 ? currencyPrecise(perHour) : "—"}</strong>
               <small>{t("income_perHour")}</small>
             </div>
-            <div className="income-metric">
-              <span><MapPin size={18} /></span>
-              <strong>{totalDistanceKm.toFixed(1)} km</strong>
-              <small>{t("income_delivered")}</small>
-            </div>
-            <div className="income-metric">
-              <span><Wallet size={18} /></span>
-              <strong>{currencyPrecise(baseRate)}</strong>
-              <small>{t("income_perKm")}</small>
-            </div>
+            {/* Distance and per-km are already on Today's Journey, directly
+                above. While a shift is running they are worth repeating because
+                they are moving; once it ends they are the same numbers printed
+                a third time on one screen. */}
+            {isTracking ? (
+              <>
+                <div className="income-metric">
+                  <span><MapPin size={18} /></span>
+                  <strong>{totalDistanceKm.toFixed(1)} km</strong>
+                  <small>{t("income_delivered")}</small>
+                </div>
+                <div className="income-metric">
+                  <span><Wallet size={18} /></span>
+                  <strong>{currencyPrecise(baseRate)}</strong>
+                  <small>{t("income_perKm")}</small>
+                </div>
+              </>
+            ) : null}
           </div>
           <div className="income-goal">
             <div className="progress-track"><span style={{ width: `${goalProgress}%` }} /></div>
@@ -206,36 +214,6 @@ export function HomeScreen() {
   );
 }
 
-function GoalRing({ pct }: { pct: number }) {
-  const radius = 34;
-  const circumference = 2 * Math.PI * radius;
-  const offset = circumference - (Math.min(100, pct) / 100) * circumference;
-  return (
-    <svg className="goal-ring" width="90" height="90" viewBox="0 0 90 90" aria-hidden>
-      <defs>
-        <linearGradient id="goalGrad" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#ff5a1f" />
-          <stop offset="100%" stopColor="#ff9d3d" />
-        </linearGradient>
-      </defs>
-      <circle cx="45" cy="45" r={radius} fill="none" stroke="var(--muted)" strokeWidth="8" />
-      <circle
-        cx="45"
-        cy="45"
-        r={radius}
-        fill="none"
-        stroke="url(#goalGrad)"
-        strokeWidth="8"
-        strokeLinecap="round"
-        strokeDasharray={circumference}
-        strokeDashoffset={offset}
-        transform="rotate(-90 45 45)"
-        className="goal-ring-fg"
-      />
-      <text x="45" y="50" textAnchor="middle" className="goal-ring-text">{Math.min(100, pct)}%</text>
-    </svg>
-  );
-}
 
 function Stat({
   icon,
