@@ -17,6 +17,11 @@ interface PushRequest {
   userId: string;
   title: string;
   body: string;
+  /** chat | social | location | promo | system. Anything but "system" is
+   *  checked against the driver's notification_prefs before sending. Callers
+   *  that omit it are treated as "system" and always delivered, which keeps
+   *  existing triggers working unchanged. */
+  kind?: string;
   data?: Record<string, string>;
 }
 
@@ -56,6 +61,30 @@ Deno.serve(async (req) => {
   if (!payload.userId || !payload.title || !payload.body) {
     return json({ error: "userId, title and body are required" }, 400);
   }
+
+  /* Does this driver want this kind of notification?
+     Checked HERE and not on the device, because the message below carries a
+     `notification:` payload — Android shows those itself while the app is
+     backgrounded, so the app gets no chance to suppress one. A preference the
+     sender ignores is not a preference.
+
+     A missing row means the driver has never opened the screen, which is
+     treated as everything on: the behaviour the app had before preferences
+     existed. */
+  const kind = String(payload.kind ?? payload.data?.kind ?? "system");
+  if (kind !== "system") {
+    const { data: prefs } = await supabase
+      .from("notification_prefs")
+      .select("chat, social, location, promo")
+      .eq("user_id", payload.userId)
+      .maybeSingle();
+    if (prefs && prefs[kind as keyof typeof prefs] === false) {
+      return json({ sent: 0, message: `Driver has ${kind} notifications off` }, 200);
+    }
+  }
+  /* `system` is deliberately not optional. Account and security notices are
+     not marketing, and an app that lets you mute them has a worse problem than
+     an unwanted notification. */
 
   const { data: tokens, error } = await supabase
     .from("device_tokens")

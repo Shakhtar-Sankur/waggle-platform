@@ -1,9 +1,10 @@
-import { ArrowLeft, CornerUpLeft, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
+import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ReportDialog, type ReportTarget } from "../components/ReportDialog";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { useT } from "../i18n";
 import { MediaService, type PickedPhoto } from "../services/MediaService";
@@ -69,6 +70,10 @@ export function MessagesScreen() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const blockUser = useCommunityStore((state) => state.blockUser);
+  const blockedIds = useCommunityStore((state) => state.blocked);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
+  const [confirmBlock, setConfirmBlock] = useState<string | null>(null);
 
   /* Voice notes. The recorder lives in a ref rather than state because it is
      a live object with a microphone attached — putting it in state would
@@ -166,8 +171,17 @@ export function MessagesScreen() {
   // Only people who actually accepted a connection. You cannot add a stranger
   // to a group chat.
   const friends = useMemo(
-    () => workers.filter((w) => connectionFor(connections, user?.id, w.id).state === "connected"),
-    [workers, connections, user],
+    () =>
+      workers.filter(
+        (w) =>
+          connectionFor(connections, user?.id, w.id).state === "connected" &&
+          // Someone you blocked must not be offerable as a group member. The
+          // block already hides their posts, their chat and their messages;
+          // leaving them selectable here would let you build a group around a
+          // person you cannot see, and then wonder why the group is silent.
+          !blockedIds.includes(w.id),
+      ),
+    [workers, connections, user, blockedIds],
   );
 
   // Keep chats fresh (RLS makes chat too complex for live-broadcast, so we
@@ -229,6 +243,17 @@ export function MessagesScreen() {
   const unreadTotal = threads.filter((thread) => (thread.unreadCount || 0) > 0).length;
 
   const chatList = [...threads]
+    /* A blocked person's direct chat leaves the list entirely. Blocking that
+       left the conversation sitting there, with their name and their last
+       message as the preview, would be a block in name only — the thing you
+       blocked to stop seeing is the first thing on the screen. Groups stay:
+       leaving a group is a separate decision, and their messages inside it are
+       filtered below instead. */
+    .filter((thread) => {
+      if (thread.isGroup) return true;
+      const other = otherWorkerOf(thread);
+      return !(other && blockedIds.includes(other.id));
+    })
     .filter((thread) => displayTitle(thread).toLowerCase().includes(query.toLowerCase()))
     .filter((thread) =>
       chatFilter === "unread" ? thread.unreadCount > 0
@@ -241,6 +266,10 @@ export function MessagesScreen() {
   const openOther = otherWorkerOf(openThread);
   const openMessages = messages
     .filter((message) => message.threadId === openId)
+    // Inside a group, a blocked member's messages are hidden while everyone
+    // else's stay. This is why blocking is filtered on the client rather than
+    // in the query: the same thread has to read differently for each member.
+    .filter((message) => !blockedIds.includes(message.senderId))
     .sort((a, b) => a.createdAt - b.createdAt);
 
   // WhatsApp scroll behaviour: opening a chat lands on the LATEST message, and
@@ -487,10 +516,10 @@ export function MessagesScreen() {
                 );
               })()}
             </div>
-            {/* Only shown for groups. A one-to-one chat has nothing to offer
-                here, and a menu that opens onto nothing is worse than no menu —
-                which is what this button was until now: no handler at all. */}
-            {openThread.isGroup ? (
+            {/* Shown for a group (members, leave) and now for a direct chat
+                too (report, block). Somebody being harassed in a DM should not
+                have to go and find the sender in Community to stop it. */}
+            {openThread.isGroup || openOther ? (
               <button
                 type="button"
                 className="wa-back"
@@ -517,22 +546,58 @@ export function MessagesScreen() {
                 onClick={() => setMenuOpen(false)}
               />
               <div className="wa-menu" role="menu">
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="wa-menu-item"
-                  onClick={() => { setMenuOpen(false); setMembersOpen(true); }}
-                >
-                  <UsersRound size={16} /> {t("wa_viewMembers")}
-                </button>
-                <button
-                  type="button"
-                  role="menuitem"
-                  className="wa-menu-item danger"
-                  onClick={() => { setMenuOpen(false); setConfirmLeave(true); }}
-                >
-                  <LogOut size={16} /> {t("wa_leaveGroup")}
-                </button>
+                {openThread.isGroup ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="wa-menu-item"
+                    onClick={() => { setMenuOpen(false); setMembersOpen(true); }}
+                  >
+                    <UsersRound size={16} /> {t("wa_viewMembers")}
+                  </button>
+                ) : null}
+
+                {openOther ? (
+                  <>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="wa-menu-item"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setReportTarget({
+                          type: "user",
+                          id: openOther.id,
+                          userId: openOther.id,
+                          authorName: openOther.name,
+                        });
+                      }}
+                    >
+                      <Flag size={16} /> {t("mod_reportUser")}
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="wa-menu-item danger"
+                      onClick={() => {
+                        setMenuOpen(false);
+                        setConfirmBlock(openOther.id);
+                      }}
+                    >
+                      <ShieldOff size={16} /> {t("mod_blockUser")}
+                    </button>
+                  </>
+                ) : null}
+                {openThread.isGroup ? (
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="wa-menu-item danger"
+                    onClick={() => { setMenuOpen(false); setConfirmLeave(true); }}
+                  >
+                    <LogOut size={16} /> {t("wa_leaveGroup")}
+                  </button>
+                ) : null}
               </div>
             </>
           ) : null}
@@ -602,6 +667,25 @@ export function MessagesScreen() {
                       >
                         <SmilePlus size={15} />
                       </button>
+                      {/* Someone else's message is the one you might need to
+                          report; your own is the one you can delete. */}
+                      {!isMe ? (
+                        <button
+                          type="button"
+                          className="wa-act"
+                          aria-label={t("mod_reportMessage")}
+                          onClick={() =>
+                            setReportTarget({
+                              type: "message",
+                              id: message.id,
+                              userId: message.senderId,
+                              excerpt: message.body,
+                            })
+                          }
+                        >
+                          <Flag size={15} />
+                        </button>
+                      ) : null}
                       {/* Only your own messages can be removed (RLS enforces it too). */}
                       {isMe ? (
                         <button
@@ -929,6 +1013,34 @@ export function MessagesScreen() {
             document.body,
           )
         : null}
+
+      <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
+
+      {/* Blocking from a chat is confirmed rather than instant: the control
+          sits one tap from "view members" and an accidental block silently
+          empties a conversation. */}
+      <Modal
+        open={!!confirmBlock}
+        onClose={() => setConfirmBlock(null)}
+        title={t("mod_blockUser")}
+        description={t("mod_blockSure")}
+      >
+        <div className="report-done">
+          <Button
+            className="wide-action"
+            onClick={async () => {
+              const id = confirmBlock;
+              setConfirmBlock(null);
+              if (id) { try { await blockUser(id); } catch { /* store reverts */ } }
+            }}
+          >
+            <ShieldOff size={17} /> {t("mod_block")}
+          </Button>
+          <Button variant="outline" className="wide-action" onClick={() => setConfirmBlock(null)}>
+            {t("sv_cancel")}
+          </Button>
+        </div>
+      </Modal>
     </main>
   );
 }

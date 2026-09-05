@@ -2,7 +2,9 @@ import {
   Check,
   Clapperboard,
   ExternalLink,
+  Bookmark,
   Facebook,
+  Flag,
   Heart,
   Home,
   Image as ImageIcon,
@@ -15,8 +17,8 @@ import {
   Send,
   Share2,
   Smile,
-  Star,
   Repeat2,
+  ShieldOff,
   Trash2,
   UserPlus,
   Users,
@@ -33,6 +35,7 @@ import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
+import { ReportDialog, type ReportTarget } from "../components/ReportDialog";
 import { BeeMark } from "../components/Wordmark";
 import { Stories } from "../components/Stories";
 import { MediaService, type PickedPhoto, type PickedVideo } from "../services/MediaService";
@@ -152,6 +155,12 @@ export function CommunityScreen() {
   const [tagged, setTagged] = useState<Worker[]>([]);
   const [tagOpen, setTagOpen] = useState(false);
   const [hidden, setHidden] = useState<Set<string>>(new Set());
+  const blocked = useCommunityStore((state) => state.blocked);
+  const bookmarks = useCommunityStore((state) => state.bookmarks);
+  const toggleBookmark = useCommunityStore((state) => state.toggleBookmark);
+  const blockUser = useCommunityStore((state) => state.blockUser);
+  const unblockUser = useCommunityStore((state) => state.unblockUser);
+  const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
   const [shareFb, setShareFb] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
@@ -182,15 +191,21 @@ export function CommunityScreen() {
 
   const firstName = user?.fullName.split(" ")[0] ?? "Driver";
 
-  // Feed filtered by the search box (author or text) and any posts the user hid.
+  /* Feed filtered by the search box (author or text), any posts the user hid,
+     and anyone they have blocked.
+     Blocking is filtered HERE rather than in the query: the feed is also served
+     from the local cache and from optimistic inserts, so a filter that only
+     lived in the SQL would let a blocked driver reappear the moment the app was
+     offline or a post arrived over realtime. */
   const visiblePosts = useMemo(() => {
     const q = query.trim().toLowerCase();
     return posts.filter(
       (post) =>
         !hidden.has(post.id) &&
+        !(post.userId && blocked.includes(post.userId)) &&
         (!q || post.author.toLowerCase().includes(q) || (post.body ?? "").toLowerCase().includes(q)),
     );
-  }, [posts, hidden, query]);
+  }, [posts, hidden, query, blocked]);
 
   // Debounced people search. Every keystroke would otherwise be a round trip,
   // and a slow reply for "ma" must never land after the reply for "maria" and
@@ -224,22 +239,30 @@ export function CommunityScreen() {
 
   const hidePost = (id: string) => setHidden((prev) => new Set(prev).add(id));
 
+  /* Everyone you blocked is absent from all three lists. A block that only hid
+     their posts would still leave them sending you connection requests, sitting
+     in your friends list, and turning up in discovery — which is not a block,
+     it is a mute on one surface. */
+  const visibleWorkers = useMemo(
+    () => workers.filter((w) => !blocked.includes(w.id)),
+    [workers, blocked],
+  );
   const requests = useMemo(
-    () => workers.filter((w) => connectionFor(connections, user?.id, w.id).state === "pending_in"),
-    [connections, user?.id, workers],
+    () => visibleWorkers.filter((w) => connectionFor(connections, user?.id, w.id).state === "pending_in"),
+    [connections, user?.id, visibleWorkers],
   );
   const friends = useMemo(
-    () => workers.filter((w) => connectionFor(connections, user?.id, w.id).state === "connected"),
-    [connections, user?.id, workers],
+    () => visibleWorkers.filter((w) => connectionFor(connections, user?.id, w.id).state === "connected"),
+    [connections, user?.id, visibleWorkers],
   );
   const suggestions = useMemo(
     () =>
-      workers.filter((w) => {
+      visibleWorkers.filter((w) => {
         const state = connectionFor(connections, user?.id, w.id).state;
         return (state === "none" || state === "pending_out") &&
           w.name.toLowerCase().includes(query.toLowerCase());
       }),
-    [connections, query, user?.id, workers],
+    [connections, query, user?.id, visibleWorkers],
   );
   // A reel is a video. Photo posts belong in the feed, not here — showing them
   // as reels is what made the tab misleading in the first place.
@@ -551,9 +574,29 @@ export function CommunityScreen() {
                         <Trash2 size={16} />
                       </button>
                     ) : (
-                      <button className="tw-more" aria-label={t("fb_hidePost")} onClick={() => hidePost(post.id)}>
-                        <MoreHorizontal size={18} />
-                      </button>
+                      <>
+                        {/* Hide is local and always was; report and block are
+                            the two that actually do something about the post
+                            and the person behind it. */}
+                        <button className="tw-more" aria-label={t("fb_hidePost")} onClick={() => hidePost(post.id)}>
+                          <MoreHorizontal size={18} />
+                        </button>
+                        <button
+                          className="tw-more"
+                          aria-label={t("mod_reportPost")}
+                          onClick={() =>
+                            setReportTarget({
+                              type: "post",
+                              id: post.id,
+                              userId: post.userId,
+                              authorName: post.author,
+                              excerpt: post.body,
+                            })
+                          }
+                        >
+                          <Flag size={16} />
+                        </button>
+                      </>
                     )}
                   </div>
 
@@ -599,6 +642,18 @@ export function CommunityScreen() {
                       <Heart size={17} fill={post.likedByMe ? "currentColor" : "none"} />
                       {post.likes ? <span>{post.likes}</span> : null}
                     </button>
+                    {/* Save sits beside share rather than in the ⋯ menu: it is
+                        the action people take most on a post they want later,
+                        and burying it behind a menu is how a feature nobody
+                        finds gets built. No count — a save is private. */}
+                    <button
+                      className={bookmarks.includes(post.id) ? "tw-act tw-saved" : "tw-act"}
+                      aria-label={t("fb_save")}
+                      aria-pressed={bookmarks.includes(post.id)}
+                      onClick={() => void toggleBookmark(post.id).catch(() => {})}
+                    >
+                      <Bookmark size={16} fill={bookmarks.includes(post.id) ? "currentColor" : "none"} />
+                    </button>
                     <button className="tw-act tw-share" aria-label={t("fb_share")} onClick={() => sharePost(post.body)}>
                       <Share2 size={16} />
                     </button>
@@ -606,7 +661,9 @@ export function CommunityScreen() {
 
                 {openComments === post.id ? (
                   <div className="fb-comments">
-                    {(comments[post.id] ?? []).map((comment) => (
+                    {(comments[post.id] ?? [])
+                      .filter((comment) => !(comment.userId && blocked.includes(comment.userId)))
+                      .map((comment) => (
                       <div className="fb-comment" key={comment.id}>
                         <span className="fb-avatar sm">{comment.initials}</span>
                         <div className="fb-comment-bubble">
@@ -615,7 +672,7 @@ export function CommunityScreen() {
                         </div>
                       </div>
                     ))}
-                    {!(comments[post.id] ?? []).length ? (
+                    {!(comments[post.id] ?? []).filter((comment) => !(comment.userId && blocked.includes(comment.userId))).length ? (
                       <p className="fb-comment-empty">{t("fb_firstComment")}</p>
                     ) : null}
                     <form className="fb-comment-form" onSubmit={(event) => submitComment(event, post.id)}>
@@ -780,7 +837,14 @@ export function CommunityScreen() {
                       <span className="fb-avatar lg">{initials(worker.name)}</span>
                       <div>
                         <strong>{worker.name}</strong>
-                        <p>{getWorkApp(worker.app)?.logo} {getWorkApp(worker.app)?.name} · {worker.rating.toFixed(1)} ★</p>
+                        {/* No star. There is no rating system in this app —
+                            nothing gives a rating, nothing stores one, and the
+                            4.8 every driver showed was a hardcoded fallback in
+                            SupabaseService. A number a user cannot earn and
+                            cannot change is not a rating, it is decoration that
+                            claims to be a fact. Same call as the Achievements
+                            section, removed for the same reason. */}
+                        <p>{getWorkApp(worker.app)?.logo} {getWorkApp(worker.app)?.name}</p>
                       </div>
                     </button>
                     {state === "pending_out" ? (
@@ -902,8 +966,8 @@ export function CommunityScreen() {
         description=""
       >
         <div className="tag-picker">
-          {workers.length ? (
-            workers.map((w) => {
+          {visibleWorkers.length ? (
+            visibleWorkers.map((w) => {
               const selected = tagged.some((t) => t.id === w.id);
               return (
                 <button
@@ -927,9 +991,27 @@ export function CommunityScreen() {
         </div>
       </Modal>
 
+      <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
+
       <WorkerProfileModal
         worker={selectedWorker}
         connectionState={selectedWorker ? connectionFor(connections, user?.id, selectedWorker.id) : { state: "none" }}
+        blocked={selectedWorker ? blocked.includes(selectedWorker.id) : false}
+        onBlock={async () => {
+          const w = selectedWorker;
+          if (!w) return;
+          setSelectedWorker(null);
+          try {
+            if (blocked.includes(w.id)) await unblockUser(w.id);
+            else await blockUser(w.id);
+          } catch { /* the store reverts; the list is unchanged */ }
+        }}
+        onReport={() => {
+          const w = selectedWorker;
+          if (!w) return;
+          setSelectedWorker(null);
+          setReportTarget({ type: "user", id: w.id, userId: w.id, authorName: w.name });
+        }}
         onClose={() => setSelectedWorker(null)}
         onConnect={(id) => void sendConnection(id)}
         onAccept={(id) => void acceptConnection(id)}
@@ -1101,17 +1183,23 @@ function PersonRow({
 function WorkerProfileModal({
   worker,
   connectionState,
+  blocked,
   onClose,
   onConnect,
   onAccept,
   onMessage,
+  onBlock,
+  onReport,
 }: {
   worker: Worker | null;
   connectionState: { state: ConnectionState; connection?: { id: string } };
+  blocked: boolean;
   onClose: () => void;
   onConnect: (id: string) => void;
   onAccept: (id: string) => void;
   onMessage: () => void;
+  onBlock: () => void;
+  onReport: () => void;
 }) {
   // Above the early return: hooks must run on every render.
   const t = useT();
@@ -1126,7 +1214,6 @@ function WorkerProfileModal({
           <p>{app?.logo} {app?.name} • {worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}</p>
         </div>
         <div className="worker-profile-stats">
-          <ProfileStat icon={<Star size={18} />} value={worker.rating.toFixed(1)} label="rating" />
           <ProfileStat icon={<MapPin size={18} />} value={km(worker.distanceKm)} label="today" />
           <ProfileStat icon={<Wallet size={18} />} value={currency(worker.earnings)} label="earned" />
         </div>
@@ -1138,6 +1225,24 @@ function WorkerProfileModal({
             onAccept={onAccept}
             onMessage={onMessage}
           />
+        </div>
+
+        {/* Report and block, set apart and quieter than Connect. These are the
+            controls Play's UGC policy requires, and they belong on the person
+            rather than only on one of their posts — someone who wants a driver
+            gone should not have to find a post of theirs first. */}
+        <div className="worker-profile-safety">
+          <button type="button" className="safety-action" onClick={onReport}>
+            <Flag size={16} /> {t("mod_reportUser")}
+          </button>
+          <button
+            type="button"
+            className={blocked ? "safety-action active" : "safety-action"}
+            onClick={onBlock}
+          >
+            <ShieldOff size={16} /> {blocked ? t("mod_unblock") : t("mod_blockUser")}
+          </button>
+          {!blocked ? <small>{t("mod_blockSure")}</small> : null}
         </div>
       </div>
     </Modal>

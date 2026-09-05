@@ -1,4 +1,4 @@
-import { Bike, Globe, Pencil, Settings, Shield, Trash2, Wallet, Wrench, Camera } from "lucide-react";
+import { Bell, Bike, Bookmark, CalendarDays, Globe, Pencil, Settings, Shield, ShieldOff, Trash2, Wallet, Wrench, Camera } from "lucide-react";
 import { WorkAppMark } from "../components/WorkAppMark";
 import { VehicleIcon } from "../components/VehicleIcon";
 import type { ReactNode } from "react";
@@ -16,7 +16,9 @@ import { MediaService } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
 import { localAppCount, workAppsForCountry } from "../utils/workApps";
 import { useAuthStore } from "../stores/useAuthStore";
+import { useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
+import { useNotificationStore } from "../stores/useNotificationStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { ProfileSettings, VehicleType } from "../types";
 import { CURRENCIES, currency, initials, km } from "../utils/format";
@@ -28,6 +30,11 @@ export function ProfileScreen() {
   const navigate = useNavigate();
   const t = useT();
   const [searchParams] = useSearchParams();
+  // For localising weekday names in the 7-day record, below.
+  const lang = useLangStore((state) => state.lang);
+  const blocked = useCommunityStore((state) => state.blocked);
+  const workers = useCommunityStore((state) => state.workers);
+  const bookmarks = useCommunityStore((state) => state.bookmarks);
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
   const signOut = useAuthStore((state) => state.signOut);
@@ -65,7 +72,59 @@ export function ProfileScreen() {
   };
   const [tab, setTab] = useState<EarningsTab>("week");
   const [showAllApps, setShowAllApps] = useState(false);
-  const earnings = totalDistanceKm * profile.baseRate;
+
+  /* The last seven days of real driving, read back from route_points.
+     `null` means "not loaded yet" and is deliberately distinct from an empty
+     week: a driver who has not driven must see seven empty days, not a
+     spinner that never resolves. */
+  /* Thirty days, because the earnings report's Month tab is measured from this
+     too. The 7-day list below is the tail of the same fetch rather than a
+     second query — one read, two views, and they cannot disagree. */
+  const [history, setHistory] = useState<{ day: string; km: number }[] | null>(null);
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    SupabaseService.routeHistory(30)
+      .then((rows) => { if (!cancelled) setHistory(rows); })
+      .catch(() => { if (!cancelled) setHistory([]); });
+    return () => { cancelled = true; };
+    // Re-read after a trip ends, so the day's bar is not stale until a reload.
+  }, [user, totalDistanceKm === 0]);
+
+  /* Weekday names must follow the language the driver PICKED, not the one the
+     handset happens to be set to. Passing undefined as the locale reads the
+     browser's language, which left "Sat Sun Mon" sitting in the middle of an
+     otherwise fully Korean screen.
+     Wrapped because a tag Intl does not recognise throws, and a driver should
+     lose the localised weekday, not the whole screen. */
+  const dayFormatter = useMemo(() => {
+    try {
+      return new Intl.DateTimeFormat(lang, { weekday: "short" });
+    } catch {
+      return new Intl.DateTimeFormat(undefined, { weekday: "short" });
+    }
+  }, [lang]);
+
+  const last7 = useMemo(() => (history ?? []).slice(-7), [history]);
+  const weekKm = useMemo(() => last7.reduce((sum, d) => sum + d.km, 0), [last7]);
+  const monthKm = useMemo(
+    () => (history ?? []).reduce((sum, d) => sum + d.km, 0),
+    [history],
+  );
+  const busiestKm = useMemo(
+    () => Math.max(1, ...last7.map((d) => d.km)),   // never divide by 0
+    [last7],
+  );
+
+  /* What the Earnings Report shows for the selected tab.
+     Day stays on the live store so this card and the home screen always agree;
+     week and month come from the record. They used to be today multiplied by 7
+     and 30, which is not a report of anything. */
+  const periodKm = tab === "day" ? totalDistanceKm : tab === "week" ? weekKm : monthKm;
+  const periodLabel =
+    tab === "day" ? t("earnings_today")
+    : tab === "week" ? t("earnings_recorded")
+    : t("earnings_recordedMonth");
 
   // 30+ platforms would swamp this screen, so show the ones operating in the
   // driver's country (plus whatever they already picked) and hide the rest
@@ -181,11 +240,70 @@ export function ProfileScreen() {
           </div>
         </div>
         <div className="earnings-report">
-          <p>{tab === "day" ? t("earnings_today") : t("earnings_projected", { period: t(`common_${tab}` as "common_week") })}</p>
-          <strong>{currency(earnings * (tab === "day" ? 1 : tab === "week" ? 7 : 30))}</strong>
-          <span>{km(totalDistanceKm * (tab === "day" ? 1 : tab === "week" ? 7 : 30))}</span>
-          {tab !== "day" ? <small className="earnings-note">{t("earnings_note")}</small> : null}
+          <p>{periodLabel}</p>
+          <strong>{currency(periodKm * profile.baseRate)}</strong>
+          <span>{km(periodKm)}</span>
+          {/* The week and month figures are read back from the server, so say
+              so while they are still arriving rather than flashing a confident
+              0 km that then jumps. */}
+          {tab !== "day" ? (
+            <small className="earnings-note">
+              {history === null ? t("history_loading") : t("earnings_recordedNote")}
+            </small>
+          ) : null}
         </div>
+      </section>
+
+      {/* A real record, unlike the projection above it: every figure here is
+          measured from the driver's own recorded fixes. */}
+      <section className="dashboard-card glass-card">
+        <div className="section-heading">
+          <h3><CalendarDays size={19} /> {t("history_last7")}</h3>
+          <span className="pill">{km(weekKm)}</span>
+        </div>
+        {history === null ? (
+          <p className="micro-copy">{t("history_loading")}</p>
+        ) : (
+          <div className="week-history">
+            {last7.map((d) => {
+              // Parsed as local parts, not Date(string): "2026-09-04" is parsed
+              // as UTC midnight, which lands on the previous day west of London
+              // and would label every bar with the wrong weekday.
+              const [y, m, day] = d.day.split("-").map(Number);
+              const date = new Date(y, m - 1, day);
+              const isToday = date.toDateString() === new Date().toDateString();
+              return (
+                <div className={`week-history-row${isToday ? " today" : ""}`} key={d.day}>
+                  <span className="week-history-day">
+                    {dayFormatter.format(date)}
+                  </span>
+                  <div className="week-history-track">
+                    <span style={{ width: `${Math.round((d.km / busiestKm) * 100)}%` }} />
+                  </div>
+                  <span className="week-history-km">{km(d.km)}</span>
+                </div>
+              );
+            })}
+          </div>
+        )}
+        <small className="earnings-note">{t("history_note")}</small>
+      </section>
+
+      {/* One way in to everything the driver has done. This replaced a
+          standalone "Blocked users" card: two places answering "what have I
+          done here" is how a Blocked list ends up somewhere nobody looks, and
+          saved posts end up with no home at all. Blocked is now a tab there. */}
+      <section className="dashboard-card glass-card activity-entry">
+        <div className="section-heading">
+          <h3><Bookmark size={19} /> {t("act_title")}</h3>
+          {bookmarks.length || blocked.length ? (
+            <span className="pill">{bookmarks.length + blocked.length}</span>
+          ) : null}
+        </div>
+        <p className="micro-copy">{t("act_sub")}</p>
+        <Button variant="outline" className="wide-action" onClick={() => navigate("/activity")}>
+          {t("act_title")}
+        </Button>
       </section>
 
       <Button className="wide-action" onClick={() => setEditOpen(true)}><Pencil size={18} /> {t("profile_editProfile")}</Button>
@@ -261,6 +379,8 @@ function SettingsModal({
   onSave: (settings: Partial<ProfileSettings>) => void;
 }) {
   const t = useT();
+  const notifPrefs = useNotificationStore((state) => state.prefs);
+  const setNotifPref = useNotificationStore((state) => state.setPref);
   const lang = useLangStore((state) => state.lang);
   const setLang = useLangStore((state) => state.setLang);
   const autoRegion = useLangStore((state) => state.autoRegion);
@@ -268,6 +388,7 @@ function SettingsModal({
   const [vehicleType, setVehicleType] = useState<VehicleType>(profile.vehicleType);
   const [homeAddress, setHomeAddress] = useState(profile.homeAddress);
   const [baseRate, setBaseRate] = useState(String(profile.baseRate));
+  const [dailyGoal, setDailyGoal] = useState(String(profile.dailyGoal));
   const [shareStats, setShareStats] = useState(profile.shareStats);
   const [currencyCode, setCurrencyCode] = useState(profile.currencyCode);
 
@@ -275,9 +396,10 @@ function SettingsModal({
     setVehicleType(profile.vehicleType);
     setHomeAddress(profile.homeAddress);
     setBaseRate(String(profile.baseRate));
+    setDailyGoal(String(profile.dailyGoal));
     setShareStats(profile.shareStats);
     setCurrencyCode(profile.currencyCode);
-  }, [profile.baseRate, profile.homeAddress, profile.shareStats, profile.vehicleType, profile.currencyCode, open]);
+  }, [profile.baseRate, profile.dailyGoal, profile.homeAddress, profile.shareStats, profile.vehicleType, profile.currencyCode, open]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
@@ -285,6 +407,10 @@ function SettingsModal({
       vehicleType,
       homeAddress,
       baseRate: Number(baseRate) || profile.baseRate,
+      /* A goal of 0 would divide by zero in the progress line, and a negative
+         one is meaningless, so an unusable entry keeps the previous goal rather
+         than being written. Same shape as baseRate above. */
+      dailyGoal: Number(dailyGoal) > 0 ? Number(dailyGoal) : profile.dailyGoal,
       shareStats,
       // Only persist a manual currency when auto mode is off.
       ...(autoRegion ? {} : { currencyCode }),
@@ -367,9 +493,45 @@ function SettingsModal({
             <span>{t("settings_baseRate")}</span>
             <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder={t("settings_baseRatePh")} />
           </label>
+          <label className="settings-row">
+            {/* home_dailyGoal, not a new key: "Daily Goal" is already
+                translated in all 43 dictionaries (it labelled the goal card
+                that used to sit on the home screen) and was left unused when
+                that card went. Reusing it means this row is translated
+                everywhere on day one, and it matches the wording of the home
+                screen's "% of your ₹1,500 daily goal". */}
+            <span>{t("home_dailyGoal")}</span>
+            <input value={dailyGoal} onChange={(event) => setDailyGoal(event.target.value)} inputMode="decimal" placeholder={t("settings_dailyGoalPh")} />
+          </label>
         </section>
 
         <section className="settings-group">
+          <h4><Bell size={15} /> {t("notifPrefs_group")}</h4>
+          {/* Four categories, each independently switchable. Account and
+              security notices are deliberately not here — an app that lets you
+              mute those has a worse problem than an unwanted notification.
+              The server checks these before sending, because Android shows an
+              FCM notification payload itself and the app never gets a say. */}
+          {([
+            ["chat", "notifPrefs_chat", "notifPrefs_chatSub"],
+            ["social", "notifPrefs_social", "notifPrefs_socialSub"],
+            ["location", "notifPrefs_location", "notifPrefs_locationSub"],
+            ["promo", "notifPrefs_promo", "notifPrefs_promoSub"],
+          ] as const).map(([key, label, sub]) => (
+            <label className="settings-row settings-toggle" key={key}>
+              <span>
+                {t(label)}
+                <small className="settings-hint">{t(sub)}</small>
+              </span>
+              <input
+                type="checkbox"
+                checked={notifPrefs[key]}
+                onChange={(event) => void setNotifPref(key, event.target.checked).catch(() => {})}
+              />
+            </label>
+          ))}
+          <small className="settings-hint">{t("notifPrefs_always")}</small>
+
           <h4><Shield size={15} /> {t("settings_grpPrivacy")}</h4>
           <label className="toggle-row">
             <span>{t("settings_shareStats")}</span>

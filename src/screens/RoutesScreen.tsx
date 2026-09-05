@@ -145,6 +145,7 @@ export function RoutesScreen() {
   const startTracking = useLocationStore((state) => state.startTracking);
   const stopTracking = useLocationStore((state) => state.stopTracking);
   const workers = useCommunityStore((state) => state.workers);
+  const blockedIds = useCommunityStore((state) => state.blocked);
   const challenges = useCommunityStore((state) => state.challenges);
   const toggleChallenge = useCommunityStore((state) => state.toggleChallenge);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
@@ -601,7 +602,14 @@ export function RoutesScreen() {
     () => (mapMode === "me" ? findStops(dayPoints) : []),
     [mapMode, dayPoints],
   );
-  const onlineWorkers = workers.filter((worker) => worker.isOnline);
+  /* Blocked drivers are off the map as well. Leaving their pin on it is the
+     most visible possible failure of a block: you asked not to see this person
+     and they are a dot following you around the city. */
+  const unblockedWorkers = useMemo(
+    () => workers.filter((worker) => !blockedIds.includes(worker.id)),
+    [workers, blockedIds],
+  );
+  const onlineWorkers = unblockedWorkers.filter((worker) => worker.isOnline);
 
   /**
    * Drivers to show on the friends map: online now, OR seen in the last
@@ -615,11 +623,11 @@ export function RoutesScreen() {
    */
   const recentWorkers = useMemo(
     () =>
-      workers.filter(
+      unblockedWorkers.filter(
         (worker) =>
           worker.isOnline || (worker.lastSeen != null && Date.now() - worker.lastSeen < RECENT_WINDOW),
       ),
-    [workers],
+    [unblockedWorkers],
   );
 
   // Only drivers you are connected with appear on the map. Showing every

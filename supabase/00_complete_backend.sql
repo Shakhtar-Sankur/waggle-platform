@@ -1,9 +1,22 @@
 -- ============================================================================
--- Buzz Buzz — COMPLETE BACKEND
+-- Waggle — COMPLETE BACKEND (as of mid-August 2026)
 -- ============================================================================
 --
--- Everything the app needs, in one file, in dependency order. Paste it into the
--- Supabase SQL editor and run it once.
+-- Everything the app needed as of mid-August, in one file, in dependency order.
+-- Paste it into the Supabase SQL editor and run it once.
+--
+-- NOT COMPLETE ANY MORE. Six things shipped after this file was consolidated and
+-- are not in it. Run them on top, in this order, or the app will fail at runtime:
+--
+--   reposts.sql               reposting a feed post
+--   stories.sql               24-hour stories
+--   report_and_block.sql      content_reports, user_blocks  (required by Play policy)
+--   bookmarks.sql             post_bookmarks
+--   notification_prefs.sql    per-category notification switches
+--   route_daily_distance.sql  the route-history RPC
+--
+-- Without them the Activity screen, report and block, notification preferences,
+-- stories and route history all break against an otherwise-healthy database.
 --
 -- Safe to run more than once: every statement is written to be idempotent, so
 -- re-running it on an existing project repairs drift rather than erroring.

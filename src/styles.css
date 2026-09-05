@@ -1712,6 +1712,64 @@ select:focus {
   font-size: 11px;
 }
 
+/* Seven days of recorded distance. A grid, not a flex row, so the weekday
+   labels and the kilometre figures line up in their own columns — ragged
+   numbers were what made the old goal block look broken. */
+.week-history {
+  display: grid;
+  gap: 9px;
+  margin: 12px 0 6px;
+}
+
+.week-history-row {
+  display: grid;
+  /* Not a fixed 34px: Arabic does not abbreviate weekday names, so "الخميس"
+     needs 39px and was being clipped. Let the column take what the language
+     needs and give the bar the rest. */
+  grid-template-columns: minmax(34px, auto) 1fr auto;
+  align-items: center;
+  gap: 10px;
+}
+
+.week-history-day {
+  color: var(--muted-foreground);
+  font-size: 12px;
+}
+
+.week-history-track {
+  height: 9px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--muted);
+}
+
+.week-history-track span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--accent-grad);
+  transition: width 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* A day with no driving gets no bar at all. progress-track's min-width would
+   have drawn a stub, which reads as "a little" rather than "none". */
+.week-history-track span[style*="width: 0%"] {
+  display: none;
+}
+
+.week-history-km {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  min-width: 58px;
+  text-align: right;
+}
+
+.week-history-row.today .week-history-day,
+.week-history-row.today .week-history-km {
+  color: var(--foreground);
+  font-weight: 600;
+}
+
 .achievement-row {
   display: flex;
   gap: 12px;
@@ -9506,3 +9564,237 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   .fb-topbar .fb-search { transition: none; }
   .fb-topbar .fb-round:hover { transform: none; }
 }
+
+/* ── reporting and blocking ────────────────────────────────────────────────
+   Required by Play's UGC policy, and the controls are deliberately quiet:
+   these are safety valves, not calls to action. Nothing here competes with
+   Connect or Message for attention. */
+
+.report-form { display: grid; gap: 14px; }
+.report-why { margin: 0; font-weight: 600; }
+
+.report-reasons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+@media (max-width: 380px) { .report-reasons { grid-template-columns: 1fr; } }
+
+.report-reason {
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--muted);
+  color: var(--foreground);
+  font-size: 13.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.18s;
+}
+.report-reason.active {
+  border-color: var(--primary);
+  background: var(--primary-soft);
+  font-weight: 600;
+}
+
+.report-note { display: grid; gap: 7px; }
+.report-note span { font-size: 13px; color: var(--muted-foreground); }
+.report-note textarea {
+  width: 100%;
+  padding: 11px 12px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  font: inherit;
+  resize: vertical;
+}
+
+.report-failed { margin: 0; color: #c0392b; font-size: 13px; }
+.report-done { display: grid; gap: 12px; }
+.report-done p { margin: 0; color: var(--muted-foreground); }
+
+/* The safety row on a driver's profile. Separated from the connect action by a
+   rule, so "block" can never be mistaken for the primary button. */
+.worker-profile-safety {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+.worker-profile-safety small {
+  color: var(--muted-foreground);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.safety-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted-foreground);
+  font-size: 14px;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+.safety-action:hover { color: var(--foreground); border-color: var(--muted-foreground); }
+.safety-action.active { color: var(--foreground); border-color: var(--primary); }
+
+/* The blocked list on Profile. */
+.blocked-list { display: grid; gap: 10px; margin-top: 12px; }
+.blocked-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 11px;
+}
+.blocked-row strong { font-size: 14.5px; font-weight: 600; }
+
+/* ── activity ──────────────────────────────────────────────────────────────
+   One screen for saved, liked, your posts and blocked. Rows are deliberately
+   plainer than a feed card: this is a list you scan to find one thing, not a
+   feed you read. */
+
+/* A scrolling row, not a 4-column grid.
+   mini-tabs is `repeat(4, 1fr)`, which for four labels plus counts gave every
+   button about 80px — so "Your posts" broke across two lines and the fourth tab
+   wrapped underneath the other three. A fixed grid also cannot survive
+   translation: "Blocked" is "المحظورون" in Arabic and "Gespeichert" in German.
+   One row that scrolls handles any label in any language. */
+/* Chips, not a segmented pill.
+   mini-tabs draws one rounded grey slab behind all its buttons, which is right
+   for a fixed set of three. On a row that scrolls, that slab gets clipped
+   mid-way and the strip reads as broken furniture rather than as "there is more
+   this way". Individually bordered chips survive scrolling and translation. */
+.activity-tabs {
+  display: flex;
+  grid-template-columns: none;
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  padding: 0 0 2px;
+  margin: 0 0 14px;
+  background: transparent;
+  border-radius: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.activity-tabs::-webkit-scrollbar { display: none; }
+
+/* Scoped to .mini-tabs so it actually wins: the base rule is
+   `.segmented-tabs button, .mini-tabs button`, which is two classes and beat a
+   bare `.activity-tabs button` on height. The chip was asking for 38px and
+   rendering at 44. */
+.mini-tabs.activity-tabs button {
+  flex: 0 0 auto;
+  white-space: nowrap;
+  height: 38px;
+  min-height: 38px;
+  padding: 0 14px;
+  /* The badge is spaced by this gap alone. It also had margin-left: 6px, so the
+     count sat 12px from its own label and read as a loose number rather than
+     part of the chip. */
+  gap: 6px;
+  font-size: 13.5px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--card);
+  color: var(--muted-foreground);
+}
+.mini-tabs.activity-tabs button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.activity-count {
+  /* No margin: the chip's flex gap already separates it. Both together put
+     12px between a word and its own number. */
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--card);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+.mini-tabs button.active .activity-count { background: rgba(255, 255, 255, 0.24); }
+
+/* A plain heading instead of a coloured band — see the note in
+   ActivityScreen.tsx. Sized to sit under the shared header without competing
+   with it. */
+.activity-head { margin: 2px 0 16px; }
+.activity-head h1 {
+  margin: 0;
+  font-size: clamp(20px, 5.2vw, 25px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+.activity-head p {
+  margin: 5px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--muted-foreground);
+  max-width: 38ch;
+}
+
+.activity-list { display: grid; gap: 2px; }
+
+.activity-row {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 11px;
+  align-items: start;
+  padding: 13px 0;
+  border-bottom: 1px solid var(--border);
+}
+.activity-row:last-child { border-bottom: 0; }
+
+.activity-meta { display: flex; align-items: baseline; gap: 8px; }
+.activity-meta strong { font-size: 14.5px; font-weight: 600; }
+.activity-meta span { font-size: 12px; color: var(--muted-foreground); }
+
+.activity-body p {
+  margin: 4px 0 0;
+  font-size: 14px;
+  line-height: 1.45;
+  /* Two lines is enough to recognise a post you saved. The whole thing belongs
+     in the feed, which is what the button at the bottom is for. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.activity-body img {
+  margin-top: 8px;
+  border-radius: 12px;
+  max-height: 150px;
+  object-fit: cover;
+  width: 100%;
+}
+
+.activity-unsave {
+  border: 0;
+  background: transparent;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 2px;
+}
+
+.activity-empty {
+  display: grid;
+  justify-items: center;
+  gap: 10px;
+  padding: 34px 16px;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+.activity-empty p { margin: 0; font-size: 13.5px; max-width: 30ch; line-height: 1.5; }
+
+/* The saved state of the bookmark button in the feed. */
+.tw-act.tw-saved { color: var(--primary); }

@@ -20,6 +20,7 @@ import { HomeScreen } from "./screens/HomeScreen";
 import { MessagesScreen } from "./screens/MessagesScreen";
 import { NotificationsScreen } from "./screens/NotificationsScreen";
 import { PrivacyScreen } from "./screens/PrivacyScreen";
+import { ActivityScreen } from "./screens/ActivityScreen";
 import { ProfileScreen } from "./screens/ProfileScreen";
 import { RoutesScreen } from "./screens/RoutesScreen";
 import { TermsScreen } from "./screens/TermsScreen";
@@ -102,6 +103,11 @@ export default function App() {
     void loadConnections(user.id);
     void loadCloudChats(user.id);
     void loadCloudNotifications(user.id);
+    // Load the switches before push registers, so a driver who has turned a
+    // category off is not interrupted on the way in.
+    void useNotificationStore.getState().loadPrefs();
+    void useCommunityStore.getState().loadBlocks();
+    void useCommunityStore.getState().loadBookmarks();
     void NotificationService.initPush(user.id);
     void SupabaseService.refreshRealtimeAuth();
 
@@ -201,6 +207,14 @@ export default function App() {
           element={
             <AppShell title="Notifications">
               <NotificationsScreen />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/activity"
+          element={
+            <AppShell title="Activity">
+              <ActivityScreen />
             </AppShell>
           }
         />

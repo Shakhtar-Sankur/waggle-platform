@@ -39,6 +39,10 @@ public class TripTrackingPlugin extends Plugin {
         intent.setAction(TripTrackingService.ACTION_START);
         intent.putExtra(TripTrackingService.EXTRA_TITLE, call.getString("title", "Waggle"));
         intent.putExtra(TripTrackingService.EXTRA_TEXT, call.getString("text", "Recording your trip"));
+        Double rate = call.getDouble("rate");
+        intent.putExtra(TripTrackingService.EXTRA_RATE, rate == null ? 0.0 : rate);
+        intent.putExtra(TripTrackingService.EXTRA_CURRENCY, call.getString("currency", ""));
+        intent.putExtra(TripTrackingService.EXTRA_UNIT, call.getString("unit", "km"));
 
         try {
             ContextCompat.startForegroundService(getContext(), intent);
@@ -51,6 +55,21 @@ public class TripTrackingPlugin extends Plugin {
             // it can fall back rather than believe it is recording.
             call.reject("Could not start trip recording: " + error.getMessage(), error);
         }
+    }
+
+    /**
+     * Hand the service the app's own distance.
+     *
+     * The service counts independently so the notification stays live while the
+     * phone is locked and the WebView is suspended. It applies the same gates
+     * but not every one of them, so the two can drift over a long stretch —
+     * this makes the app's figure authoritative whenever the app is awake.
+     */
+    @PluginMethod
+    public void sync(PluginCall call) {
+        Double km = call.getDouble("distanceKm");
+        if (km != null) TripTrackingService.syncDistance(km);
+        call.resolve();
     }
 
     @PluginMethod

@@ -58,7 +58,15 @@ export const LocationService = {
     });
   },
 
-  async watchPosition(onUpdate: (point: LocationPoint) => void): Promise<() => void> {
+  /**
+   * @param trip  Rate, currency symbol and distance unit for the ongoing
+   *   notification. Optional because the web build has no notification, and a
+   *   caller that does not care should not have to pass anything.
+   */
+  async watchPosition(
+    onUpdate: (point: LocationPoint) => void,
+    trip: { rate?: number; currency?: string; unit?: string } = {},
+  ): Promise<() => void> {
     if (Capacitor.isNativePlatform()) {
       const permission = await Geolocation.requestPermissions();
       if (permission.location === "denied") {
@@ -76,6 +84,7 @@ export const LocationService = {
         await TripTracking.start({
           title: translate("track_notifTitle"),
           text: translate("track_notifBody"),
+          ...trip,
         });
         return drainFromService(onUpdate);
       } catch {

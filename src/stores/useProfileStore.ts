@@ -12,6 +12,15 @@ interface ProfileState extends ProfileSettings {
    *  currency changes stop overwriting it. Local only — never sent to cloud
    *  (saveSettings whitelists its columns). */
   rateCustomised: boolean;
+  /** The same protection for the daily goal, tracked separately.
+   *
+   *  One flag for both was a data-loss bug: it is only set when the RATE is
+   *  edited, but the goal is the field a driver actually changes ("I want to
+   *  make ₹1,500 today"). Editing only the goal left the flag false, so the
+   *  first real GPS fix on the map screen called applyCurrency and reset their
+   *  ₹1,500 target to the regional default of ₹600 — silently, on a screen they
+   *  were not looking at. A goal the driver chose is theirs. */
+  goalCustomised: boolean;
   loadCloudSettings: (userId: string) => Promise<void>;
   setActiveApp: (app: WorkAppId | null) => void;
   updateSettings: (updates: Partial<ProfileSettings>) => void;
@@ -36,10 +45,24 @@ export const useProfileStore = create<ProfileState>()(
     (set, get) => ({
       ...defaults,
       rateCustomised: false,
+      goalCustomised: false,
       loadCloudSettings: async (userId) => {
         try {
           const settings = await SupabaseService.loadSettings(userId);
-          if (settings) set(settings);
+          if (settings) {
+            set(settings);
+            /* A stored rate and goal are the driver's own, so auto-currency must
+               not overwrite them.
+               Without this the two fought each other every session: the cloud
+               profile loads daily_goal 1500, then the first GPS fix on the map
+               calls applyCurrency, which resets it to the ₹600 regional default
+               on a screen the driver is not looking at. Going back to the home
+               screen showed a target they never chose — and because
+               persistSettings writes whatever is in state, the next settings
+               change would have written 600 over their 1500 for good. */
+            if (settings.baseRate !== undefined) set({ rateCustomised: true });
+            if (settings.dailyGoal !== undefined) set({ goalCustomised: true });
+          }
         } catch (error) {
           // Keep locally-persisted settings when the cloud is unreachable.
           console.warn("Could not load cloud settings:", error);
@@ -57,8 +80,11 @@ export const useProfileStore = create<ProfileState>()(
       updateSettings: (updates) => {
         const wasSharing = get().shareStats;
         set(updates);
-        // Once they choose a rate, auto-currency must never overwrite it.
+        // Once they choose a rate or a goal, auto-currency must never overwrite
+        // it. Tracked separately: editing one must not silently surrender the
+        // other to the regional default.
         if (updates.baseRate !== undefined) set({ rateCustomised: true });
+        if (updates.dailyGoal !== undefined) set({ goalCustomised: true });
         if (updates.currencyCode) setCurrency(updates.currencyCode);
         persistSettings(get());
         // Opting out of community sharing must take effect immediately, not on
@@ -79,9 +105,8 @@ export const useProfileStore = create<ProfileState>()(
         // this currency, unless the driver has already set their own. "10" is
         // right for ₱10/km but absurd as $10/km, and a flat 500/day goal needs
         // 714 km at $0.70/km — unreachable, so the ring would never move.
-        if (!get().rateCustomised) {
-          set({ baseRate: defaultRateFor(code), dailyGoal: defaultDailyGoalFor(code) });
-        }
+        if (!get().rateCustomised) set({ baseRate: defaultRateFor(code) });
+        if (!get().goalCustomised) set({ dailyGoal: defaultDailyGoalFor(code) });
         if (get().currencyCode === code) {
           setCurrency(code);
           return;

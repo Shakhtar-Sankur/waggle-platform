@@ -19,7 +19,20 @@ export interface TripFix {
 export interface TripTrackingPlugin {
   /** Starts the foreground service. The strings are what the driver reads in
    *  their notification shade, already translated by the app's own i18n. */
-  start(options: { title: string; text: string }): Promise<void>;
+  start(options: {
+    title: string;
+    text: string;
+    /** Per-km rate and currency symbol, so the ongoing notification can show
+     *  what the trip has earned. The service has no access to settings. */
+    rate?: number;
+    currency?: string;
+    /** Localised "km" — otherwise the notification is the one English string
+     *  on an otherwise translated phone. */
+    unit?: string;
+  }): Promise<void>;
+  /** Hand the service the app's own distance, so the notification and the app
+   *  cannot drift apart over a long locked stretch. */
+  sync?(options: { distanceKm: number }): Promise<void>;
   stop(): Promise<void>;
   /** Everything recorded since the last call, oldest first, and clears it. */
   drain(): Promise<{ fixes: TripFix[] }>;

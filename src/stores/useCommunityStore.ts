@@ -40,6 +40,26 @@ interface CommunityState {
   acceptConnection: (connectionId: string) => Promise<void>;
   toggleChallenge: (id: string) => void;
   toggleGroup: (id: string) => void;
+  /** Ids of people this driver has blocked. Their posts, comments and messages
+   *  are filtered out everywhere content is shown. */
+  blocked: string[];
+  /** Post ids this driver has saved. Ids rather than posts: the Activity
+   *  screen fetches the posts, because a save from three weeks ago is not in
+   *  the loaded feed. */
+  bookmarks: string[];
+  loadBlocks: () => Promise<void>;
+  blockUser: (userId: string) => Promise<void>;
+  unblockUser: (userId: string) => Promise<void>;
+  loadBookmarks: () => Promise<void>;
+  toggleBookmark: (postId: string) => Promise<void>;
+  reportContent: (input: {
+    targetType: "post" | "message" | "user";
+    targetId: string;
+    targetUser?: string;
+    reason: "spam" | "harassment" | "hate" | "violence" | "sexual" | "other";
+    note?: string;
+    excerpt?: string;
+  }) => Promise<void>;
 }
 
 export const useCommunityStore = create<CommunityState>()(
@@ -53,16 +73,22 @@ export const useCommunityStore = create<CommunityState>()(
       connections: [],
       loaded: false,
       groupsFromCloud: false,
+      blocked: [],
+      bookmarks: [],
       loadCloudCommunity: async () => {
         const user = useAuthStore.getState().user;
         try {
-          const [posts, workers] = await Promise.all([
+          const [posts, workers, blocked] = await Promise.all([
             SupabaseService.loadPosts(user?.id),
             SupabaseService.loadWorkers(user?.id),
+            user ? SupabaseService.loadBlocks(user.id) : Promise.resolve([]),
           ]);
           set((state) => ({
             posts: posts.length ? posts : state.posts,
             workers: workers.length ? workers : state.workers,
+            // Always take the server's list, including when it is empty — an
+            // unblock elsewhere has to be able to clear this one.
+            blocked: user ? blocked : state.blocked,
           }));
         } catch (error) {
           console.warn("Could not load community feed:", error);
@@ -288,6 +314,78 @@ export const useCommunityStore = create<CommunityState>()(
             challenge.id === id ? { ...challenge, joined: !challenge.joined } : challenge,
           ),
         })),
+      loadBookmarks: async () => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        try {
+          set({ bookmarks: await SupabaseService.loadBookmarkIds(user.id) });
+        } catch (error) {
+          console.warn("Could not load bookmarks:", error);
+        }
+      },
+
+      /* Optimistic, like the like button beside it. Saving is a small, private
+         act and it should feel instant; a failed write puts the icon back. */
+      toggleBookmark: async (postId) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        const before = get().bookmarks;
+        const saving = !before.includes(postId);
+        set({ bookmarks: saving ? [postId, ...before] : before.filter((id) => id !== postId) });
+        try {
+          await SupabaseService.toggleBookmark(user.id, postId, saving);
+        } catch (error) {
+          set({ bookmarks: before });
+          throw error;
+        }
+      },
+
+      loadBlocks: async () => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        try {
+          set({ blocked: await SupabaseService.loadBlocks(user.id) });
+        } catch (error) {
+          console.warn("Could not load block list:", error);
+        }
+      },
+
+      /* Optimistic on purpose. Blocking is something people do when they want
+         someone gone NOW; waiting on a round trip to stop showing the content
+         is the wrong feel. Reverted if the write fails. */
+      blockUser: async (userId) => {
+        const user = useAuthStore.getState().user;
+        if (!user || userId === user.id) return;
+        const before = get().blocked;
+        if (before.includes(userId)) return;
+        set({ blocked: [...before, userId] });
+        try {
+          await SupabaseService.blockUser(user.id, userId);
+        } catch (error) {
+          set({ blocked: before });
+          throw error;
+        }
+      },
+
+      unblockUser: async (userId) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        const before = get().blocked;
+        set({ blocked: before.filter((id) => id !== userId) });
+        try {
+          await SupabaseService.unblockUser(user.id, userId);
+        } catch (error) {
+          set({ blocked: before });
+          throw error;
+        }
+      },
+
+      reportContent: async (input) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        await SupabaseService.reportContent({ reporterId: user.id, ...input });
+      },
+
       toggleGroup: (id) => {
         const user = useAuthStore.getState().user;
         const group = get().groups.find((g) => g.id === id);

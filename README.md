@@ -1,25 +1,26 @@
-# Buzz
+# Waggle
 
 **A tracking and community app for gig workers — free for the people who use it.**
 
 A Swiggy rider, an Uber driver and an Amazon Flex courier are often the same person, but no platform
 connects those identities. More than half of gig workers operate across multiple platforms at once,
-and each platform sees only its own slice. Buzz is the professional and social layer that sits
+and each platform sees only its own slice. Waggle is the professional and social layer that sits
 across all of them.
 
 Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populace), which was written for
 this app and then became a product of its own.
 
-**Website:** https://shakhtar-sankur.github.io/buzz-buzz/ &nbsp;·&nbsp;
-**Download:** [BuzzBuzz-v1.5.apk](https://shakhtar-sankur.github.io/buzz-buzz/BuzzBuzz-v1.5.apk)
-(7.9 MB, Android 8.0+) &nbsp;·&nbsp;
+**Website:** https://shakhtar-sankur.github.io/waggle/ &nbsp;·&nbsp;
+**Download:** [Waggle-1.0.apk](https://shakhtar-sankur.github.io/waggle/Waggle-1.0.apk)
+(8.2 MB, Android 7.0+) &nbsp;·&nbsp;
 **Test report:** [gigzen.github.io/test-report](https://shakhtar-sankur.github.io/gigzen/test-report.html)
 
 ## Where it stands
 
-- **16 languages** at full parity, right-to-left included; **27 currencies** across **49 countries**,
-  selected from where the rider actually is.
-- **Version 1.5 (build 6)**, signed release, in closed testing. Not yet publicly on Google Play.
+- **43 languages**, right-to-left included; **61 currencies** across **83 countries** and
+  **33 gig platforms**, selected from where the rider actually is.
+- **Version 1.0 (build 2)**, signed release, uploaded to Google Play internal testing.
+  Not yet publicly on Google Play.
 - Verified by a six-user concurrent simulation against the live backend: **400 API calls, no
   failures**, 13/13 adapter methods covered, every test account deleted afterwards.
 - The run before that one found **five real defects** in this app after it had already passed a
@@ -39,7 +40,10 @@ been run. The test report says so too.
 | **Community feed** | Posts with photos, likes, comments, tagging, and joinable groups. |
 | **Messaging** | One-to-one and group chat with presence, last-seen, and read receipts that progress ✓ → ✓✓ → blue ✓✓. |
 | **Worker dashboard** | Earnings, vehicle maintenance, challenges and a leaderboard. |
-| **16 languages** | Including right-to-left Arabic, with currency and language auto-selected by region. |
+| **Activity** | One place for saved posts, liked posts, your own posts, and the users you have blocked. |
+| **Report and block** | On any post, comment, profile and chat thread, with the block offered at the point of reporting. |
+| **Notification preferences** | Per-category switches, promotional included, stored server-side so they hold across devices. |
+| **43 languages** | Including right-to-left Arabic, Urdu and Hebrew, with currency and language auto-selected by region. |
 
 ## Stack
 
@@ -49,11 +53,11 @@ Realtime, Edge Functions)
 ## Scale
 
 ```
-13,235   lines of TypeScript, CSS and SQL
-    17   Postgres tables
-    48   row-level-security policies
-    16   languages, one of them RTL
-     9   screens · 7 stores · 6 services
+31,459   lines of TypeScript, CSS and SQL
+    24   Postgres tables
+    54   row-level-security policies
+    43   languages, three of them RTL
+    10   screens · 8 stores · 14 services
 ```
 
 ## Running it
@@ -69,20 +73,39 @@ and publishable key.
 ### Database setup, in order
 
 ```
-schema.sql              tables, row-level security, the core policies
-social_features.sql     likes, comments, connections
-direct_messages.sql     one-to-one threads
-groups.sql              joinable groups
-post_photos.sql         image column on posts
-presence.sql            last_seen
-read_receipts.sql       message status transitions
-realtime.sql            adds tables to the realtime publication
-notify_social.sql       triggers for like/comment/message notifications
-daily_reset.sql         pg_cron job zeroing daily stats at local midnight
+schema.sql                tables, row-level security, the core policies
+social_features.sql       likes, comments, connections
+direct_messages.sql       one-to-one threads
+groups.sql                joinable groups
+post_photos.sql           image column on posts
+photo_storage.sql         storage bucket and its policies
+presence.sql              last_seen
+read_receipts.sql         message status transitions
+chat_reply_reactions.sql  replies and emoji reactions on messages
+chat_voice_notes.sql      voice messages
+chat_thread_atomic.sql    thread creation without a race
+people_search.sql         search across profiles
+work_apps_global.sql      the 33 gig platforms, shared across installs
+reposts.sql               reposting a feed post
+stories.sql               24-hour stories, expiry enforced in the read policy
+report_and_block.sql      content_reports and user_blocks
+bookmarks.sql             saved posts
+notification_prefs.sql    per-category notification switches
+user_content_control.sql  editing and deleting your own content
+delete_account_guard.sql  delete_own_account(), caller-only
+route_daily_distance.sql  per-day distance aggregated in SQL, not on the client
+realtime.sql              adds tables to the realtime publication
+notify_social.sql         triggers for like/comment/message notifications
+daily_reset.sql           pg_cron job zeroing daily stats at local midnight
 ```
 
 `privacy_lockdown.sql` is a **migration for projects created before the policies were tightened**.
 A fresh `schema.sql` is already closed; run the lockdown only if your project predates it.
+
+> **`00_complete_backend.sql` is behind the list above.** It bundles everything up to
+> mid-August into one idempotent file, but it predates stories, reposts, report and block,
+> bookmarks, notification preferences and `route_daily_distance`. Run it first if you like the
+> single-file route, then run those files on top — or work down the ordered list instead.
 
 > **Why the read policies require a session.** The publishable key ships inside the APK and can be
 > extracted from it in minutes, so in practice "anonymous" means anyone who downloads the app. These
@@ -139,7 +162,10 @@ able to `SELECT` the thread they just inserted, and members have to be able to `
 ## Status
 
 Feature-complete, signed for release, and verified end to end against a live backend with two real
-accounts. Not yet published to the Play Store.
+accounts. The signed AAB is uploaded to Google Play internal testing; not yet published publicly.
+
+Two things have not been exercised on real hardware and are written up as untested rather than
+claimed: push notification delivery, and one rider watching another move on the map.
 
 ## Licence
 

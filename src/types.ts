@@ -204,6 +204,10 @@ export interface StoryGroup {
 export interface PostComment {
   id: string;
   postId: string;
+  /** The author's user id. Needed so a blocked person's comments can be
+   *  filtered out — without it a block hid their posts but left their comments
+   *  sitting under everyone else's. */
+  userId?: string;
   author: string;
   initials: string;
   body: string;
@@ -259,4 +263,18 @@ export interface AppNotification {
   createdAt: number;
   read: boolean;
   kind: "job" | "chat" | "system" | "location";
+}
+
+/**
+ * Notification categories a driver can turn off.
+ *
+ * `system` is deliberately absent: account and security notices are not
+ * marketing, and an app that lets you mute those has a worse problem than an
+ * unwanted notification.
+ */
+export interface NotificationPrefs {
+  chat: boolean;
+  social: boolean;
+  location: boolean;
+  promo: boolean;
 }

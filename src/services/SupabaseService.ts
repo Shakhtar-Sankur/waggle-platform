@@ -11,6 +11,7 @@ import type {
   Job,
   LocationPoint,
   PostComment,
+  NotificationPrefs,
   ProfileSettings,
   Story,
   StoryGroup,
@@ -18,6 +19,8 @@ import type {
   Worker,
 } from "../types";
 import { initials } from "../utils/format";
+// Safe: LocationService does not import this module, so no cycle.
+import { LocationService } from "./LocationService";
 import type { PickedPhoto, PickedVideo } from "./MediaService";
 
 /** Object-storage bucket holding community and chat photos. */
@@ -213,7 +216,11 @@ function toWorker(profile: any): Worker {
       lng: Number(loc?.lng ?? MANILA_CENTER.lng),
       timestamp: locUpdated || Date.now(),
     },
-    rating: Number(loc?.rating ?? 4.8),
+    /* No invented default. This was `?? 4.8`, so every driver without a
+       worker_locations row — which is every driver who has not tracked yet —
+       was reported to the interface as a 4.8-star driver. The field stays on
+       the type because the column exists; nothing displays it. */
+    rating: Number(loc?.rating ?? 0),
     tags: loc?.tags ?? [],
   };
 }
@@ -797,7 +804,7 @@ export const SupabaseService = {
     if (!supabase) return [];
     const { data, error } = await supabase
       .from("post_comments")
-      .select("id, body, created_at, profiles(full_name)")
+      .select("id, body, created_at, user_id, profiles(full_name)")
       .eq("post_id", postId)
       .order("created_at", { ascending: true })
       .limit(200);
@@ -807,6 +814,7 @@ export const SupabaseService = {
       return {
         id: row.id,
         postId,
+        userId: row.user_id ? String(row.user_id) : undefined,
         author,
         initials: initials(author),
         body: row.body,
@@ -1075,6 +1083,269 @@ export const SupabaseService = {
       days.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`);
     }
     return [...days];
+  },
+
+  /**
+   * Distance for each of the last `days` local days, oldest first.
+   *
+   * Aggregated in the database, not here. The first version fetched raw
+   * route_points and summed them in the client, which was correct on a test
+   * account and wrong for anybody who actually drives:
+   *
+   *   Tracking writes one row per accepted fix, up to one every 2 seconds, so
+   *   an 8-hour shift is ~14,400 rows and a month is ~430,000. The query capped
+   *   at 20,000 rows ordered ASCENDING, so it returned the OLDEST rows in the
+   *   window and the recent days came back empty. Seeded with six realistic
+   *   shifts, the screen showed 6.9 km for the week and 0.0 km on six days out
+   *   of seven — today included.
+   *
+   * Raising the cap would have meant pulling hundreds of thousands of rows onto
+   * a handset, which is the opposite of what this app is for. The function
+   * returns one row per day instead. See supabase/route_daily_distance.sql; it
+   * applies the same session-gap and speed rules as routeDistanceKm, and the
+   * two were checked against each other day by day on 86,829 real rows.
+   *
+   * Days with no recorded movement are returned as zero rather than omitted. A
+   * week is seven bars; a driver who did not work on Sunday should see Sunday
+   * empty, not see the week silently become six days long.
+   */
+  async routeHistory(days = 7): Promise<{ day: string; km: number }[]> {
+    const dayKey = (d: Date) =>
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+    const from = new Date();
+    from.setHours(0, 0, 0, 0);
+    from.setDate(from.getDate() - (days - 1));
+
+    // The window, empty, so a day with no rows still gets a bar.
+    const buckets = new Map<string, number>();
+    for (let i = 0; i < days; i += 1) {
+      const d = new Date(from);
+      d.setDate(d.getDate() + i);
+      buckets.set(dayKey(d), 0);
+    }
+    const asRows = () => [...buckets].map(([day, km]) => ({ day, km }));
+    if (!supabase) return asRows();
+
+    /* The driver's own timezone, so "Tuesday" means their Tuesday. Bucketing in
+       UTC would push part of every evening shift into the next day for anyone
+       east of London. */
+    let tz = "UTC";
+    try { tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"; } catch { /* keep UTC */ }
+
+    const { data, error } = await supabase.rpc("route_daily_distance", { days, tz });
+
+    if (error || !Array.isArray(data)) {
+      /* Deliberately NOT falling back to summing raw points here. That path is
+         the bug this replaced: it would quietly report a week of driving as
+         nearly zero, and a confidently wrong number is worse than an empty
+         one. Zeros show the driver something is missing. */
+      console.warn("Could not load route history:", error);
+      return asRows();
+    }
+
+    for (const row of data as { day: string; km: number }[]) {
+      // Postgres returns the date as YYYY-MM-DD, already in the driver's zone.
+      const key = String(row.day).slice(0, 10);
+      if (buckets.has(key)) buckets.set(key, Number(row.km) || 0);
+    }
+    return asRows();
+  },
+
+  /**
+   * File a report about a post, a message or a person.
+   *
+   * `excerpt` is a snapshot of what was reported, taken at report time, because
+   * the obvious follow-up to being reported is deleting the evidence. Without
+   * it a report arrives pointing at content that no longer exists.
+   *
+   * A duplicate (same reporter, same target) is not an error the driver should
+   * see — they tapped twice, or reported something they had reported before.
+   * The unique constraint swallows it and the UI says "reported" either way.
+   */
+  async reportContent(input: {
+    reporterId: string;
+    targetType: "post" | "message" | "user";
+    targetId: string;
+    targetUser?: string;
+    reason: "spam" | "harassment" | "hate" | "violence" | "sexual" | "other";
+    note?: string;
+    excerpt?: string;
+  }): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase.from("content_reports").insert({
+      reporter_id: input.reporterId,
+      target_type: input.targetType,
+      target_id: input.targetId,
+      target_user: input.targetUser ?? null,
+      reason: input.reason,
+      note: input.note?.slice(0, 1000) || null,
+      excerpt: input.excerpt?.slice(0, 500) || null,
+    });
+    // 23505 = already reported by this person. Not a failure.
+    if (error && error.code !== "23505") throw error;
+  },
+
+  /** Everyone the driver has blocked. Ids only — the app filters by id. */
+  async loadBlocks(userId: string): Promise<string[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("user_blocks")
+      .select("blocked_id")
+      .eq("blocker_id", userId);
+    if (error || !Array.isArray(data)) return [];
+    return data.map((r) => String(r.blocked_id));
+  },
+
+  async blockUser(blockerId: string, blockedId: string): Promise<void> {
+    if (!supabase || blockerId === blockedId) return;
+    const { error } = await supabase
+      .from("user_blocks")
+      .insert({ blocker_id: blockerId, blocked_id: blockedId });
+    if (error && error.code !== "23505") throw error;   // already blocked
+  },
+
+  async unblockUser(blockerId: string, blockedId: string): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("user_blocks")
+      .delete()
+      .eq("blocker_id", blockerId)
+      .eq("blocked_id", blockedId);
+    if (error) throw error;
+  },
+
+  /**
+   * Which notification categories this driver wants.
+   *
+   * No row means they have never opened the screen, which is everything on —
+   * the behaviour the app had before preferences existed. Returning nulls and
+   * letting the caller decide would push that judgement into three places.
+   */
+  async loadNotificationPrefs(userId: string): Promise<NotificationPrefs> {
+    const all: NotificationPrefs = { chat: true, social: true, location: true, promo: true };
+    if (!supabase) return all;
+    const { data, error } = await supabase
+      .from("notification_prefs")
+      .select("chat, social, location, promo")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !data) return all;
+    return {
+      chat: data.chat !== false,
+      social: data.social !== false,
+      location: data.location !== false,
+      promo: data.promo !== false,
+    };
+  },
+
+  async saveNotificationPrefs(userId: string, prefs: NotificationPrefs): Promise<void> {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("notification_prefs")
+      .upsert({ user_id: userId, ...prefs, updated_at: new Date().toISOString() });
+    if (error) throw error;
+  },
+
+  /** Save a post, or unsave it. Returns the state it ended in. */
+  async toggleBookmark(userId: string, postId: string, save: boolean): Promise<void> {
+    if (!supabase) return;
+    if (save) {
+      const { error } = await supabase
+        .from("post_bookmarks")
+        .insert({ user_id: userId, post_id: postId });
+      if (error && error.code !== "23505") throw error;   // already saved
+      return;
+    }
+    const { error } = await supabase
+      .from("post_bookmarks")
+      .delete()
+      .eq("user_id", userId)
+      .eq("post_id", postId);
+    if (error) throw error;
+  },
+
+  /** Post ids this driver has saved. Ids only — the Activity screen resolves
+   *  them against the feed it already holds. */
+  async loadBookmarkIds(userId: string): Promise<string[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("post_bookmarks")
+      .select("post_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error || !Array.isArray(data)) return [];
+    return data.map((r: any) => String(r.post_id));
+  },
+
+  /** Post ids this driver has liked. Same shape, same reason. */
+  async loadLikedIds(userId: string): Promise<string[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("post_likes")
+      .select("post_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error || !Array.isArray(data)) return [];
+    return data.map((r: any) => String(r.post_id));
+  },
+
+  /**
+   * Posts by id, for the Activity lists.
+   *
+   * Fetched rather than filtered out of the loaded feed: the feed holds the
+   * newest 100 posts, and something saved three weeks ago will not be among
+   * them. Filtering would have made old saves silently disappear from the very
+   * screen that exists to keep them.
+   */
+  async loadPostsByIds(ids: string[], userId?: string): Promise<FeedPost[]> {
+    if (!supabase || !ids.length) return [];
+    const SELECT =
+      "id, user_id, body, image_url, image_thumb_url, video_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)";
+    let { data, error }: { data: any[] | null; error: unknown } = await supabase
+      .from("feed_posts")
+      .select(SELECT)
+      .in("id", ids.slice(0, 200));
+    if (error) {
+      ({ data, error } = await supabase
+        .from("feed_posts")
+        .select("id, user_id, body, image_url, created_at, profiles!feed_posts_user_id_fkey(full_name), post_likes(count), post_comments(count)")
+        .in("id", ids.slice(0, 200)));
+    }
+    if (error || !Array.isArray(data)) return [];
+
+    let likedIds = new Set<string>();
+    if (userId) {
+      const { data: myLikes } = await supabase
+        .from("post_likes").select("post_id").eq("user_id", userId);
+      likedIds = new Set((myLikes ?? []).map((r: any) => r.post_id));
+    }
+
+    const byId = new Map<string, FeedPost>();
+    for (const row of data) {
+      const author = row.profiles?.full_name ?? "Driver";
+      byId.set(String(row.id), {
+        id: String(row.id),
+        userId: row.user_id ? String(row.user_id) : undefined,
+        author,
+        initials: initials(author),
+        body: row.body ?? "",
+        imageUrl: resolveMediaUrl(row.image_thumb_url ?? row.image_url),
+        videoUrl: resolveMediaUrl(row.video_url),
+        createdAt: new Date(row.created_at).getTime(),
+        likeCount: row.post_likes?.[0]?.count ?? 0,
+        commentCount: row.post_comments?.[0]?.count ?? 0,
+        likedByMe: likedIds.has(String(row.id)),
+        // The feed's own shape. `likes` mirrors likeCount; reposts are not
+        // queried here because the Activity lists do not show them, and a
+        // second round trip per screen is not worth a number nobody reads.
+        likes: row.post_likes?.[0]?.count ?? 0,
+        reposts: 0,
+        repostedByMe: false,
+      } as FeedPost);
+    }
+    // Keep the order the ids came in — newest saved first, not newest posted.
+    return ids.map((id) => byId.get(id)).filter(Boolean) as FeedPost[];
   },
 
   async loadThreads(userId: string): Promise<ChatThread[]> {

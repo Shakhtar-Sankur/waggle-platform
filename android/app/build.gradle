@@ -26,7 +26,13 @@ android {
         //
         // From the first upload onward the usual rule returns: every later
         // upload needs a higher versionCode than the highest already accepted.
-        versionCode 1
+        //
+        // 2 rather than 1 because several signed builds of "versionCode 1" have
+        // now been installed on a test handset, and Android refuses to install
+        // a build whose versionCode is not higher than the one already on the
+        // device. Nothing has reached Play yet, so any value is still valid as
+        // the first upload — this simply keeps the artefacts distinguishable.
+        versionCode 2
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {

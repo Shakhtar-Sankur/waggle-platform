@@ -7,6 +7,8 @@ import type { LocationPoint } from "../types";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
 import { useProfileStore } from "./useProfileStore";
+import { TripTracking } from "../services/TripTracking";
+import { currencySymbol } from "../utils/format";
 import { translate } from "../i18n";
 
 type PermissionState = "idle" | "granted" | "denied";
@@ -141,9 +143,27 @@ export const useLocationStore = create<LocationState>()(
         try {
           const point = await LocationService.currentPosition();
           stopWatching?.();
-          stopWatching = await LocationService.watchPosition((next) => {
-            get().updatePosition(next);
-          });
+          /* The rate and the currency symbol go with the watch, so the ongoing
+             notification can say what the trip is worth. The service cannot
+             read settings itself, and while the phone is locked the WebView is
+             suspended — so anything the notification shows has to have been
+             handed over before the screen went off. */
+          const profile = useProfileStore.getState();
+          stopWatching = await LocationService.watchPosition(
+            (next) => {
+              get().updatePosition(next);
+              /* Re-sync the service with OUR total. The service applies the
+                 same gates but not every one of them, so over a long locked
+                 stretch the two can drift; this makes the app's figure the one
+                 on the notification whenever the app is awake. */
+              void TripTracking.sync?.({ distanceKm: get().totalDistanceKm }).catch(() => {});
+            },
+            {
+              rate: profile.baseRate,
+              currency: currencySymbol(),
+              unit: "km",
+            },
+          );
           trackingStartedAt = Date.now();
           // A new trip earns a fresh warning. Whatever was blocking the signal
           // last time — a car park, a tunnel — is not necessarily true now.

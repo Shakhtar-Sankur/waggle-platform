@@ -4,7 +4,7 @@ Everything here is checkable against the app. Play compares the Data Safety
 section to what the binary actually does, and a listing that overstates is a
 removal later rather than a rejection now.
 
-`com.gigzen.waggle` · versionCode 1 · versionName 1.0 · targetSdk 36 · minSdk 24
+`com.gigzen.waggle` · versionCode 2 · versionName 1.0 · targetSdk 36 · minSdk 24
 
 ---
 
@@ -37,9 +37,15 @@ matched to real roads rather than drawn as straight lines between GPS pings, and
 it is coloured by how fast you were moving, so you can see where you were stuck.
 
 Earnings you can check
-Set your rate per kilometre. Waggle multiplies it by the distance it measured
-and shows the total, your rate per hour, and how far you are through the daily
-goal you set. Every figure comes from your own trips.
+Set your rate per kilometre and the daily goal you are working towards. Waggle
+multiplies the rate by the distance it measured and shows the total, your rate
+per hour, and how far through the goal you are. Every figure comes from your own
+trips.
+
+A week you can look back on
+Every day you drive is kept, so you can see the last seven days side by side and
+what each one earned. These are measured from your recorded trips, not today's
+pace multiplied out — a slow morning does not become a bad week.
 
 It ignores what did not happen
 A phone sitting still reports GPS that wanders by several metres. Waggle
@@ -129,8 +135,13 @@ the service.
 
 - **Icon** — 512×512 PNG, from `android/app/src/main/res` (already in the app).
 - **Feature graphic** — 1024×500, `docs/play-feature-graphic.png`.
-- **Phone screenshots** — at least two, 16:9 or 9:16, min 320px.
-  Use `gigzen-website/shots/`: home, map, friends, community, messages, profile.
+- **Phone screenshots** — `docs/play-screenshots/`: home, map, community,
+  friends, messages, profile. 780×1520 (1.949:1), 24-bit PNG, captured from the
+  current build.
+
+  Not `gigzen-website/shots/`. That set is 720×1520 — 2.111:1, over Play's 2:1
+  cap — and was taken on 29 August, so it still shows the Daily Goal card that
+  has since been removed and predates the 7-day record entirely.
 
 ## Content rating
 

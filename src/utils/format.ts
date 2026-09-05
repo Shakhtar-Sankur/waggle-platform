@@ -134,6 +134,12 @@ export function setCurrency(code: string) {
   activeCurrency = CURRENCIES.find((c) => c.code === code) ?? CURRENCIES[0];
 }
 
+/** Just the symbol of the active currency — for places that format the
+ *  amount themselves, like the Android tracking notification. */
+export function currencySymbol(): string {
+  return activeCurrency.symbol;
+}
+
 export function currency(value: number) {
   return `${activeCurrency.symbol}${Math.round(value).toLocaleString(activeCurrency.locale)}`;
 }
