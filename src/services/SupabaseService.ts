@@ -639,9 +639,25 @@ export const SupabaseService = {
    * a story once. A round trip to ask permission to do something the database
    * will decide anyway is a round trip on a driver's connection.
    */
+  /**
+   * Record that this driver has seen a story.
+   *
+   * ignoreDuplicates rather than a bare insert: a story gets re-opened all the
+   * time, and the plain insert hit the (story_id, viewer_id) unique constraint
+   * every time after the first. The 23505 was caught and discarded, so nothing
+   * broke — but it was a wasted round trip and a red console error on every
+   * re-view. ON CONFLICT DO NOTHING makes the second view a no-op at the
+   * database instead.
+   *
+   * DO NOTHING, not DO UPDATE: the RLS policy on story_views has INSERT but no
+   * UPDATE, so an ordinary upsert would take the UPDATE path and be refused —
+   * the same trap already documented on joinGroup.
+   */
   async markStorySeen(storyId: string, viewerId: string): Promise<void> {
     if (!supabase) return;
-    const { error } = await supabase.from("story_views").insert({ story_id: storyId, viewer_id: viewerId });
+    const { error } = await supabase
+      .from("story_views")
+      .upsert({ story_id: storyId, viewer_id: viewerId }, { ignoreDuplicates: true });
     if (error && error.code !== "23505") throw error;
   },
 
@@ -897,14 +913,28 @@ export const SupabaseService = {
     // Presence lives in profiles.last_seen (added by supabase/presence.sql). If that
     // migration hasn't run yet, the column is missing → fall back gracefully so the
     // whole Discover/Friends/Map feature never breaks.
+    // Ordered by who was here most recently. Without an order clause PostgREST
+    // returns rows in whatever order the planner produced, so "People you may
+    // know" was arbitrary AND unstable — it could reshuffle between two loads
+    // of the same screen, and past 500 drivers it would silently show a
+    // different arbitrary 500 each time. Most-recently-seen first is both
+    // deterministic and the more useful answer: a driver who was online an hour
+    // ago is worth suggesting, one who has not opened the app since March is not.
     let data: any[] | null = null;
     let error: any = null;
     ({ data, error } = await supabase
       .from("profiles")
       .select(`${WORKER_SELECT}, last_seen`)
+      .order("last_seen", { ascending: false, nullsFirst: false })
       .limit(500));
     if (error) {
-      ({ data, error } = await supabase.from("profiles").select(WORKER_SELECT).limit(500));
+      // No last_seen column on this project, so there is nothing to rank by —
+      // fall back to a stable order rather than none at all.
+      ({ data, error } = await supabase
+        .from("profiles")
+        .select(WORKER_SELECT)
+        .order("id", { ascending: true })
+        .limit(500));
       if (error) throw error;
     }
 
@@ -1689,6 +1719,25 @@ export const SupabaseService = {
     }));
   },
 
+  /**
+   * The chat room behind a group, if this driver can see it.
+   *
+   * Returns null rather than throwing when there is none: a backend that has
+   * not run supabase/group_rooms.sql has no group_id column at all, and on that
+   * project joining a group should still work the way it always did instead of
+   * failing outright.
+   */
+  async groupThreadId(groupId: string): Promise<string | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("chat_threads")
+      .select("id")
+      .eq("group_id", groupId)
+      .maybeSingle();
+    if (error) return null;
+    return data?.id ?? null;
+  },
+
   async joinGroup(groupId: string, userId: string) {
     assertSupabase();
     // ignoreDuplicates, so this compiles to ON CONFLICT DO NOTHING rather than
@@ -1703,10 +1752,84 @@ export const SupabaseService = {
       .from("group_members")
       .upsert({ group_id: groupId, user_id: userId }, { ignoreDuplicates: true });
     if (error) throw error;
+
+    // Membership first, then the room — "threads group read" grants sight of a
+    // group's thread to members of that group, so the lookup below only works
+    // once the row above exists.
+    await this.enterGroupRoom(groupId, userId).catch(() => undefined);
+  },
+
+  /**
+   * Put the driver in the group's chat room, creating the room if they are the
+   * first one in.
+   *
+   * Deliberately swallowed by the caller: a driver whose room could not be
+   * reached is still in the group, and a Join button that reports failure
+   * because a side effect failed is worse than one that quietly joins.
+   */
+  async enterGroupRoom(groupId: string, userId: string): Promise<string | null> {
+    if (!supabase) return null;
+
+    const existing = await this.groupThreadId(groupId);
+    if (existing) {
+      const { error } = await supabase
+        .from("chat_thread_members")
+        .upsert({ thread_id: existing, user_id: userId }, { ignoreDuplicates: true });
+      if (error) throw error;
+      return existing;
+    }
+
+    // First member in. create_thread is the atomic path — it makes the thread
+    // and the creator's membership in one transaction — and the group_id is
+    // stamped on afterwards. If that stamp fails the worst case is a thread
+    // with no group, visible only to its creator, which the app can still list
+    // and leave; the alternative ordering risks a thread nobody can see at all.
+    const { name } = await this.groupName(groupId);
+    const thread = await this.createThread(userId, name, true);
+
+    const { error: stampError } = await supabase
+      .from("chat_threads")
+      .update({ group_id: groupId })
+      .eq("id", thread.id);
+
+    if (stampError) {
+      // 23505 means somebody else created the room in the moment between the
+      // lookup above and this update. Theirs is the real one — drop ours and
+      // join it, rather than leaving two rooms for one group.
+      await supabase.from("chat_threads").delete().eq("id", thread.id);
+      const winner = await this.groupThreadId(groupId);
+      if (!winner) throw stampError;
+      await supabase
+        .from("chat_thread_members")
+        .upsert({ thread_id: winner, user_id: userId }, { ignoreDuplicates: true });
+      return winner;
+    }
+
+    return thread.id;
+  },
+
+  /** The group's display name, for titling its room. */
+  async groupName(groupId: string): Promise<{ name: string }> {
+    if (!supabase) return { name: groupId };
+    const { data } = await supabase.from("groups").select("name").eq("id", groupId).maybeSingle();
+    return { name: data?.name ?? groupId };
   },
 
   async leaveGroup(groupId: string, userId: string) {
     assertSupabase();
+
+    // The room first, while the group membership row still exists — the policy
+    // that lets this driver see the thread reads group_members, so deleting
+    // that row first would hide the room and strand them inside it.
+    const threadId = await this.groupThreadId(groupId).catch(() => null);
+    if (threadId) {
+      await supabase!
+        .from("chat_thread_members")
+        .delete()
+        .eq("thread_id", threadId)
+        .eq("user_id", userId);
+    }
+
     const { error } = await supabase!
       .from("group_members")
       .delete()

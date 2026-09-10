@@ -131,6 +131,22 @@ export function CommunityScreen() {
     });
   };
 
+  /**
+   * Walk into a group's room.
+   *
+   * enterGroupRoom is idempotent, so this also repairs a driver who joined
+   * before group rooms existed, or whose room join failed the first time —
+   * they get put in the room the moment they tap Open rather than being told
+   * there is nothing there.
+   */
+  const openGroupRoom = async (groupId: string) => {
+    if (!user) return;
+    const threadId = await SupabaseService.enterGroupRoom(groupId, user.id).catch(() => null);
+    if (!threadId) return;
+    await useChatStore.getState().loadCloudChats(user.id).catch(() => undefined);
+    navigate("/messages", { state: { openThreadId: threadId } });
+  };
+
   const [tab, setTab] = useState<FbTab>("home");
   const [postBody, setPostBody] = useState("");
   const [query, setQuery] = useState("");
@@ -148,6 +164,8 @@ export function CommunityScreen() {
   // happened to carry a photo. A reel needs an image, so the picker comes
   // first and the caption second.
   const [reelOpen, setReelOpen] = useState(false);
+  /** Reels whose video element reported an error, so they can say so. */
+  const [deadReels, setDeadReels] = useState<string[]>([]);
   const [reelVideo, setReelVideo] = useState<PickedVideo | undefined>();
   const [reelError, setReelError] = useState<string | null>(null);
   const [reelCaption, setReelCaption] = useState("");
@@ -724,18 +742,34 @@ export function CommunityScreen() {
             <div className="fb-reels">
               {reels.map((reel) => (
                 <article className="fb-reel" key={reel.id}>
-                  <video
-                    src={reel.videoUrl}
-                    playsInline
-                    muted
-                    loop
-                    preload="metadata"
-                    onClick={(e) => {
-                      const v = e.currentTarget;
-                      if (v.paused) void v.play(); else v.pause();
-                    }}
-                  />
-                  <span className="fb-reel-play"><Play size={20} fill="currentColor" /></span>
+                  {/* A reel whose video will not load used to render as a black
+                      rectangle with a play button on it — indistinguishable
+                      from one that simply had not started, so the driver taps
+                      it and nothing ever happens. The object can be gone, or
+                      the connection can be too poor to fetch it; either way say
+                      so instead of pretending. */}
+                  {deadReels.includes(reel.id) ? (
+                    <div className="fb-reel-dead">
+                      <Clapperboard size={22} />
+                      <span>{t("fb_reelUnavailable")}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <video
+                        src={reel.videoUrl}
+                        playsInline
+                        muted
+                        loop
+                        preload="metadata"
+                        onError={() => setDeadReels((prev) => (prev.includes(reel.id) ? prev : [...prev, reel.id]))}
+                        onClick={(e) => {
+                          const v = e.currentTarget;
+                          if (v.paused) void v.play(); else v.pause();
+                        }}
+                      />
+                      <span className="fb-reel-play"><Play size={20} fill="currentColor" /></span>
+                    </>
+                  )}
                   {isTrending(reel, posts) ? (
                     <span className="fb-reel-trending">{t("fb_trending")}</span>
                   ) : null}
@@ -867,7 +901,13 @@ export function CommunityScreen() {
                 );
               })
             ) : (
-              <p className="fb-comment-empty">{t("fb_noSuggestions")}</p>
+              /* Two different nothings. With a search running, "more drivers
+                 will appear as they join" is simply false — plenty have joined,
+                 none of them match what was typed — and it sends the driver off
+                 believing the app is empty rather than trying another spelling. */
+              <p className="fb-comment-empty">
+                {query.trim() ? t("fb_noPeople") : t("fb_noSuggestions")}
+              </p>
             )}
           </section>
 
@@ -922,13 +962,23 @@ export function CommunityScreen() {
                       : t("fb_membersUnknown")}
                   </small>
                   <div className="fb-group-actions">
+                    {/* Joining used to end here: a membership row, a button that
+                        said "Joined", and nothing to open. The only way into an
+                        actual community was the Facebook link below, which
+                        takes the driver out of the app entirely. A joined group
+                        now has a room, and this is the door to it. */}
+                    {group.joined ? (
+                      <Button size="sm" className="fb-open-group" onClick={() => void openGroupRoom(group.id)}>
+                        <MessageCircle size={15} /> {t("fb_openGroup")}
+                      </Button>
+                    ) : null}
                     <Button
                       size="sm"
                       variant={group.joined ? "outline" : "primary"}
                       className={group.joined ? "" : "fb-join"}
                       onClick={() => toggleGroup(group.id)}
                     >
-                      {group.joined ? <><Check size={15} /> {t("fb_joined")}</> : <><Plus size={15} /> {t("fb_joinGroup")}</>}
+                      {group.joined ? <><Check size={15} /> {t("fb_leaveGroup")}</> : <><Plus size={15} /> {t("fb_joinGroup")}</>}
                     </Button>
                     <button
                       type="button"

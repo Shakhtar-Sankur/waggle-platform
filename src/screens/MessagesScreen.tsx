@@ -184,6 +184,25 @@ export function MessagesScreen() {
     [workers, connections, user, blockedIds],
   );
 
+  /* Whatever conversation is on screen is the one the store sends to.
+   *
+   * These were two separate pieces of state. The screen renders from `openId`;
+   * sendMessage reads `selectedThreadId` off the store. Tapping a chat in the
+   * list sets both, so that path was fine — but arriving with an openThreadId
+   * from a Message or Open button set only `openId`, and selectedThreadId is
+   * persisted, so it still held whatever thread this device last had selected,
+   * possibly from a previous session.
+   *
+   * The result was a message typed into one conversation being delivered to a
+   * different one, while the sender watched it appear under the right name.
+   * Reproduced: opened a group room, sent a line, and it landed in a one-to-one
+   * thread with another driver. That is not a display bug, it is somebody's
+   * message going to the wrong person.
+   */
+  useEffect(() => {
+    if (openId) selectThread(openId);
+  }, [openId, selectThread]);
+
   // Keep chats fresh (RLS makes chat too complex for live-broadcast, so we
   // poll). Poll fast while a conversation is actually open — that is when a
   // reply needs to feel instant — and back off on the chat list, which costs
