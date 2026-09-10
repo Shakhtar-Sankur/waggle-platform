@@ -626,9 +626,17 @@ export function CommunityScreen() {
                       <MessageCircle size={17} />
                       {post.commentCount ? <span>{post.commentCount}</span> : null}
                     </button>
+                    {/* Repost and like are toggles whose state used to live only in
+                        a CSS class, so a screen reader announced "Like, button"
+                        whether or not this rider had liked the post. The count is
+                        no help: it is the post's total, not a record of whether
+                        you are one of them. The bookmark beside them already did
+                        this correctly. State goes in aria-pressed rather than the
+                        label so it is announced once, not twice. */}
                     <button
                       className={post.repostedByMe ? "tw-act tw-repost active" : "tw-act tw-repost"}
                       aria-label={t("tw_repost")}
+                      aria-pressed={post.repostedByMe}
                       onClick={() => toggleRepost(post.id)}
                     >
                       <Repeat2 size={18} />
@@ -637,6 +645,7 @@ export function CommunityScreen() {
                     <button
                       className={post.likedByMe ? "tw-act tw-like active" : "tw-act tw-like"}
                       aria-label={t("fb_like")}
+                      aria-pressed={post.likedByMe}
                       onClick={() => toggleLike(post.id)}
                     >
                       <Heart size={17} fill={post.likedByMe ? "currentColor" : "none"} />
