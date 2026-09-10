@@ -100,6 +100,7 @@ export function CommunityScreen() {
   const deletePost = useCommunityStore((state) => state.deletePost);
   const loadComments = useCommunityStore((state) => state.loadComments);
   const addComment = useCommunityStore((state) => state.addComment);
+  const deleteComment = useCommunityStore((state) => state.deleteComment);
   const sendConnection = useCommunityStore((state) => state.sendConnection);
   const acceptConnection = useCommunityStore((state) => state.acceptConnection);
 
@@ -642,7 +643,20 @@ export function CommunityScreen() {
                       onClick={() => toggleCommentSection(post.id)}
                     >
                       <MessageCircle size={17} />
-                      {post.commentCount ? <span>{post.commentCount}</span> : null}
+                      {/* Once this post's comments are actually loaded, count
+                          what the driver can SEE. The server's count is every
+                          row, blocked authors included, so a post whose only
+                          comment came from someone you blocked showed "1" and
+                          then opened onto "Be the first to comment." Before the
+                          comments arrive the server number is still the best
+                          guess, so it stands. */}
+                      {(() => {
+                        const loaded = comments[post.id];
+                        const shown = loaded
+                          ? loaded.filter((c) => !(c.userId && blocked.includes(c.userId))).length
+                          : post.commentCount;
+                        return shown ? <span>{shown}</span> : null;
+                      })()}
                     </button>
                     {/* Repost and like are toggles whose state used to live only in
                         a CSS class, so a screen reader announced "Like, button"
@@ -697,6 +711,21 @@ export function CommunityScreen() {
                           <strong>{comment.author}</strong>
                           <p>{comment.body}</p>
                         </div>
+                        {/* You could always delete your own post and your own
+                            message, but a comment was permanent the moment it
+                            was sent — including one written in anger or left on
+                            the wrong post. The delete policy was there the whole
+                            time; nothing was asking for it. */}
+                        {comment.userId && comment.userId === user?.id ? (
+                          <button
+                            type="button"
+                            className="fb-comment-del"
+                            aria-label={t("fb_deleteComment")}
+                            onClick={() => void deleteComment(post.id, comment.id)}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        ) : null}
                       </div>
                     ))}
                     {!(comments[post.id] ?? []).filter((comment) => !(comment.userId && blocked.includes(comment.userId))).length ? (
@@ -719,10 +748,15 @@ export function CommunityScreen() {
               </article>
             ))
           ) : (
+            /* An empty feed and an empty SEARCH are different things. With a
+               query running this said "No posts yet — share a tip to get
+               started", which is untrue: the feed is full, nothing in it
+               matched. Telling a driver the community is empty because they
+               mistyped a street name is how they stop searching. */
             <div className="fb-empty">
               <MessageCircle size={34} />
-              <p>{t("fb_noPosts")}</p>
-              <span>{t("fb_noPostsSub")}</span>
+              <p>{query.trim() ? t("fb_noPostsMatch") : t("fb_noPosts")}</p>
+              <span>{query.trim() ? t("fb_noPostsMatchSub") : t("fb_noPostsSub")}</span>
             </div>
           )}
         </div>

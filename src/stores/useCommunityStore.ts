@@ -35,6 +35,8 @@ interface CommunityState {
   deletePost: (postId: string) => Promise<void>;
   loadComments: (postId: string) => Promise<void>;
   addComment: (postId: string, body: string) => Promise<void>;
+  /** Remove your own comment. Scoped to the caller by RLS and by the query. */
+  deleteComment: (postId: string, commentId: string) => Promise<void>;
   loadConnections: (userId: string) => Promise<void>;
   sendConnection: (workerId: string) => Promise<void>;
   acceptConnection: (connectionId: string) => Promise<void>;
@@ -274,6 +276,35 @@ export const useCommunityStore = create<CommunityState>()(
           }));
         } catch (error) {
           console.warn("Could not add comment:", error);
+        }
+      },
+      deleteComment: async (postId, commentId) => {
+        const user = useAuthStore.getState().user;
+        if (!user) return;
+        const previous = get().comments[postId] ?? [];
+        // Optimistic, like every other delete here: the row goes from the list
+        // now and comes back if the server refuses, rather than the driver
+        // tapping delete and watching nothing happen.
+        set((state) => ({
+          comments: {
+            ...state.comments,
+            [postId]: (state.comments[postId] ?? []).filter((c) => c.id !== commentId),
+          },
+          posts: state.posts.map((p) =>
+            p.id === postId ? { ...p, commentCount: Math.max(0, p.commentCount - 1) } : p,
+          ),
+        }));
+        if (!SupabaseService.enabled) return;
+        try {
+          await SupabaseService.deleteComment(commentId, user.id);
+        } catch (error) {
+          console.warn("Could not delete comment:", error);
+          set((state) => ({
+            comments: { ...state.comments, [postId]: previous },
+            posts: state.posts.map((p) =>
+              p.id === postId ? { ...p, commentCount: p.commentCount + 1 } : p,
+            ),
+          }));
         }
       },
       loadConnections: async (userId) => {

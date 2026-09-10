@@ -55,9 +55,16 @@ const PUBLIC_OBJECT_MARKER = "/storage/v1/object/public/";
  * can be gravatar or a social login's CDN, and rewriting those would break
  * them.
  */
-export function resolveMediaUrl(stored?: string | null): string | undefined {
-  if (!stored) return undefined;
-  if (!supabase) return stored;
+/**
+ * Split a stored media value into the bucket and the object path inside it.
+ *
+ * Handles both shapes the database holds: an absolute URL with a storage host
+ * baked in, and a bare `bucket/path`. Returns null for anything that is not one
+ * of ours — someone else's CDN, an avatar from a social login — so callers
+ * never rewrite or delete a URL they do not own.
+ */
+function storageRef(stored?: string | null): { bucket: string; path: string } | null {
+  if (!stored) return null;
 
   const marker = stored.indexOf(PUBLIC_OBJECT_MARKER);
   let bucketAndPath: string;
@@ -65,19 +72,56 @@ export function resolveMediaUrl(stored?: string | null): string | undefined {
   if (marker !== -1) {
     bucketAndPath = stored.slice(marker + PUBLIC_OBJECT_MARKER.length);
   } else if (/^https?:\/\//i.test(stored)) {
-    return stored;                      // someone else's URL; not ours to rewrite
+    return null;                        // someone else's URL; not ours to touch
   } else {
     bucketAndPath = stored.replace(/^\/+/, "");
   }
 
   const slash = bucketAndPath.indexOf("/");
-  if (slash <= 0) return stored;        // no bucket segment — leave it be
-
+  if (slash <= 0) return null;          // no bucket segment
   const bucket = bucketAndPath.slice(0, slash);
   const path = bucketAndPath.slice(slash + 1);
-  if (!path) return stored;
+  if (!path) return null;
+  return { bucket, path };
+}
 
-  return supabase.storage.from(bucket).getPublicUrl(path).data.publicUrl;
+export function resolveMediaUrl(stored?: string | null): string | undefined {
+  if (!stored) return undefined;
+  if (!supabase) return stored;
+  const ref = storageRef(stored);
+  if (!ref) return stored;
+  return supabase.storage.from(ref.bucket).getPublicUrl(ref.path).data.publicUrl;
+}
+
+/**
+ * Remove uploaded objects that a deleted row was the only reference to.
+ *
+ * Deleting a post or a story used to delete the row and nothing else, so the
+ * photo, its thumbnail and any video stayed in a PUBLIC bucket permanently. Two
+ * problems, and the second is the serious one. The storage is paid for forever.
+ * And a driver who deletes a post believing the picture is gone is wrong: the
+ * object still answers on its original URL to anyone who has it. Verified by
+ * deleting a post and fetching its video back with a 200.
+ *
+ * Best-effort by design. The row is already gone, and a storage error must not
+ * turn a successful delete into a failed one — the object is at worst orphaned,
+ * which is exactly where it was before.
+ */
+async function removeStoredMedia(values: (string | null | undefined)[]): Promise<void> {
+  if (!supabase) return;
+  const byBucket = new Map<string, string[]>();
+  for (const value of values) {
+    const ref = storageRef(value);
+    if (!ref) continue;
+    const paths = byBucket.get(ref.bucket) ?? [];
+    paths.push(ref.path);
+    byBucket.set(ref.bucket, paths);
+  }
+  await Promise.all(
+    [...byBucket].map(([bucket, paths]) =>
+      supabase!.storage.from(bucket).remove(paths).catch(() => undefined),
+    ),
+  );
 }
 
 export interface UploadedPhoto {
@@ -663,8 +707,19 @@ export const SupabaseService = {
 
   async deleteStory(storyId: string): Promise<void> {
     assertSupabase();
+
+    // Same reasoning as deletePost: a story that expires quietly is one thing,
+    // one the driver deliberately deleted should not still be fetchable.
+    const { data: story } = await supabase!
+      .from("stories")
+      .select("image_url, image_thumb_url")
+      .eq("id", storyId)
+      .maybeSingle();
+
     const { error } = await supabase!.from("stories").delete().eq("id", storyId);
     if (error) throw error;
+
+    if (story) await removeStoredMedia([story.image_url, story.image_thumb_url]);
   },
 
   async uploadPhoto(
@@ -749,12 +804,31 @@ export const SupabaseService = {
   // user_id filter is belt-and-braces — the database enforces ownership too.
   async deletePost(postId: string, userId: string) {
     assertSupabase();
+
+    // Read the attachments before the row goes, or there is nothing left to say
+    // which objects belonged to it. Scoped to this driver exactly like the
+    // delete below, so it can only ever name their own files.
+    const { data: attachments } = await supabase!
+      .from("feed_posts")
+      .select("image_url, image_thumb_url, video_url")
+      .eq("id", postId)
+      .eq("user_id", userId)
+      .maybeSingle();
+
     const { error } = await supabase!
       .from("feed_posts")
       .delete()
       .eq("id", postId)
       .eq("user_id", userId);
     if (error) throw error;
+
+    if (attachments) {
+      await removeStoredMedia([
+        attachments.image_url,
+        attachments.image_thumb_url,
+        attachments.video_url,
+      ]);
+    }
   },
 
   // Remove a message the driver sent (chat_messages_delete_own).
@@ -851,11 +925,37 @@ export const SupabaseService = {
     return {
       id: data.id,
       postId,
+      // loadComments carries the author's id and this did not, so a comment was
+      // anonymous until the next refetch — which is exactly the window in which
+      // somebody wants to take back what they just wrote.
+      userId,
       author,
       initials: initials(author),
       body: data.body,
       createdAt: new Date(data.created_at).getTime(),
     };
+  },
+
+  /**
+   * Remove your own comment.
+   *
+   * The "comments own delete" policy has always allowed this — the app simply
+   * never asked. A driver could delete their own post and their own message but
+   * was stuck with a comment the moment it was sent, including one posted to
+   * the wrong thread or written in anger.
+   *
+   * Scoped by user_id as well as id: RLS would refuse someone else's row
+   * anyway, but a delete that names only an id is one bad variable away from
+   * meaning something much larger.
+   */
+  async deleteComment(commentId: string, userId: string): Promise<void> {
+    assertSupabase();
+    const { error } = await supabase!
+      .from("post_comments")
+      .delete()
+      .eq("id", commentId)
+      .eq("user_id", userId);
+    if (error) throw error;
   },
 
   async loadConnections(userId: string): Promise<Connection[]> {

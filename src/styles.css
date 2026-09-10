@@ -9813,3 +9813,20 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 
 /* The saved state of the bookmark button in the feed. */
 .tw-act.tw-saved { color: var(--primary); }
+
+/* The delete affordance on your own comment. Small and quiet: it sits beside
+   every comment you wrote, and a comment row is not the place for a button
+   that competes with the words in it. */
+.fb-comment-del {
+  align-self: center;
+  margin-inline-start: auto;
+  padding: 4px;
+  border: none;
+  background: none;
+  color: var(--fb-secondary);
+  cursor: pointer;
+  line-height: 0;
+}
+.fb-comment-del:active {
+  color: #d93025;
+}
