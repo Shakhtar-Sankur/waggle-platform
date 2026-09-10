@@ -41,6 +41,7 @@ interface LocationState {
   tickElapsed: () => void;
   resetRoute: () => void;
   ensureToday: () => void;
+  hydrateFromServer: () => Promise<void>;
 }
 
 const initialPoint: LocationPoint = {
@@ -289,6 +290,54 @@ export const useLocationStore = create<LocationState>()(
       // Zero out "today's" distance / time / route when the calendar day rolls over,
       // so daily stats truly reset at midnight (and a brand-new day starts clean).
       // Weekly challenge totals reset the same way when the week rolls over.
+      /**
+       * Load today's distance back from the server.
+       *
+       * The daily total lived only in this store, which persists to
+       * localStorage. Everything needed to rebuild it has been written to
+       * route_points since the beginning — the same rows the map and the seven
+       * day history read — but nothing ever read it back for this number. So a
+       * driver who cleared their browser, reinstalled, or signed in on a second
+       * phone saw 0.0 km and zero earnings for a day they had actually worked.
+       * The distance was never lost; the screen simply never asked.
+       *
+       * Takes the LARGER of the two rather than overwriting. A fix that has been
+       * recorded locally but not yet posted is real distance the server does not
+       * know about, and a driver mid-shift must never watch their total drop
+       * because a sync landed. ensureToday() has already zeroed a stale local
+       * figure by the time this runs, so "larger" cannot resurrect yesterday.
+       */
+      hydrateFromServer: async () => {
+        if (!useAuthStore.getState().user) return;
+
+        const days = await SupabaseService.routeHistory(7).catch(() => []);
+        if (!days.length) return;
+
+        /* routeHistory pads its keys ("2026-09-10") while todayKey() does not
+           ("2026-9-10"), because the latter is only ever compared against
+           itself as a persistence marker. Matching on todayKey() here would
+           never find a row and this whole function would quietly do nothing —
+           the worst kind of fix, one that looks applied. Formatted to match the
+           service rather than changing todayKey(), which would invalidate the
+           activeDate already persisted on every installed device. */
+        const now = new Date();
+        const today = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+        const server = days.find((entry) => entry.day === today)?.km ?? 0;
+        const week = days.reduce((sum, entry) => sum + entry.km, 0);
+
+        const state = get();
+        // Tracking owns the counter while it runs; stepping on it mid-drive
+        // would fight the live updates coming from each new fix.
+        if (state.isTracking) return;
+
+        const rate = useProfileStore.getState().baseRate;
+        set({
+          totalDistanceKm: Math.max(state.totalDistanceKm, server),
+          weekDistanceKm: Math.max(state.weekDistanceKm, week),
+          weekEarnings: Math.max(state.weekEarnings, week * rate),
+        });
+      },
+
       ensureToday: () => {
         if (get().isTracking) return;
         const today = todayKey();

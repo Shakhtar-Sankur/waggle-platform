@@ -953,8 +953,19 @@ export const SupabaseService = {
   // Heartbeat: mark the current user as "seen now" so others get live presence.
   // Fire-and-forget; if presence.sql hasn't been run the column is missing and this
   // simply no-ops (the error is swallowed by the caller).
+  //
+  // Gated on a REAL session rather than on the app's own `user` state. The two
+  // are not the same thing for a second or so after sign-in: the store has the
+  // user before supabase-js has attached the session to outgoing requests, and a
+  // write sent in that window goes out as `anon`. The schema deliberately strips
+  // anon of everything on profiles, so it came back 401 / 42501 — eight times per
+  // login, silently, each one a round trip that could never have succeeded.
+  //
+  // getSession() reads from memory, so this costs nothing per beat.
   async updateLastSeen(userId: string) {
     if (!supabase) return;
+    const { data } = await supabase.auth.getSession();
+    if (!data.session) return;
     await supabase.from("profiles").update({ last_seen: new Date().toISOString() }).eq("id", userId);
   },
 

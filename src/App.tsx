@@ -31,6 +31,7 @@ export default function App() {
   const isTracking = useLocationStore((state) => state.isTracking);
   const tickElapsed = useLocationStore((state) => state.tickElapsed);
   const ensureToday = useLocationStore((state) => state.ensureToday);
+  const hydrateFromServer = useLocationStore((state) => state.hydrateFromServer);
   const loadCloudSettings = useProfileStore((state) => state.loadCloudSettings);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
   const loadConnections = useCommunityStore((state) => state.loadConnections);
@@ -59,15 +60,25 @@ export default function App() {
     useProfileStore.getState().applyCurrency(countryToCurrency(resolveCountryForLocation()));
   }, [autoRegion]);
 
-  // Reset "today's" distance/earnings when the day rolls over (on open + on refocus).
+  /* Reset "today's" distance/earnings when the day rolls over (on open + on
+     refocus), then load the real figure back from the server.
+     
+     Order matters: ensureToday() first, so a stale total from yesterday is
+     zeroed before hydrate takes the larger of local and server and would
+     otherwise carry it forward. Hydrating on refocus as well as on open is what
+     catches the driver who recorded distance on their phone and then opened the
+     app somewhere else. */
   useEffect(() => {
     ensureToday();
+    void hydrateFromServer();
     const onVisible = () => {
-      if (document.visibilityState === "visible") ensureToday();
+      if (document.visibilityState !== "visible") return;
+      ensureToday();
+      void hydrateFromServer();
     };
     document.addEventListener("visibilitychange", onVisible);
     return () => document.removeEventListener("visibilitychange", onVisible);
-  }, [ensureToday]);
+  }, [ensureToday, hydrateFromServer]);
 
   useEffect(() => {
     if (!isTracking) return undefined;
@@ -94,7 +105,12 @@ export default function App() {
       window.clearInterval(timer);
       document.removeEventListener("visibilitychange", onVisible);
     };
-  }, [user]);
+    /* Keyed on the id, not the object. The auth store hands back a fresh `user`
+       whenever the profile or the token refreshes, and depending on the object
+       tore this effect down and rebuilt it each time — firing beat(true) again
+       on every rebuild. That is most of why one sign-in produced eight presence
+       writes rather than one. */
+  }, [user?.id]);
 
   useEffect(() => {
     if (!user || !SupabaseService.enabled) return undefined;
