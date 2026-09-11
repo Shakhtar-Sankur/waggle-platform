@@ -7295,11 +7295,19 @@ body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat:
   inset: -30% -20%;
   z-index: 0;
   pointer-events: none;
+  /* Light and shadow ONLY — no colour of its own.
+     The first two attempts tinted these pools with the band's own hues mixed
+     toward white, which does not light a colour, it bleaches it: Home went from
+     a deep indigo to a washed lilac. Asking for an animation is not asking for
+     a new palette, so the hue is now left completely alone. What moves is a
+     faint white highlight and an equally faint dark one, both so weak that the
+     band's colour at any instant is the colour it always was, only lit
+     unevenly — which is the whole point of light. */
   background:
-    radial-gradient(38% 46% at 22% 32%, color-mix(in srgb, var(--band-a, #4338ca) 70%, white) 0%, transparent 62%),
-    radial-gradient(34% 42% at 78% 66%, color-mix(in srgb, var(--band-b, #312e81) 55%, white) 0%, transparent 60%);
-  opacity: .5;
-  filter: blur(18px);
+    radial-gradient(40% 48% at 22% 32%, rgba(255, 255, 255, .10) 0%, transparent 62%),
+    radial-gradient(36% 44% at 78% 66%, rgba(0, 0, 0, .12) 0%, transparent 60%);
+  opacity: 1;
+  filter: blur(26px);
   animation: band-drift 22s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -7310,8 +7318,10 @@ body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat:
   inset: -25% -15%;
   z-index: 0;
   pointer-events: none;
+  /* A second, slower glint on its own timing, so the two never line up and the
+     movement does not read as one object sliding about. */
   background:
-    radial-gradient(30% 38% at 68% 20%, rgba(255, 255, 255, .22) 0%, transparent 64%);
+    radial-gradient(32% 40% at 68% 20%, rgba(255, 255, 255, .07) 0%, transparent 64%);
   animation: band-drift-2 30s ease-in-out infinite alternate;
   will-change: transform;
 }
@@ -7326,7 +7336,8 @@ body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat:
 }
 
 /* Ambient motion is the first thing to go for anyone who has asked for less of
-   it. The pools stay — they are part of the colour — they simply stop moving. */
+   it. The light stays where it is; it simply stops moving, and since it no
+   longer carries any hue the band looks exactly as it always did. */
 @media (prefers-reduced-motion: reduce) {
   .screen-band::before,
   .home-band::before,
