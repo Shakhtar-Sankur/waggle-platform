@@ -1572,13 +1572,25 @@ export const SupabaseService = {
 
   async loadMessages(threadId: string): Promise<ChatMessage[]> {
     if (!supabase) return [];
+    /* The NEWEST 200, not the first 200.
+     *
+     * Ascending + limit takes the OLDEST page, so a conversation longer than
+     * the limit opened on messages from months ago with the recent half simply
+     * absent — and nothing said so. Verified on a 253-message thread: the app
+     * showed 200, ending at number 197, and the three newest were nowhere. It
+     * gets worse the more two drivers talk, and a new message arriving in that
+     * thread would never appear at all.
+     *
+     * So: take the last 200 by ordering descending, then put them back in
+     * reading order for the caller, which expects oldest-first. */
     const { data, error } = await supabase
       .from("chat_messages")
       .select("*")
       .eq("thread_id", threadId)
-      .order("created_at", { ascending: true })
+      .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw error;
+    if (data) data.reverse();
 
     // Reactions come from their own table, in one query for the whole page of
     // messages rather than one per message — 200 messages would otherwise be
