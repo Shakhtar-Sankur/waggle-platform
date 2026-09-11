@@ -147,7 +147,15 @@ export default function App() {
     let unsubscribe: Array<() => void> = [];
 
     void (async () => {
-      await SupabaseService.refreshRealtimeAuth();
+      /* A failure here must not take the subscriptions down with it. Realtime
+         without a token delivers nothing on these RLS-heavy tables, but the
+         polling timers still work — so a broken token is a slow app, not a
+         dead one. */
+      try {
+        await SupabaseService.refreshRealtimeAuth();
+      } catch (error) {
+        console.warn("Could not authenticate realtime; falling back to polling.", error);
+      }
       if (cancelled) return;
       unsubscribe = [
       SupabaseService.subscribeToTable("feed_posts", () => void loadCloudCommunity()),
