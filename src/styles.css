@@ -10007,3 +10007,110 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   background: var(--primary-tint, rgba(124, 58, 237, .08));
   border-radius: 10px;
 }
+
+/* ── Shared media in a conversation ───────────────────────────────────
+   The grid is edge to edge with no card around each picture: a driver
+   opening this is scanning for one photo they already remember, and a
+   chrome frame around every tile is thirty borders between them and it.
+   Rounded square cells, three across, so a portrait receipt and a
+   landscape bumper photo read as the same kind of thing. */
+.wa-media { display: flex; flex-direction: column; gap: 4px; }
+.wa-media-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 8px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--fb-secondary);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.wa-media-head em {
+  font-style: normal;
+  font-weight: 650;
+  color: var(--foreground);
+  background: var(--fb-chip, #eef0f4);
+  border-radius: 999px;
+  padding: 1px 8px;
+  font-size: 12px;
+}
+.wa-media-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+}
+.wa-media-cell {
+  position: relative;
+  aspect-ratio: 1;
+  padding: 0;
+  border: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--fb-chip, #eef0f4);
+  cursor: pointer;
+}
+.wa-media-cell img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* The date sits on the picture rather than under it, so the grid stays a
+   grid of pictures and the tiles keep their rhythm. */
+.wa-media-when {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 10px 6px 4px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, .6));
+  color: #fff;
+  font-size: 10px;
+  text-align: start;
+}
+.wa-media-voice { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.wa-media-voice li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: var(--fb-chip, #eef0f4);
+}
+.wa-media-voice button {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--primary-fill);
+  color: #fff;
+  cursor: pointer;
+}
+.wa-media-voice .wa-media-wave {
+  flex: 1;
+  overflow: hidden;
+  white-space: nowrap;
+  font-family: ui-monospace, monospace;
+  font-size: 11px;
+  color: var(--fb-secondary);
+}
+.wa-media-voice .wa-media-when {
+  position: static;
+  padding: 0;
+  background: none;
+  color: var(--fb-secondary);
+}
+.wa-media-empty { color: var(--fb-secondary); font-size: 13px; padding: 14px 0; }
+/* The message a media tile pointed at, flashed once so the eye lands on it. */
+.wa-row.is-found > * { animation: wa-found 1.6s ease; }
+@keyframes wa-found {
+  0%, 70% { background: var(--primary-tint, rgba(124, 58, 237, .16)); }
+  100% { background: transparent; }
+}
+/* Count on the menu row, pushed to the end. */
+.wa-menu-count {
+  margin-inline-start: auto;
+  font-style: normal;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--fb-secondary);
+}

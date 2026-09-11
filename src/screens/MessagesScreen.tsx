@@ -1,4 +1,4 @@
-import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
+import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, Images, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -68,6 +68,9 @@ export function MessagesScreen() {
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<PickedPhoto | undefined>();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [mediaOpen, setMediaOpen] = useState(false);
+  /** A message to scroll to and flash, set when a media cell is tapped. */
+  const [jumpTo, setJumpTo] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const blockUser = useCommunityStore((state) => state.blockUser);
@@ -307,6 +310,50 @@ export function MessagesScreen() {
         }, { once: true });
     });
   }, [openId, lastMessageId]);
+
+  /* Everything visual this conversation has exchanged, newest first.
+   *
+   * Derived from the messages already loaded rather than fetched again: the
+   * thread query pulls the last 200, which is the whole conversation for all
+   * but the most talkative pair, and a second round trip to show a grid the
+   * driver may never open is not worth the data on a phone plan.
+   *
+   * Photos and voice notes are kept apart rather than interleaved. They are
+   * looked for in different moods — a photo is "what did that damage look
+   * like", a voice note is "what did they actually say" — and a grid of
+   * squares with audio rows wedged between them serves neither. */
+  const sharedPhotos = useMemo(
+    () =>
+      openMessages
+        .filter((m) => m.attachmentUrl)
+        .slice()
+        .reverse(),
+    [openMessages],
+  );
+  const sharedVoice = useMemo(
+    () =>
+      openMessages
+        .filter((m) => m.voiceUrl)
+        .slice()
+        .reverse(),
+    [openMessages],
+  );
+  const sharedCount = sharedPhotos.length + sharedVoice.length;
+
+  /* Scroll to the message a media cell pointed at, and flash it so the eye
+     finds it. Cleared afterwards so re-opening the same photo jumps again
+     rather than doing nothing the second time. */
+  useEffect(() => {
+    if (!jumpTo) return undefined;
+    const timer = window.setTimeout(() => {
+      const el = messagesRef.current?.querySelector<HTMLElement>(`[data-mid="${jumpTo}"]`);
+      el?.scrollIntoView({ block: "center", behavior: "smooth" });
+      el?.classList.add("is-found");
+      window.setTimeout(() => el?.classList.remove("is-found"), 1600);
+      setJumpTo(null);
+    }, 260);
+    return () => window.clearTimeout(timer);
+  }, [jumpTo]);
 
   const openChat = (id: string) => {
     selectThread(id);
@@ -576,6 +623,22 @@ export function MessagesScreen() {
                   </button>
                 ) : null}
 
+                {/* Shared media. First item, because it is the one people
+                    come to this menu FOR — the other two are things you do
+                    once about a person, this is a thing you look for again and
+                    again. Carries its own count so the menu answers "is there
+                    anything in there" without being opened. */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="wa-menu-item"
+                  onClick={() => { setMenuOpen(false); setMediaOpen(true); }}
+                  disabled={!sharedCount}
+                >
+                  <Images size={16} /> {t("wa_sharedMedia")}
+                  {sharedCount ? <em className="wa-menu-count">{sharedCount}</em> : null}
+                </button>
+
                 {openOther ? (
                   <>
                     <button
@@ -662,7 +725,7 @@ export function MessagesScreen() {
                   {newDay ? (
                     <div className="wa-daysep"><span>{dayLabel(message.createdAt, t)}</span></div>
                   ) : null}
-                  <div className={`wa-row ${isMe ? "me" : ""}`} id={`msg-${message.id}`}>
+                  <div className={`wa-row ${isMe ? "me" : ""}`} id={`msg-${message.id}`} data-mid={message.id}>
                     {/* Siblings of the bubble, for the same reason the delete
                         button is: on touch there is no hover, so anything
                         positioned inside the bubble sits on top of the words. */}
@@ -1032,6 +1095,82 @@ export function MessagesScreen() {
             document.body,
           )
         : null}
+
+      {/* ── Shared media ────────────────────────────────────────────────
+          Everything this conversation has exchanged, in one place, because
+          scrolling a thread to find a photo of a damaged bumper from three
+          weeks ago is not a search — it is an archaeology dig.
+
+          Deliberately not a copy of the usual "media, links and docs" list.
+          Links and docs do not exist here: this app sends photos and voice,
+          and a row for two categories that are always empty is furniture
+          pretending to be a feature. What IS here gets the room instead —
+          photos as a full-bleed grid where the picture is the thing, and
+          voice notes as their own strand underneath with the duration on
+          each, because you pick those by "how long was it" rather than by
+          looking. */}
+      {mediaOpen && openThread ? (
+        <Modal
+          open
+          onClose={() => setMediaOpen(false)}
+          title={t("wa_sharedMedia")}
+          description={displayTitle(openThread)}
+        >
+          <div className="wa-media">
+            {sharedPhotos.length ? (
+              <>
+                <h4 className="wa-media-head">
+                  {t("wa_mediaPhotos")}<em>{sharedPhotos.length}</em>
+                </h4>
+                <div className="wa-media-grid">
+                  {sharedPhotos.map((m) => (
+                    <button
+                      type="button"
+                      key={m.id}
+                      className="wa-media-cell"
+                      /* Tapping a picture takes you to the moment it was sent
+                         rather than opening it alone. A photo in a driver's
+                         chat is almost always evidence of something — damage,
+                         an address, a receipt — and the words around it are
+                         the half you actually came back for. */
+                      onClick={() => { setMediaOpen(false); setJumpTo(m.id); }}
+                    >
+                      <img src={m.attachmentThumbUrl ?? m.attachmentUrl} alt="" loading="lazy" decoding="async" />
+                      <span className="wa-media-when">{dayLabel(m.createdAt, t)}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            ) : null}
+
+            {sharedVoice.length ? (
+              <>
+                <h4 className="wa-media-head">
+                  {t("wa_mediaVoice")}<em>{sharedVoice.length}</em>
+                </h4>
+                <ul className="wa-media-voice">
+                  {sharedVoice.map((m) => (
+                    <li key={m.id}>
+                      <button
+                        type="button"
+                        aria-label={t("wa_voiceNote")}
+                        onClick={() => m.voiceUrl && playVoice(m.id, m.voiceUrl)}
+                      >
+                        {playingId === m.id ? <Pause size={15} /> : <Play size={15} />}
+                      </button>
+                      <span className="wa-media-wave">{waveform(m.voiceLevels ?? [])}</span>
+                      <small>{clockOf(m.voiceSeconds ?? 0)}</small>
+                      <small className="wa-media-when">{dayLabel(m.createdAt, t)}</small>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+
+            {!sharedCount ? <p className="wa-media-empty">{t("wa_mediaEmpty")}</p> : null}
+          </div>
+        </Modal>
+      ) : null}
 
       <ReportDialog target={reportTarget} onClose={() => setReportTarget(null)} />
 
