@@ -165,13 +165,23 @@ export default function App() {
       cancelled = true;
       unsubscribe.forEach((fn) => fn());
     };
+    /* Keyed on the id, not the object — the same trap the presence heartbeat
+       was in. The auth store hands back a fresh `user` whenever the profile or
+       the token refreshes, and depending on the object tore this effect down
+       and rebuilt it each time. That was survivable while the subscriptions
+       were created synchronously; it is fatal now that they are created after
+       an await, because a rebuild sets `cancelled` on the pending one and the
+       replacement gets cancelled in its turn. With the object churning, no
+       channel ever survived long enough to join — the app reported zero
+       channels and a disconnected socket, and every live surface sat on its
+       polling timer. */
   }, [
     loadCloudChats,
     loadCloudCommunity,
     loadConnections,
     loadCloudNotifications,
     loadCloudSettings,
-    user,
+    user?.id,
   ]);
 
   // Poll notifications and connections while the app is open.
