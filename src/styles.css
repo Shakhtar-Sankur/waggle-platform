@@ -10476,3 +10476,94 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   font-weight: 750;
   letter-spacing: -0.015em;
 }
+
+/* ══ Stat tiles and map stats, re-cut ═══════════════════════════════════
+   The three Home tiles each carried their own tinted background — blue,
+   amber, green — on the reasoning that distance, time and money are three
+   different questions. True, but three unrelated hues across one row read as
+   three unrelated components, and none of them is the app's indigo. The row
+   is one thing: today.
+
+   So the colour moves OFF the tile and INTO the icon. One neutral surface
+   under all three, and a small tinted chip carrying the icon — which is also
+   what fixes the icons themselves: they were bare glyphs floating in the
+   middle of a tinted box with nothing holding them. */
+.home-native .stat-grid > *,
+.home-native .stat-grid > *:nth-child(1),
+.home-native .stat-grid > *:nth-child(2),
+.home-native .stat-grid > *:nth-child(3) {
+  background: var(--card, #fff);
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(23, 26, 33, .07);
+  gap: 9px;
+}
+
+/* The chip. A squircle rather than a circle: a 999px puck on a square tile is
+   the dated shape here, and every icon the app draws elsewhere sits in a
+   rounded square. */
+.home-native .stat-grid > * span:first-child {
+  width: 34px;
+  height: 34px;
+  border-radius: 11px;
+  display: grid;
+  place-items: center;
+  box-shadow: none;
+}
+.home-native .stat-grid > *:nth-child(1) span:first-child { background: rgba(37, 99, 235, .11); }
+.home-native .stat-grid > *:nth-child(2) span:first-child { background: rgba(180, 83, 9, .11); }
+.home-native .stat-grid > *:nth-child(3) span:first-child { background: rgba(6, 122, 82, .12); }
+.home-native .stat-grid > * span:first-child svg { width: 18px; height: 18px; }
+
+/* Labels were 10.5px, weight 700, tracked out at .06em and shouting in caps.
+   Caps are kept — the strings in all 43 dictionaries are lowercase and rely on
+   the transform — but set quietly: a touch larger so it is legible at arm's
+   length in daylight, lighter, and with the tracking brought back. */
+.home-native .stat-grid small,
+.sv-stat small {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .035em;
+  color: var(--muted-foreground);
+}
+
+/* The map's stat row is the same component in a different place, and had the
+   same bare-glyph problem. */
+.sv-stat svg {
+  width: 17px;
+  height: 17px;
+  opacity: .9;
+}
+
+/* The map's stat row gets the same treatment, and needs it more: its tiles
+   were tinted blue, slate and green while the sheet sits under a teal band,
+   so the row was carrying four unrelated colours at once. */
+.sv-stats .sv-stat,
+.sv-stats .sv-stat:nth-child(1),
+.sv-stats .sv-stat:nth-child(2),
+.sv-stats .sv-stat:nth-child(3) {
+  background: var(--card, #fff);
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgba(23, 26, 33, .07);
+  gap: 7px;
+  padding: 12px 4px;
+}
+.sv-stats .sv-stat-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+}
+.sv-stats .sv-stat:nth-child(1) .sv-stat-icon { background: rgba(37, 99, 235, .11); }
+.sv-stats .sv-stat:nth-child(2) .sv-stat-icon { background: rgba(71, 85, 105, .11); }
+.sv-stats .sv-stat:nth-child(3) .sv-stat-icon { background: rgba(4, 120, 87, .12); }
+
+/* `km` and `/km` are units, not part of the figure. They were set at the same
+   weight as the number, so "0.00km" read as one seven-character token. */
+.sv-stat strong em {
+  font-style: normal;
+  font-weight: 600;
+  font-size: .62em;
+  opacity: .62;
+  margin-inline-start: 2px;
+}
