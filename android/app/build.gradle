@@ -32,8 +32,13 @@ android {
         // a build whose versionCode is not higher than the one already on the
         // device. Nothing has reached Play yet, so any value is still valid as
         // the first upload — this simply keeps the artefacts distinguishable.
-        versionCode 2
-        versionName "1.0"
+        // 3: the build carrying the message-attachment delete fix, server-side
+        // currency, the avatar read-back and the Arabic number isolation. Bumped
+        // for the same reason 2 was — signed builds of versionCode 2 are already
+        // installed on the test handset, and Android will not install over them
+        // unless this number goes up.
+        versionCode 3
+        versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
