@@ -4103,6 +4103,20 @@ html {
   z-index: 0;
 }
 
+/* Leaflet ships its own font stack on the little boxes it draws over the map —
+   Helvetica Neue on the attribution and the scale bar — so those two read in a
+   different typeface from every other word in the app. They sit directly on the
+   map where the difference is easy to see. Inheriting puts them back in Jakarta
+   with everything else. */
+.strava-screen .leaflet-container,
+.strava-screen .leaflet-control-attribution,
+.strava-screen .leaflet-control-attribution a,
+.strava-screen .leaflet-control-scale-line {
+  /* Named, not inherited: Leaflet declares the font on .leaflet-container
+     itself, so `inherit` on a control inside it just inherits Helvetica Neue
+     back again. The container is where it has to be replaced. */
+  font-family: var(--font-body);
+}
 .strava-screen .leaflet-control-attribution {
   font-size: 9px;
   background: rgba(255, 255, 255, 0.6);
@@ -4115,7 +4129,11 @@ html {
   border-color: #6b7280;
   color: #374151;
   background: rgba(255, 255, 255, 0.85);
-  font-weight: 700;
+  /* 700 was Leaflet's weight, not ours. 650 is the weight the rest of the map
+     furniture uses, so the scale reads as part of the same set. */
+  font-weight: 650;
+  font-size: 11px;
+  letter-spacing: 0.01em;
   padding: 2px 6px;
 }
 
@@ -4296,6 +4314,15 @@ html {
   flex-direction: column;
   gap: 12px;
   align-items: center;
+  /* The rail is a transparent column 44px wide and ~145px tall laid over the
+     map, and it was eating pointer events in the gaps between its buttons — so
+     a drag started in the space between Recentre and Zoom moved nothing and the
+     map felt dead in a strip down the right side. The column itself is only a
+     layout box; the buttons inside it take the input. */
+  pointer-events: none;
+}
+.sv-rail > * {
+  pointer-events: auto;
 }
 .sv-rail-btn,
 .sv-zoom {
@@ -9880,4 +9907,40 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 }
 .fb-reel-act.active {
   color: #ff5a7a;
+}
+
+/* ── the clean-map switch ─────────────────────────────────────────────
+   Sits directly above the layer button, because the two answer the same
+   question: what am I looking at. Same size and shape as its neighbour so the
+   right edge reads as one set of controls rather than a pile. */
+.sv-chromebtn {
+  position: absolute;
+  top: 68px;
+  right: 12px;
+  z-index: 500;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .18);
+  cursor: pointer;
+}
+.sv-chromebtn[aria-pressed="true"] {
+  background: var(--primary-fill);
+  color: #fff;
+}
+
+/* Labels off. The search bar goes with them: it is the largest thing on the
+   map and leaving it behind would make "clean" a half-measure. The control
+   rail stays — it is how you get everything back. */
+.sv-content.maps.is-clean .sv-top,
+.sv-content.maps.is-clean .sv-mapmode,
+.sv-content.maps.is-clean .sv-mapnote,
+.sv-content.maps.is-clean .sv-speedkey,
+.sv-content.maps.is-clean .sv-daypick {
+  display: none;
 }

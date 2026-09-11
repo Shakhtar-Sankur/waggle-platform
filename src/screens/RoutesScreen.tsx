@@ -2,6 +2,8 @@ import {
   ArrowLeftRight,
   Award,
   CalendarDays,
+  Eye,
+  EyeOff,
   Flag,
   Gauge,
   Layers,
@@ -235,6 +237,13 @@ export function RoutesScreen() {
    *
    * Drag it down or tap the handle to collapse; either brings it back.
    */
+  /* One switch for every label the app draws over the map.
+     The mode switch, the day picker, the "my path · following roads" note and
+     the colour key are each small, but together they cover the top third of a
+     phone screen — which is the third a route is usually drawn in. Rather than
+     shrink four things or argue about which one earns its place, they go behind
+     a single control: tapped off, the map is just the map. */
+  const [mapChrome, setMapChrome] = useState(true);
   const [sheetCollapsed, setSheetCollapsed] = useState(false);
   const dragRef = useRef<{ y: number; collapsed: boolean } | null>(null);
 
@@ -779,6 +788,26 @@ export function RoutesScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [map]);
 
+  /* How much of the map is covered by our own furniture rather than by map.
+     fitBounds used a flat 60px on every side, which frames the path against the
+     map RECTANGLE — but a good part of that rectangle has the search box, the
+     day chips and the legend over the top of it, the control rail down the
+     right, and the stats sheet across the bottom. So a route was fitted neatly
+     into a box and then had the chrome drawn on top of it, and the path ran
+     under the zoom buttons.
+
+     Measured against the live layout at 320x570: search and chips reach ~150px
+     down, the rail occupies the right 56px, and the sheet covers the bottom
+     ~190px. Leaflet takes these as [x, y].
+
+     The right and top numbers are the real ones — they clear the rail and the
+     chips, which is what a path was running under. The bottom is deliberately
+     LESS than the sheet's 190px: reserving all of it left a 250x220 hole to
+     draw a 13km route into, and a path shrunk to a squiggle is its own kind of
+     useless. The sheet can be dragged down; the zoom buttons cannot. */
+  const FIT_TOP_LEFT: [number, number] = [8, 150];
+  const FIT_BOTTOM_RIGHT: [number, number] = [62, 120];
+
   /* Move to the day you picked.
      Without this, choosing a past date loaded that day's path and left the map
      where it was — which for a driver who has moved city, or simply driven
@@ -788,7 +817,7 @@ export function RoutesScreen() {
   useEffect(() => {
     if (!map || mapMode !== "me" || isToday) return;
     if (drawnPath.length > 1) {
-      map.fitBounds(drawnPath, { padding: [60, 60], animate: true });
+      map.fitBounds(drawnPath, { paddingTopLeft: FIT_TOP_LEFT, paddingBottomRight: FIT_BOTTOM_RIGHT, animate: true });
     }
   }, [map, mapMode, isToday, drawnPath]);
 
@@ -797,7 +826,7 @@ export function RoutesScreen() {
     // Re-centring on yourself resumes live follow after a location search.
     setFollowPaused(false);
     if (routePositions.length > 1) {
-      map.fitBounds(routePositions, { padding: [60, 60], animate: true });
+      map.fitBounds(routePositions, { paddingTopLeft: FIT_TOP_LEFT, paddingBottomRight: FIT_BOTTOM_RIGHT, animate: true });
     } else {
       map.setView([currentLocation.lat, currentLocation.lng], 15, { animate: true });
     }
@@ -831,6 +860,7 @@ export function RoutesScreen() {
         <div
           className={
             "sv-content maps" +
+            (mapChrome ? "" : " is-clean") +
             (view === "friends" ? " is-friends-page" : "") +
             (searchPin ? " has-route" : "") +
             (results.length ? " has-results" : "")
@@ -1269,6 +1299,15 @@ export function RoutesScreen() {
               least-used control here — a driver switches to satellite rarely
               and re-centres constantly — and top-right beside the search is
               where map apps put a layer toggle anyway. */}
+          <button
+            className="sv-chromebtn"
+            aria-label={t(mapChrome ? "sv_hideLabels" : "sv_showLabels")}
+            aria-pressed={!mapChrome}
+            onClick={() => setMapChrome((v) => !v)}
+          >
+            {mapChrome ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+
           <button
             className="sv-layerbtn"
             aria-label={t("a11y_changeMapLayer")}
