@@ -9079,6 +9079,21 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .sv-sheet-grip { height: 22px; }
 .sv-sheet-grip::before { top: 13px; }
 .sv-sheet-title { margin-top: 0; }
+/* 22px is the LAYOUT height, chosen to keep the gap above the title closed.
+   22px is not a tap target — a thumb wants about 40. So the hit area is
+   extended past the box with a transparent ::after instead of by making the
+   element taller, which would push the title back down and undo the thing
+   above. It reaches further down than up on purpose: downward it overlaps the
+   title, which is text nobody taps, while upward it would start eating drags
+   meant for the map. */
+.sv-sheet-grip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: -6px;
+  bottom: -14px;
+}
 
 /* ── The layer button belongs with the other map controls ─────────────
    It was floating alone up near the search while locate and zoom sat in
@@ -9949,4 +9964,23 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .sv-content.maps.is-clean .sv-speedkey,
 .sv-content.maps.is-clean .sv-daypick {
   display: none;
+}
+
+/* ── the featured challenge had collapsed to nothing ──────────────────
+   .sv-content.challenges is a fixed-height column flex container that scrolls.
+   Its children ask for 1243px inside 570px, and every one of them is
+   flex-shrink:1 by default — so the browser squeezes them. Three of them have
+   visible overflow, which gives them an automatic minimum size and protects
+   them. .svc-hero sets overflow:hidden, and that is precisely what removes the
+   automatic minimum: it was free to shrink all the way to 0.
+
+   So the whole featured card — artwork, title, progress and a full-width
+   "Join Challenge" — rendered at zero height. It was still in the accessibility
+   tree and still reported a box, so it read as a working button that no tap
+   could ever reach.
+
+   Nothing should shrink here in the first place. The container scrolls; that is
+   what overflow:auto is for. */
+.sv-content.challenges > * {
+  flex-shrink: 0;
 }
