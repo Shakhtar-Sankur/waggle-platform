@@ -258,7 +258,21 @@ function toWorker(profile: any): Worker {
     location: {
       lat: Number(loc?.lat ?? MANILA_CENTER.lat),
       lng: Number(loc?.lng ?? MANILA_CENTER.lng),
-      timestamp: locUpdated || Date.now(),
+      /* A driver with no worker_locations row has no position, and both of
+         these used to pretend otherwise. The coordinates fell back to Manila,
+         and the timestamp fell back to Date.now() — so somebody who had
+         connected but never tracked appeared permanently live, parked on
+         another continent, and the friends list printed the distance to them
+         as fact. Seen on screen: a friend 5,147 km away, which is Mumbai to
+         Manila.
+
+         The flag is the same one initialPoint carries and for the same reason:
+         callers that infer something about the driver from these coordinates
+         must be able to tell a real fix from a default. `timestamp: 0` keeps
+         the recency filters honest rather than handing them a fresh-looking
+         reading that will never change. */
+      timestamp: locUpdated || 0,
+      fallback: !loc,
     },
     /* No invented default. This was `?? 4.8`, so every driver without a
        worker_locations row — which is every driver who has not tracked yet —

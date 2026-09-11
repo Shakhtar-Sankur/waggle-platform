@@ -671,6 +671,11 @@ export function RoutesScreen() {
     () =>
       recentWorkers
         .filter((w) => connectionFor(connections, user?.id, w.id).state === "connected")
+        /* A driver whose position is a default is not somewhere — they are
+           nowhere, and putting them on a map says otherwise. Without this a
+           friend who has connected but never tracked sat on the Manila default
+           with a confident "5,147 km" beside their name. */
+        .filter((w) => w.location.fallback !== true)
         // Nearest first. The roster came out in whatever order the query
         // returned — 1km, <1km, 2km, 6km, 8km, 4km — and distance is the
         // only thing on the row that decides whether somebody's position is
