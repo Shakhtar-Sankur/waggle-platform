@@ -37,7 +37,10 @@ android {
         // for the same reason 2 was — signed builds of versionCode 2 are already
         // installed on the test handset, and Android will not install over them
         // unless this number goes up.
-        versionCode 3
+        // 4: same release as 3, rebuilt with the stat-tile restyle. The number
+        // goes up because a signed versionCode 3 has already been handed over
+        // and Android will not install over it.
+        versionCode 4
         versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
