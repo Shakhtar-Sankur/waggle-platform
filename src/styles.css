@@ -6687,6 +6687,25 @@ html { background: var(--ground, #fbf7f4); }
 }
 .wa-filters::-webkit-scrollbar { display: none; }
 .wa-filters button { flex: none; white-space: nowrap; }
+/* At 320px the fourth pill sits entirely off the right edge, and a row that
+   scrolls with no sign that it scrolls is a row whose last option nobody finds.
+   The mask fades the trailing edge while there is more to reach and clears
+   itself at the end of the scroll, so the hint is only there when it is true.
+   mask-image rather than an overlay: an overlay would have to know the colour
+   of the band behind it, and the band changes per screen. */
+.wa-filters {
+  -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+  mask-image: linear-gradient(to right, #000 calc(100% - 28px), transparent 100%);
+}
+.wa-filters.is-end {
+  -webkit-mask-image: none;
+  mask-image: none;
+}
+/* No mask when everything already fits — a three-pill row on a wide phone
+   should not have its last word faded for no reason. */
+@media (min-width: 420px) {
+  .wa-filters { -webkit-mask-image: none; mask-image: none; }
+}
 .wa-filters button {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid rgba(255, 255, 255, .28);
@@ -10155,20 +10174,15 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    fixed 44px target pinned to the end. */
 .wa-chat-line { display: flex; align-items: center; }
 .wa-chat-line .wa-chat-row { flex: 1; min-width: 0; }
+/* Not a button any more — a mark, and only on the rows that earned it. It no
+   longer needs a 44px target, so it takes the width it needs and gives the
+   name back the rest of the row. */
 .wa-star {
   flex: none;
   display: grid;
   place-items: center;
-  width: 44px;
-  height: 44px;
-  margin-inline-end: 4px;
-  border: 0;
-  background: none;
-  /* Quiet until it means something: an unstarred chat should not have a bright
-     control shouting on every row of the list. */
-  color: var(--fb-secondary);
-  opacity: .45;
-  cursor: pointer;
+  width: 26px;
+  margin-inline-end: 8px;
+  color: #f5a524;
 }
-.wa-star.is-on { color: #f5a524; opacity: 1; }
 .wa-filters button svg { flex: none; }

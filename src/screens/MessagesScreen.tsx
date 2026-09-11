@@ -439,7 +439,18 @@ export function MessagesScreen() {
             divide a phone's width evenly — so they scroll sideways as a row
             rather than wrapping onto a second line that pushes the chat list
             down. Each keeps its full label; none is squeezed to fit. */}
-        <div className="wa-filters" role="tablist" aria-label={t("wa_filterAll")}>
+        <div
+          className="wa-filters"
+          role="tablist"
+          aria-label={t("wa_filterAll")}
+          /* Drop the trailing fade once the row is scrolled to its end, so the
+             hint only shows while there is genuinely something further along. */
+          onScroll={(e) => {
+            const el = e.currentTarget;
+            const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+            el.classList.toggle("is-end", atEnd);
+          }}
+        >
           {(["all", "unread", "favourites", "groups"] as const).map((f) => (
             <button
               key={f}
@@ -589,18 +600,17 @@ export function MessagesScreen() {
                 </div>
                 {thread.unreadCount ? <em className="wa-unread">{thread.unreadCount}</em> : null}
               </button>
-              {/* The star sits outside the row button: nesting a button inside a
-                  button is invalid, and tapping the star must not also open the
-                  chat. */}
-              <button
-                type="button"
-                className={favourites.includes(thread.id) ? "wa-star is-on" : "wa-star"}
-                aria-label={t("wa_filterFavourites")}
-                aria-pressed={favourites.includes(thread.id)}
-                onClick={() => toggleFavourite(thread.id)}
-              >
-                <Star size={16} fill={favourites.includes(thread.id) ? "currentColor" : "none"} />
-              </button>
+              {/* A MARK, not a control. This was a star button on every row,
+                  which put four hollow outlines down the side of a list whose
+                  job is scanning names — and read as a column of favourites
+                  rather than four buttons. Favouriting moved into the chat's
+                  own menu, where it is a decision about that person; what stays
+                  here is the answer to "is this one of them". */}
+              {favourites.includes(thread.id) ? (
+                <span className="wa-star is-on" aria-label={t("wa_filterFavourites")} role="img">
+                  <Star size={15} fill="currentColor" />
+                </span>
+              ) : null}
               </div>
             );
           })
@@ -738,6 +748,22 @@ export function MessagesScreen() {
                     once about a person, this is a thing you look for again and
                     again. Carries its own count so the menu answers "is there
                     anything in there" without being opened. */}
+                {/* Add or remove the favourite here, on the person, rather
+                    than from a control repeated on every row of the list. */}
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="wa-menu-item"
+                  aria-pressed={favourites.includes(openThread.id)}
+                  onClick={() => { setMenuOpen(false); toggleFavourite(openThread.id); }}
+                >
+                  <Star
+                    size={16}
+                    fill={favourites.includes(openThread.id) ? "currentColor" : "none"}
+                  />
+                  {t(favourites.includes(openThread.id) ? "wa_unfavourite" : "wa_favourite")}
+                </button>
+
                 <button
                   type="button"
                   role="menuitem"
