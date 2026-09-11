@@ -37,10 +37,11 @@ android {
         // for the same reason 2 was — signed builds of versionCode 2 are already
         // installed on the test handset, and Android will not install over them
         // unless this number goes up.
-        // 4: same release as 3, rebuilt with the stat-tile restyle. The number
-        // goes up because a signed versionCode 3 has already been handed over
-        // and Android will not install over it.
-        versionCode 4
+        // 5: a clean rebuild of the same release, asked for so the handset gets
+        // an artefact it will definitely accept. Nothing in the app changed
+        // between 4 and 5 — 4 already carried the stat-tile restyle, verified by
+        // reading the bundled stylesheet out of the signed APK.
+        versionCode 5
         versionName "1.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
