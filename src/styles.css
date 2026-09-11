@@ -9984,3 +9984,11 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .sv-content.challenges > * {
   flex-shrink: 0;
 }
+
+/* The reader's own row on the leaderboard. Tinted rather than bolder: the rank
+   and the distance are already the loud parts, and this only has to answer
+   "which one is me" at a glance. */
+.svc-rank.is-me {
+  background: var(--primary-tint, rgba(124, 58, 237, .08));
+  border-radius: 10px;
+}

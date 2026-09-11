@@ -758,10 +758,32 @@ export function RoutesScreen() {
       ? `${(shownMinutes / shownDistanceKm).toFixed(1)}`
       : "--";
 
-  const topDrivers = useMemo(
-    () => [...workers].sort((a, b) => b.distanceKm - a.distanceKm).slice(0, 5),
-    [workers],
-  );
+  /* Today's leaders, with the driver reading it in the list.
+   *
+   * Two things were wrong with sorting `workers` directly. loadWorkers is given
+   * the current user id and filters them OUT — correct for "other drivers
+   * nearby", wrong for a leaderboard, so a driver could never see where they
+   * stood on their own board. Seen live: four drivers listed, the reader third
+   * by distance and absent from the table.
+   *
+   * And it used the raw list rather than the unblocked one, so somebody the
+   * driver had blocked still appeared here — while the app tells them blocking
+   * means they stop seeing that person. A block that holds everywhere except
+   * the one screen that ranks people is not a block.
+   */
+  const topDrivers = useMemo(() => {
+    const me = user
+      ? [{
+          id: user.id,
+          name: user.fullName ?? "You",
+          distanceKm: totalDistanceKm,
+          isMe: true,
+        }]
+      : [];
+    return [...unblockedWorkers.map((w) => ({ ...w, isMe: false })), ...me]
+      .sort((a, b) => b.distanceKm - a.distanceKm)
+      .slice(0, 5);
+  }, [unblockedWorkers, user, totalDistanceKm]);
 
   /** How many of the friends shown are actually beating right now. */
   const liveFriendCount = useMemo(
@@ -1586,7 +1608,7 @@ export function RoutesScreen() {
             <h4><Trophy size={17} /> {t("sv_leaders")}</h4>
             {topDrivers.length ? (
               topDrivers.map((worker, index) => (
-                <div className="svc-rank" key={worker.id}>
+                <div className={worker.isMe ? "svc-rank is-me" : "svc-rank"} key={worker.id}>
                   <span className={`svc-place p${index + 1}`}>{index + 1}</span>
                   <span className="svc-rank-avatar">{initials(worker.name)}</span>
                   <strong>{worker.name}</strong>
