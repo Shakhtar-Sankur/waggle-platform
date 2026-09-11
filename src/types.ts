@@ -143,6 +143,15 @@ export interface ChatMessage {
   /** Loudness captured while recording, so the waveform draws immediately
    *  instead of downloading and decoding the audio to find its shape. */
   voiceLevels?: number[];
+  /**
+   * Queued in the outbox rather than delivered — written with no signal.
+   *
+   * Distinct from status, which describes what the SERVER knows. A pending
+   * message has not reached the server at all, and showing it the same single
+   * tick as one that has tells a driver in a tunnel their message went when it
+   * did not. Cleared when the next chat poll replaces it with the server's copy.
+   */
+  pending?: boolean;
 }
 
 export interface ChatThread {

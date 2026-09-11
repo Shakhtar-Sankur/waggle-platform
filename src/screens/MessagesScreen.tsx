@@ -1,4 +1,4 @@
-import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, Images, ImagePlus, Star, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
+import { ArrowLeft, Clock, CornerUpLeft, Flag, ShieldOff, Images, ImagePlus, Star, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -129,6 +129,11 @@ export function MessagesScreen() {
   const [replyTo, setReplyTo] = useState<string | null>(null);
   /** Which message has its emoji picker open. */
   const [pickerFor, setPickerFor] = useState<string | null>(null);
+  /** Who is typing in the open thread right now, cleared on a timer. */
+  const [typingIds, setTypingIds] = useState<string[]>([]);
+  const typingSendRef = useRef<(() => void) | null>(null);
+  const typingSentAt = useRef(0);
+  const typingTimers = useRef<Record<string, number>>({});
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const beginRecording = async () => {
@@ -394,6 +399,43 @@ export function MessagesScreen() {
     return () => window.clearTimeout(timer);
   }, [jumpTo]);
 
+  /* Subscribe to "someone is typing" for whichever thread is open.
+   *
+   * Each sender gets their own expiry timer rather than one shared clock: with
+   * two people typing in a group, a single timer would clear both the moment
+   * the first stopped. 3.5s is a little longer than the 2s throttle below, so a
+   * steady typist never flickers between typing and not. */
+  useEffect(() => {
+    if (!openId || !user || !SupabaseService.enabled) return undefined;
+    setTypingIds([]);
+    const channel = SupabaseService.subscribeToTyping(openId, user.id, (who) => {
+      setTypingIds((prev) => (prev.includes(who) ? prev : [...prev, who]));
+      window.clearTimeout(typingTimers.current[who]);
+      typingTimers.current[who] = window.setTimeout(() => {
+        setTypingIds((prev) => prev.filter((id) => id !== who));
+        delete typingTimers.current[who];
+      }, 3500);
+    });
+    typingSendRef.current = channel.send;
+    return () => {
+      typingSendRef.current = null;
+      Object.values(typingTimers.current).forEach((id) => window.clearTimeout(id));
+      typingTimers.current = {};
+      setTypingIds([]);
+      channel.stop();
+    };
+  }, [openId, user?.id]);
+
+  /* One broadcast per 2s of continuous typing, not one per keystroke. The
+     receiver holds it for 3.5s, so the line stays lit while someone keeps
+     typing and goes out on its own shortly after they stop. */
+  const noteTyping = () => {
+    const now = Date.now();
+    if (now - typingSentAt.current < 2000) return;
+    typingSentAt.current = now;
+    typingSendRef.current?.();
+  };
+
   const openChat = (id: string) => {
     selectThread(id);
     setOpenId(id);
@@ -572,8 +614,8 @@ export function MessagesScreen() {
                         thread. Whether the last thing you said has been read is
                         the question this list gets asked most often. */}
                     {last && mine ? (
-                      <span className={`wa-ticks ${last.status === "read" ? "read" : ""}`}>
-                        {last.status === "sent" ? "✓" : "✓✓"}
+                      <span className={`wa-ticks ${last.pending ? "pending" : last.status === "read" ? "read" : ""}`}>
+                        {last.pending ? <Clock size={11} /> : last.status === "sent" ? "✓" : "✓✓"}
                       </span>
                     ) : null}
                     {/* Only when there is text beside the photo. The fallback
@@ -691,12 +733,22 @@ export function MessagesScreen() {
                     ? `${names.slice(0, SHOWN).join(", ")} ${t("wa_andMore", { count: String(names.length - SHOWN) })}`
                     : names.join(", ")
                   : "";
-                const line = openThread.isGroup
+                /* Typing wins over presence. "last seen 8d" is background
+                   information; "typing…" is happening now, and showing the
+                   stale one while it is true would be the wrong of the two. */
+                const typingNames = typingIds
+                  .map((id) => (id === openOther?.id ? openOther?.name : workerById[id]?.name))
+                  .filter(Boolean) as string[];
+                const line = typingNames.length
+                  ? openThread.isGroup
+                    ? t("wa_typingNamed", { name: typingNames[0] })
+                    : t("wa_typing")
+                  : openThread.isGroup
                   ? memberNames || t("wa_groupChat")
                   : presenceLabel(openOther, t);
                 if (!line) return null;
                 return (
-                  <small className={!openThread.isGroup && openOther?.isOnline ? "wa-online" : ""}>
+                  <small className={typingIds.length ? "wa-typing" : !openThread.isGroup && openOther?.isOnline ? "wa-online" : ""}>
                     {line}
                   </small>
                 );
@@ -985,8 +1037,11 @@ export function MessagesScreen() {
                     <small>
                       {clock(message.createdAt)}
                       {isMe ? (
-                        <span className={`wa-ticks ${message.status === "read" ? "read" : ""}`}>
-                          {" "}{message.status === "sent" ? "✓" : "✓✓"}
+                        <span className={`wa-ticks ${message.pending ? "pending" : message.status === "read" ? "read" : ""}`}>
+                          {" "}
+                          {message.pending ? (
+                            <Clock size={11} aria-label={t("wa_pendingSend")} />
+                          ) : message.status === "sent" ? "✓" : "✓✓"}
                         </span>
                       ) : null}
                     </small>
@@ -1116,7 +1171,7 @@ export function MessagesScreen() {
             </button>
             <input
               value={draft}
-              onChange={(event) => setDraft(event.target.value)}
+              onChange={(event) => { setDraft(event.target.value); noteTyping(); }}
               placeholder={attachment ? t("wa_caption") : t("wa_typeMessage")}
             />
             {/* Mic when there is nothing to send, send when there is — one

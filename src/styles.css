@@ -10186,3 +10186,11 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   color: #f5a524;
 }
 .wa-filters button svg { flex: none; }
+
+/* "typing…" in the conversation header. Uses the live colour rather than the
+   muted one: it is the only line up there that is true this second. */
+.wa-convo-title small.wa-typing { color: #7ee0a0; font-weight: 600; }
+
+/* A message still in the outbox. Dimmer than a tick and a clock rather than a
+   mark, so "waiting for signal" never reads as "delivered". */
+.wa-ticks.pending { opacity: .6; display: inline-flex; align-items: center; vertical-align: middle; }

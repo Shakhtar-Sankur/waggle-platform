@@ -118,6 +118,9 @@ export default function App() {
     void loadCloudCommunity();
     void loadConnections(user.id);
     void loadCloudChats(user.id);
+    /* Favourites live on the server now, so they follow a driver to a new
+       handset rather than staying on the cracked one. */
+    void useChatStore.getState().loadFavourites(user.id);
     void loadCloudNotifications(user.id);
     // Load the switches before push registers, so a driver who has turned a
     // category off is not interrupted on the way in.

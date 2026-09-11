@@ -39,7 +39,8 @@ interface ChatState {
   createGroup: (title: string, memberIds: string[]) => Promise<void>;
   /** Thread ids the driver has starred, newest first. */
   favourites: string[];
-  toggleFavourite: (threadId: string) => void;
+  toggleFavourite: (threadId: string) => Promise<void>;
+  loadFavourites: (userId: string) => Promise<void>;
   /** Add people to a group that already exists. */
   addMembers: (threadId: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
@@ -232,12 +233,24 @@ export const useChatStore = create<ChatState>()(
                 ? { full: await blobToDataUrl(photo.full), thumb: await blobToDataUrl(photo.thumb) }
                 : undefined,
             });
-            if (!queued)
+            /* Say so on the message itself. The comment above has claimed
+               "marked pending" since the outbox was written, and nothing ever
+               set the flag — so a message waiting in a tunnel wore the same
+               single tick as one the server had. The next poll replaces this
+               with the server's copy and the mark goes on its own. */
+            if (queued) {
+              set((state) => ({
+                messages: state.messages.map((m) =>
+                  m.id === outgoing.id ? { ...m, pending: true } : m,
+                ),
+              }));
+            } else {
               useNotificationStore.getState().push(
                 translate("notif_queueFullTitle"),
                 translate("notif_queueFullBody"),
                 "chat",
               );
+            }
           }
           return;
         }
@@ -261,12 +274,32 @@ export const useChatStore = create<ChatState>()(
         }, 1200);
       },
       favourites: [],
-      toggleFavourite: (threadId) =>
-        set((state) => ({
-          favourites: state.favourites.includes(threadId)
-            ? state.favourites.filter((id) => id !== threadId)
-            : [threadId, ...state.favourites],
-        })),
+      loadFavourites: async (userId) => {
+        if (!SupabaseService.enabled) return;
+        const ids = await SupabaseService.loadFavourites(userId);
+        set({ favourites: ids });
+      },
+      toggleFavourite: async (threadId) => {
+        /* Optimistic, then the server. A star is a one-tap decision and waiting
+           on a round trip to redraw it feels broken on a slow connection; if the
+           write fails the list goes back to what the server actually holds. */
+        const user = useAuthStore.getState().user;
+        const had = get().favourites.includes(threadId);
+        const previous = get().favourites;
+        set({
+          favourites: had
+            ? previous.filter((id) => id !== threadId)
+            : [threadId, ...previous],
+        });
+        if (!user || !SupabaseService.enabled) return;
+        try {
+          if (had) await SupabaseService.removeFavourite(user.id, threadId);
+          else await SupabaseService.addFavourite(user.id, threadId);
+        } catch (error) {
+          console.warn("Could not save favourite:", error);
+          set({ favourites: previous });
+        }
+      },
       addMembers: async (threadId, memberIds) => {
         /* The service call for this has existed since groups were built and was
            only ever used at creation time, so a group could be made with people
@@ -369,7 +402,17 @@ export const useChatStore = create<ChatState>()(
         }
       },
     }),
-    { name: "masaya_chat_v3" },
+    {
+      name: "masaya_chat_v3",
+      /* Favourites are deliberately NOT persisted any more. They come from the
+         server on sign-in, and a stale local copy would briefly contradict it
+         on every launch — showing a star on a chat the driver unstarred from
+         another phone. */
+      partialize: (state) =>
+        Object.fromEntries(
+          Object.entries(state).filter(([key]) => key !== "favourites"),
+        ) as typeof state,
+    },
   ),
 );
 

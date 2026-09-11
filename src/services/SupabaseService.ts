@@ -1825,6 +1825,46 @@ export const SupabaseService = {
   },
 
   // Real cloud groups: true member counts + whether the current user has joined.
+  /**
+   * Chats this driver has starred.
+   *
+   * Returns [] rather than throwing when the table is not there, so a project
+   * that has not run chat_favourites.sql keeps a working chat list instead of
+   * an empty one — the filter simply finds nothing until the migration lands.
+   */
+  async loadFavourites(userId: string): Promise<string[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
+      .from("chat_favourites")
+      .select("thread_id")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
+    if (error) return [];
+    return (data ?? []).map((row: { thread_id: string }) => row.thread_id);
+  },
+
+  async addFavourite(userId: string, threadId: string): Promise<void> {
+    assertSupabase();
+    /* ignoreDuplicates, so starring something already starred is a no-op at the
+       database rather than a policy failure: chat_favourites has INSERT and
+       DELETE policies and no UPDATE one, and a plain upsert would take the
+       UPDATE path. Same trap as joinGroup. */
+    const { error } = await supabase!
+      .from("chat_favourites")
+      .upsert({ user_id: userId, thread_id: threadId }, { ignoreDuplicates: true });
+    if (error) throw error;
+  },
+
+  async removeFavourite(userId: string, threadId: string): Promise<void> {
+    assertSupabase();
+    const { error } = await supabase!
+      .from("chat_favourites")
+      .delete()
+      .eq("user_id", userId)
+      .eq("thread_id", threadId);
+    if (error) throw error;
+  },
+
   async loadGroups(userId?: string): Promise<Group[]> {
     if (!supabase) return [];
     const { data, error } = await supabase
@@ -2052,6 +2092,44 @@ export const SupabaseService = {
     if (data.session?.access_token) {
       supabase.realtime.setAuth(data.session.access_token);
     }
+  },
+
+  /**
+   * "Someone is typing", over a broadcast channel rather than the database.
+   *
+   * A keystroke is not a fact worth storing: it is true for two seconds and
+   * then it is wrong. Writing one row per keypress would be a write per
+   * character per driver, replicated to every subscriber, to render a line that
+   * disappears on its own. Broadcast carries it to whoever is in the room right
+   * now and leaves nothing behind, which is exactly the lifetime of the claim.
+   *
+   * Returns a sender and an unsubscribe. The caller throttles; this does not,
+   * because how often to say it is a question about the composer, not about
+   * the transport.
+   */
+  subscribeToTyping(
+    threadId: string,
+    selfId: string,
+    onTyping: (userId: string) => void,
+  ): { send: () => void; stop: () => void } {
+    if (!supabase) return { send: () => undefined, stop: () => undefined };
+    const channel = supabase
+      .channel(`typing:${threadId}`, { config: { broadcast: { self: false } } })
+      .on("broadcast", { event: "typing" }, (message) => {
+        const who = (message.payload as { userId?: string } | undefined)?.userId;
+        // self:false should stop our own coming back, but a reconnect can
+        // replay one — and "you are typing" is a strange thing to be told.
+        if (who && who !== selfId) onTyping(who);
+      })
+      .subscribe();
+    return {
+      send: () => {
+        void channel.send({ type: "broadcast", event: "typing", payload: { userId: selfId } });
+      },
+      stop: () => {
+        supabase!.removeChannel(channel);
+      },
+    };
   },
 
   subscribeToTable(table: string, callback: () => void) {
