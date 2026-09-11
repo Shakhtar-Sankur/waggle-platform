@@ -1,4 +1,4 @@
-import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, Images, ImagePlus, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
+import { ArrowLeft, CornerUpLeft, Flag, ShieldOff, Images, ImagePlus, Star, LogOut, MessageCircle, Mic, MoreVertical, Pause, Play, Search, Send, SmilePlus, Trash2, UsersRound, X } from "lucide-react";
 import { Fragment, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
@@ -86,6 +86,8 @@ export function MessagesScreen() {
   const leaveThread = useChatStore((state) => state.leaveThread);
   const createGroup = useChatStore((state) => state.createGroup);
   const addMembers = useChatStore((state) => state.addMembers);
+  const favourites = useChatStore((state) => state.favourites);
+  const toggleFavourite = useChatStore((state) => state.toggleFavourite);
   const loadCloudChats = useChatStore((state) => state.loadCloudChats);
   const chatsLoaded = useChatStore((state) => state.chatsLoaded);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
@@ -94,7 +96,7 @@ export function MessagesScreen() {
     (location.state as { openThreadId?: string } | null)?.openThreadId ?? null,
   );
   const [query, setQuery] = useState("");
-  const [chatFilter, setChatFilter] = useState<"all" | "unread" | "groups">("all");
+  const [chatFilter, setChatFilter] = useState<"all" | "unread" | "favourites" | "groups">("all");
   const [draft, setDraft] = useState("");
   const [attachment, setAttachment] = useState<PickedPhoto | undefined>();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -315,6 +317,7 @@ export function MessagesScreen() {
     .filter((thread) => displayTitle(thread).toLowerCase().includes(query.toLowerCase()))
     .filter((thread) =>
       chatFilter === "unread" ? thread.unreadCount > 0
+      : chatFilter === "favourites" ? favourites.includes(thread.id)
       : chatFilter === "groups" ? thread.isGroup
       : true,
     )
@@ -432,15 +435,28 @@ export function MessagesScreen() {
         {/* All / Unread / Groups. A driver with thirty chats and two unread ones
             should not have to scroll to find them, which is the whole reason
             these exist in the app this is modelled on. */}
-        <div className="wa-filters">
-          {(["all", "unread", "groups"] as const).map((f) => (
+        {/* Four filters now, and four pills of different word-lengths do not
+            divide a phone's width evenly — so they scroll sideways as a row
+            rather than wrapping onto a second line that pushes the chat list
+            down. Each keeps its full label; none is squeezed to fit. */}
+        <div className="wa-filters" role="tablist" aria-label={t("wa_filterAll")}>
+          {(["all", "unread", "favourites", "groups"] as const).map((f) => (
             <button
               key={f}
+              role="tab"
+              aria-selected={chatFilter === f}
               className={chatFilter === f ? "is-on" : ""}
               onClick={() => setChatFilter(f)}
             >
-              {t(f === "all" ? "wa_filterAll" : f === "unread" ? "wa_filterUnread" : "wa_filterGroups")}
+              {f === "favourites" ? <Star size={14} /> : null}
+              {t(
+                f === "all" ? "wa_filterAll"
+                : f === "unread" ? "wa_filterUnread"
+                : f === "favourites" ? "wa_filterFavourites"
+                : "wa_filterGroups",
+              )}
               {f === "unread" && unreadTotal ? <em>{unreadTotal}</em> : null}
+              {f === "favourites" && favourites.length ? <em>{favourites.length}</em> : null}
             </button>
           ))}
         </div>
@@ -524,7 +540,11 @@ export function MessagesScreen() {
             const last = lastOf(thread.id);
             const mine = last && (last.senderId === user?.id || last.senderId === "me");
             return (
-              <button className="wa-chat-row" key={thread.id} onClick={() => openChat(thread.id)}>
+              /* The row and its star are siblings inside a wrapper: a button
+                 cannot legally contain another button, and tapping the star
+                 must not also open the chat. */
+              <div className="wa-chat-line" key={thread.id}>
+              <button className="wa-chat-row" onClick={() => openChat(thread.id)}>
                 <span className="wa-avatar-wrap">
                   <span className="wa-avatar">
                     {thread.isGroup ? <UsersRound size={20} /> : initials(displayTitle(thread))}
@@ -551,20 +571,74 @@ export function MessagesScreen() {
                     {last?.attachmentUrl && last.body ? (
                       <ImagePlus size={13} className="wa-preview-icon" />
                     ) : null}
+                    {last?.voiceUrl && last.body ? (
+                      <Mic size={13} className="wa-preview-icon" />
+                    ) : null}
                     <span className="wa-preview-text">
-                      {last ? last.body || t("wa_photoMsg") : t("wa_tapToStart")}
+                      {/* A voice note has no body, and `body || photoLabel` sent
+                          every one of them to the photo label — so a chat whose
+                          last message was a 12-second voice note read "Photo" in
+                          the list. Ask what the message IS rather than treating
+                          "no text" as one thing. */}
+                      {last
+                        ? last.body ||
+                          (last.voiceUrl ? t("wa_voiceMsg") : t("wa_photoMsg"))
+                        : t("wa_tapToStart")}
                     </span>
                   </p>
                 </div>
                 {thread.unreadCount ? <em className="wa-unread">{thread.unreadCount}</em> : null}
               </button>
+              {/* The star sits outside the row button: nesting a button inside a
+                  button is invalid, and tapping the star must not also open the
+                  chat. */}
+              <button
+                type="button"
+                className={favourites.includes(thread.id) ? "wa-star is-on" : "wa-star"}
+                aria-label={t("wa_filterFavourites")}
+                aria-pressed={favourites.includes(thread.id)}
+                onClick={() => toggleFavourite(thread.id)}
+              >
+                <Star size={16} fill={favourites.includes(thread.id) ? "currentColor" : "none"} />
+              </button>
+              </div>
             );
           })
         ) : (
+          /* Four different empty lists that used to read the same. "No chats
+             yet, connect with drivers in Community" is true of a new driver and
+             false of someone with five conversations who has starred none of
+             them, or who has searched for a name that is not in any of them —
+             and sending them off to Community to fix a filter they can undo
+             with one tap is the wrong instruction. */
           <div className="empty-state">
             <MessageCircle size={34} />
-            <p>{t("wa_noChats")}</p>
-            <span>{t("wa_noChatsSub")}</span>
+            {query.trim() ? (
+              <>
+                <p>{t("wa_noChatMatch")}</p>
+                <span>{t("wa_noChatMatchSub")}</span>
+              </>
+            ) : chatFilter === "favourites" ? (
+              <>
+                <p>{t("wa_noFavourites")}</p>
+                <span>{t("wa_noFavouritesSub")}</span>
+              </>
+            ) : chatFilter === "unread" ? (
+              <>
+                <p>{t("wa_noUnread")}</p>
+                <span>{t("wa_noUnreadSub")}</span>
+              </>
+            ) : chatFilter === "groups" ? (
+              <>
+                <p>{t("wa_noGroups")}</p>
+                <span>{t("wa_noGroupsSub")}</span>
+              </>
+            ) : (
+              <>
+                <p>{t("wa_noChats")}</p>
+                <span>{t("wa_noChatsSub")}</span>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -1255,7 +1329,14 @@ export function MessagesScreen() {
                       >
                         {playingId === m.id ? <Pause size={15} /> : <Play size={15} />}
                       </button>
-                      <span className="wa-media-wave">{waveform(m.voiceLevels ?? [])}</span>
+                      {/* Same bars as the bubble. waveform() returns NUMBERS to
+                          map into elements; rendering the array itself printed
+                          "0.120.120.4…" across the row. */}
+                      <span className="wa-media-wave">
+                        {waveform(m.voiceLevels ?? [], 22).map((v, i) => (
+                          <i key={i} style={{ height: `${Math.round(3 + v * 13)}px` }} />
+                        ))}
+                      </span>
                       <small>{clockOf(m.voiceSeconds ?? 0)}</small>
                       <small className="wa-media-when">{dayLabel(m.createdAt, t)}</small>
                     </li>

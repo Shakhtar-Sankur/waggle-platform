@@ -37,6 +37,9 @@ interface ChatState {
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: (title: string, memberIds: string[]) => Promise<void>;
+  /** Thread ids the driver has starred, newest first. */
+  favourites: string[];
+  toggleFavourite: (threadId: string) => void;
   /** Add people to a group that already exists. */
   addMembers: (threadId: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
@@ -257,6 +260,13 @@ export const useChatStore = create<ChatState>()(
           useNotificationStore.getState().push(translate("notif_newMessage"), reply.body, "chat");
         }, 1200);
       },
+      favourites: [],
+      toggleFavourite: (threadId) =>
+        set((state) => ({
+          favourites: state.favourites.includes(threadId)
+            ? state.favourites.filter((id) => id !== threadId)
+            : [threadId, ...state.favourites],
+        })),
       addMembers: async (threadId, memberIds) => {
         /* The service call for this has existed since groups were built and was
            only ever used at creation time, so a group could be made with people

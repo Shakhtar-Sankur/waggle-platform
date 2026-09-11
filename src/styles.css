@@ -6671,7 +6671,22 @@ html { background: var(--ground, #fbf7f4); }
    All / Unread / Groups, sitting on the band under the search field. A
    driver with thirty chats and two unread ones should not have to scroll
    to find them. */
-.wa-filters { display: flex; gap: 8px; margin-top: 12px; }
+/* Four pills of different word-lengths do not divide a phone's width evenly.
+   Rather than shrink the labels or wrap onto a second line that pushes the chat
+   list down, the row scrolls sideways and each pill keeps its full word. The
+   scrollbar is hidden because a driver flicks it; nobody drags a 4px bar. */
+.wa-filters {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /* The pills stop at the edge of the band rather than clipping mid-word. */
+  padding-inline-end: 2px;
+}
+.wa-filters::-webkit-scrollbar { display: none; }
+.wa-filters button { flex: none; white-space: nowrap; }
 .wa-filters button {
   display: inline-flex; align-items: center; gap: 6px;
   border: 1px solid rgba(255, 255, 255, .28);
@@ -10087,11 +10102,17 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 }
 .wa-media-voice .wa-media-wave {
   flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 2px;
   overflow: hidden;
-  white-space: nowrap;
-  font-family: ui-monospace, monospace;
-  font-size: 11px;
-  color: var(--fb-secondary);
+}
+.wa-media-voice .wa-media-wave i {
+  flex: 1;
+  min-width: 2px;
+  border-radius: 999px;
+  background: var(--fb-secondary);
+  opacity: .55;
 }
 .wa-media-voice .wa-media-when {
   position: static;
@@ -10128,3 +10149,26 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   color: var(--fb-secondary);
 }
 .wa-addmembers .wa-group-friends { max-height: 190px; overflow-y: auto; }
+
+
+/* A chat row and its star. The row takes all the width it can; the star is a
+   fixed 44px target pinned to the end. */
+.wa-chat-line { display: flex; align-items: center; }
+.wa-chat-line .wa-chat-row { flex: 1; min-width: 0; }
+.wa-star {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-inline-end: 4px;
+  border: 0;
+  background: none;
+  /* Quiet until it means something: an unstarred chat should not have a bright
+     control shouting on every row of the list. */
+  color: var(--fb-secondary);
+  opacity: .45;
+  cursor: pointer;
+}
+.wa-star.is-on { color: #f5a524; opacity: 1; }
+.wa-filters button svg { flex: none; }
