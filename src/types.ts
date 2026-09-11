@@ -77,6 +77,14 @@ export interface LocationPoint {
   accuracy?: number;
   timestamp: number;
   /**
+   * Ground speed in metres per second, when the device reports one.
+   *
+   * Better evidence of standing still than comparing two positions, because it
+   * comes from Doppler rather than from subtracting two uncertain numbers.
+   * Absent or negative means the device does not know.
+   */
+  speed?: number | null;
+  /**
    * True when this is the Manila default rather than a real fix — GPS denied,
    * unavailable, or timed out.
    *

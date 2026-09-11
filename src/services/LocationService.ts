@@ -36,7 +36,7 @@ export const LocationService = {
             enableHighAccuracy: true,
             timeout: 8000,
           });
-          return toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy);
+          return toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy, undefined, position.coords.speed);
         }
       } catch {
         return fallbackPoint();
@@ -50,7 +50,7 @@ export const LocationService = {
     return new Promise((resolve) => {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          resolve(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy));
+          resolve(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy, undefined, position.coords.speed));
         },
         () => resolve(fallbackPoint()),
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 15000 },
@@ -66,6 +66,8 @@ export const LocationService = {
   async watchPosition(
     onUpdate: (point: LocationPoint) => void,
     trip: { rate?: number; currency?: string; unit?: string } = {},
+    /** Called if the driver revokes location while the trip is running. */
+    onDenied?: () => void,
   ): Promise<() => void> {
     if (Capacitor.isNativePlatform()) {
       const permission = await Geolocation.requestPermissions();
@@ -102,7 +104,7 @@ export const LocationService = {
         },
         (position, error) => {
           if (error || !position) return;
-          onUpdate(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy));
+          onUpdate(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy, undefined, position.coords.speed));
         },
       );
       return () => {
@@ -116,9 +118,18 @@ export const LocationService = {
 
     const watchId = navigator.geolocation.watchPosition(
       (position) => {
-        onUpdate(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy));
+        onUpdate(toPoint(position.coords.latitude, position.coords.longitude, position.coords.accuracy, undefined, position.coords.speed));
       },
-      () => undefined,
+      /* A watch error was thrown away entirely. A timeout genuinely is noise —
+         a tunnel, a car park, a moment under a bridge — and dropping those is
+         correct, because the next fix usually arrives on its own.
+         PERMISSION_DENIED is not noise: it means no fix will EVER arrive, and
+         every second after it the panel keeps saying "Recording activity" over
+         a distance that can no longer change. It can happen mid-trip, because a
+         driver can revoke the permission while the app is open. */
+      (error) => {
+        if (error.code === error.PERMISSION_DENIED) onDenied?.();
+      },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },
     );
     return () => navigator.geolocation.clearWatch(watchId);
@@ -173,11 +184,17 @@ export const LocationService = {
   },
 };
 
-function toPoint(lat: number, lng: number, accuracy?: number, timestamp?: number): LocationPoint {
+function toPoint(
+  lat: number,
+  lng: number,
+  accuracy?: number,
+  timestamp?: number,
+  speed?: number | null,
+): LocationPoint {
   // `timestamp` is optional because a live fix arrives as it happens, so "now"
   // is the truth. A fix replayed out of the service buffer is NOT now — it may
   // be an hour old — and must carry the time it was observed. See TripFix.
-  return { lat, lng, accuracy, timestamp: timestamp ?? Date.now() };
+  return { lat, lng, accuracy, timestamp: timestamp ?? Date.now(), speed };
 }
 
 /**

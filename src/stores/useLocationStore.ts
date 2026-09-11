@@ -99,9 +99,35 @@ const MAX_ACCURACY_M = 100;
  * to go on.
  */
 function movementGateKm(a?: number, b?: number): number {
-  const worst = Math.max(a ?? 0, b ?? 0) / 1000;
-  return Math.max(MIN_MOVE_KM, worst);
+  /* The SUM of the two uncertainties, not the larger of them.
+   *
+   * The paragraph above has it right — "two fixes each honestly accurate to
+   * 40 m can be 60 m apart with nothing having moved" — and then the code took
+   * the max, which is 40. That gap is where parked drift got in. Measured: a
+   * stationary handset reporting accuracy 12 and wandering ±10 m booked 0.18 km
+   * over sixty fixes, because a max-gate of 15 m passes every wander bigger
+   * than 15 m and each one is committed as forward travel. A random walk
+   * filtered by a minimum step still accumulates; only the big steps survive
+   * and every survivor counts as positive distance.
+   *
+   * Adding them asks the question that actually matters: could these two
+   * readings be the same place? Two fixes at 12 m become a 24 m gate, which the
+   * drift no longer clears, while a driver moving at any real speed clears it
+   * in a single fix. */
+  const combined = ((a ?? 0) + (b ?? 0)) / 1000;
+  return Math.max(MIN_MOVE_KM, combined);
 }
+
+/**
+ * Below this the handset is telling us it is not travelling.
+ *
+ * Where the device reports speed it is far better evidence than comparing two
+ * positions, because it comes from Doppler rather than from subtracting two
+ * uncertain numbers. 1 m/s is a slow walk; a driver stopped at a light or
+ * waiting at a stand sits well under it. Absent or negative means the device
+ * does not know, and then position is all we have.
+ */
+const STATIONARY_MS = 1;
 /* MAX_PLAUSIBLE_KMH now lives in LocationService, because the replay of a past
    day needs the same threshold and two copies would drift apart. */
 
@@ -143,6 +169,23 @@ export const useLocationStore = create<LocationState>()(
       startTracking: async () => {
         try {
           const point = await LocationService.currentPosition();
+
+          /* Refuse to start on a guess.
+           *
+           * currentPosition resolves a FALLBACK point when the browser refuses
+           * or times out rather than rejecting — which is right for the callers
+           * that only need somewhere to centre a map, and wrong here. It meant
+           * the catch below never ran on a denial, so tapping Start with
+           * location switched off flipped the panel to "Recording activity ·
+           * LIVE" and left it there: no error, no warning, and 0.00 km for as
+           * long as the driver cared to look. Someone could drive an entire
+           * shift believing it was being recorded.
+           *
+           * The point already carries the flag that says it is a guess, and its
+           * own comment says callers that measure FROM it need to know. This is
+           * one of those callers. */
+          if (point.fallback) throw new Error(translate("err_locationDenied"));
+
           stopWatching?.();
           /* The rate and the currency symbol go with the watch, so the ongoing
              notification can say what the trip is worth. The service cannot
@@ -163,6 +206,15 @@ export const useLocationStore = create<LocationState>()(
               rate: profile.baseRate,
               currency: currencySymbol(),
               unit: "km",
+            },
+            /* Revoked mid-trip. Stop rather than keep a LIVE panel over a
+               number that can no longer move, and say why. */
+            () => {
+              get().stopTracking();
+              set({ permission: "denied" });
+              useNotificationStore
+                .getState()
+                .push(translate("err_locationDenied"), translate("notif_sessionEndedBody"), "location");
             },
           );
           trackingStartedAt = Date.now();
@@ -232,6 +284,10 @@ export const useLocationStore = create<LocationState>()(
           // red light. Ignore anything below the noise floor — a floor that now
           // rises with how uncertain the two fixes admit they are…
           if (moved < movementGateKm(last.accuracy, point.accuracy)) return;
+          /* And if the handset says it is standing still, believe it. Two
+             positions can disagree by more than the gate through nothing but
+             noise; a speed reading cannot drift a driver into motion. */
+          if (typeof point.speed === "number" && point.speed >= 0 && point.speed < STATIONARY_MS) return;
           // …and reject teleports (a lost then re-acquired fix), which would
           // otherwise credit a driver kilometres they never drove.
           const seconds = Math.max(1, (point.timestamp - last.timestamp) / 1000);
