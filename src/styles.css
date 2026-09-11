@@ -8380,8 +8380,18 @@ body[data-band="home"] {
 .sv-content.has-results .sv-mapmode,
 .sv-content.has-results .sv-daypick { opacity: 0; pointer-events: none; }
 
-/* And the list itself sits above the map layer regardless, so a control
-   I have not named here cannot quietly land on top of it again. */
+/* The list sits above the map layer — but this does NOT protect it from a
+   control I forget to name below, and it is worth being clear about why.
+   .sv-results lives inside .sv-top, which is position:absolute with z-index
+   500, and that makes a stacking context. So the 620 only ranks the list
+   against its own siblings inside .sv-top; against .sv-layerbtn or
+   .sv-chromebtn it competes as part of a group at 500, and loses to whichever
+   of them comes later in the markup.
+
+   So every control that can overlap the list has to be named in the rules
+   below. Adding one and leaving it out puts it back on top of the first
+   result row, which is exactly what happened when the clean-map toggle
+   arrived. */
 .sv-results,
 .sv-top > div:has(> button strong) { position: relative; z-index: 620; }
 
@@ -8449,7 +8459,12 @@ body[data-band="home"] {
 /* Out of the way whenever the results list or a route panel is open, the
    same as everything else that floats over the map. */
 .sv-content.has-results .sv-layerbtn,
-.sv-content.has-route .sv-layerbtn { opacity: 0; pointer-events: none; }
+.sv-content.has-route .sv-layerbtn,
+/* The clean-map toggle sits directly above the layer button and overlapped
+   the first result row the same way. Measured: the right-hand 44px of row one
+   answered to this button instead of selecting the place. */
+.sv-content.has-results .sv-chromebtn,
+.sv-content.has-route .sv-chromebtn { opacity: 0; pointer-events: none; }
 
 /* With three buttons down to two, the rail fits between the mode row and
    the sheet with room to spare. */
