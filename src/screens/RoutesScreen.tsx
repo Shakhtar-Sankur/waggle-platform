@@ -982,12 +982,26 @@ export function RoutesScreen() {
                   {routeOptions.length > 1 ? (
                     <div className="sv-routeopts">
                       {routeOptions.map((r, i) => {
-                        const fastest = r.minutes === Math.min(...routeOptions.map((x) => x.minutes));
-                        const shortest = r.km === Math.min(...routeOptions.map((x) => x.km));
+                        /* Sole winner, not joint. These were `=== Math.min(...)`,
+                           so two routes tied on time both wore "fastest" — which
+                           tells a driver nothing and, worse, suppressed the
+                           "shortest" tag on the one that WAS shorter, because
+                           that branch only ran when fastest was false. Seen live:
+                           12 min / 9.8 km and 12 min / 8.9 km, both labelled
+                           fastest, the 0.9km difference unmarked. A label that
+                           does not distinguish is not worth the width. */
+                        const minMinutes = Math.min(...routeOptions.map((x) => x.minutes));
+                        const minKm = Math.min(...routeOptions.map((x) => x.km));
+                        const fastest =
+                          r.minutes === minMinutes &&
+                          routeOptions.filter((x) => x.minutes === minMinutes).length === 1;
+                        const shortest =
+                          r.km === minKm && routeOptions.filter((x) => x.km === minKm).length === 1;
                         return (
                           <button
                             key={i}
                             className={i === chosenRoute ? "is-on" : ""}
+                            aria-pressed={i === chosenRoute}
                             onClick={() => setChosenRoute(i)}
                           >
                             <b>{r.minutes} min</b>
@@ -1013,7 +1027,17 @@ export function RoutesScreen() {
                       route. Steps folds the list away, because six turns is a
                       lot of panel on a phone held at a junction. */}
                   <div className="sv-routeacts">
-                    <button className={stepsOpen ? "is-on" : ""} onClick={() => setStepsOpen((v) => !v)}>
+                    {/* Both of these are toggles whose state lived only in a CSS
+                        class, so a screen reader announced "Pin, button" whether
+                        or not the destination was pinned, and "Steps, button"
+                        with the list open or shut. Same fix as the feed's like
+                        and repost: the state goes in aria-pressed. */}
+                    <button
+                      className={stepsOpen ? "is-on" : ""}
+                      aria-pressed={stepsOpen}
+                      aria-expanded={stepsOpen}
+                      onClick={() => setStepsOpen((v) => !v)}
+                    >
                       <RouteIcon size={14} /> {t("sv_steps")}
                     </button>
                     <button className="primary" onClick={() => { if (!isTracking) void startTracking(); }}>
@@ -1021,6 +1045,7 @@ export function RoutesScreen() {
                     </button>
                     <button
                       className={pinnedHere ? "is-on" : ""}
+                      aria-pressed={pinnedHere}
                       onClick={() => setPinnedHere((v) => !v)}
                     >
                       <MapPin size={14} /> {t("sv_pin")}
