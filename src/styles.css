@@ -2406,6 +2406,22 @@ select:focus {
    ===================================================================== */
 html {
   scroll-behavior: smooth;
+  /* Always leave room for the scrollbar, whether or not one is showing.
+     Without this the page is a few pixels wider whenever the content happens
+     to be short enough not to scroll — so switching the chat filter from All
+     to Unread shrinks the list, the scrollbar disappears, and every centred
+     thing on the page slides sideways. Measured at 6px, which is small and
+     very visible because it moves on a tap. It applies to every screen rather
+     than the chat list alone: any page whose content changes length had the
+     same jump, it was just harder to catch. */
+  scrollbar-gutter: stable;
+  /* And force the track to exist even on a screen that never scrolls.
+     scrollbar-gutter alone does not reserve anything on the map, because that
+     screen's <main> is position:fixed so the document has no tall content and
+     no scrollbar was ever going to appear — leaving Routes 10px wider than
+     every other tab, so the whole app jumped sideways on the way in and out of
+     the map. Every screen now measures the same width. */
+  overflow-y: scroll;
 }
 
 /* Tap feedback on card-style buttons (press = slight shrink). */
@@ -7199,6 +7215,38 @@ button:not(:disabled):active,
    a filled pill, a bolder label and a heavier icon, because for the ~8% of
    men with red-green colour blindness a scheme that speaks only in hue says
    nothing at all. */
+/* ── the band changes colour rather than cutting to it ────────────────
+   Each tab owns a hue so a driver can tell at a glance that a tap landed.
+   Snapping from one to the next throws that away: the eye reads a hard cut as
+   a new screen appearing, not as this screen becoming that one. A short
+   interpolation keeps the connection between the two.
+
+   Custom properties do not animate on their own — a browser has no idea
+   --band-a holds a colour rather than an arbitrary string — so they are
+   registered with their type first. Where @property is unsupported the
+   declarations are ignored and the colours simply snap, which is exactly
+   today's behaviour, so nothing breaks on an older WebView.
+
+   260ms: long enough to read as movement, short enough that it is over before
+   the next screen has finished painting. Anything slower feels like the app
+   is thinking. */
+@property --band-a { syntax: "<color>"; inherits: true; initial-value: #4338ca; }
+@property --band-b { syntax: "<color>"; inherits: true; initial-value: #312e81; }
+@property --band-flat { syntax: "<color>"; inherits: true; initial-value: #3730a3; }
+
+body {
+  transition:
+    --band-a 260ms ease,
+    --band-b 260ms ease,
+    --band-flat 260ms ease;
+}
+
+/* Motion is decoration here: the colour still tells you where you are the
+   instant it lands, so anyone who has asked for less of it loses nothing. */
+@media (prefers-reduced-motion: reduce) {
+  body { transition: none; }
+}
+
 body[data-band="home"]      { --band-a: #4338ca; --band-b: #312e81; --band-flat: #3730a3; }
 body[data-band="community"] { --band-a: #6d28d9; --band-b: #4c1d95; --band-flat: #5b21b6; }
 body[data-band="routes"]    { --band-a: #0f766e; --band-b: #134e4a; --band-flat: #115e59; }
