@@ -9861,8 +9861,15 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .fb-reel-act {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 4px;
-  padding: 2px;
+  /* A 14px icon is a 14px target. These sit over video on a phone held in one
+     hand, so the button is padded out to something a thumb can actually hit
+     rather than sized to the glyph inside it. */
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 6px;
+  margin-inline-start: -6px;
   border: none;
   background: none;
   color: rgba(255, 255, 255, 0.86);
