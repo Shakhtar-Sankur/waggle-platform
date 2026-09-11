@@ -9070,9 +9070,15 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    opened up above the title. The grip keeps its target by pulling the
    sheet's padding back rather than by pushing the content down. */
 .sv-sheet { padding-top: 0; }
+/* Still 22px, because the height IS the drag target and it is already on the
+   small side for a thumb. What changes is where the bar sits inside it: at
+   top:8 there were 10 dead pixels of button trailing under the bar, and with
+   the title's own leading on top of that the reader saw ~20px of nothing
+   between the handle and "Ready to record". Dropping the bar to the bottom of
+   its own button closes the gap without taking anything away to grab. */
 .sv-sheet-grip { height: 22px; }
-.sv-sheet-grip::before { top: 8px; }
-.sv-sheet-title { margin-top: 2px; }
+.sv-sheet-grip::before { top: 13px; }
+.sv-sheet-title { margin-top: 0; }
 
 /* ── The layer button belongs with the other map controls ─────────────
    It was floating alone up near the search while locate and zoom sat in

@@ -269,6 +269,18 @@ export function RoutesScreen() {
       if (start && Math.abs(e.clientY - start.y) <= 28) setSheetCollapsed((v) => !v);
     },
     onPointerCancel: () => { dragRef.current = null; },
+    /* Keyboard. The grip is a real <button> carrying aria-expanded, so a screen
+       reader announces it as something you can open and close — but only
+       pointer events were wired to it, and Enter or Space did nothing at all.
+       A control that says it is operable and is not is worse than one that
+       never claimed it.
+
+       detail === 0 is what separates a keyboard-generated click from a click
+       that followed a real tap. Without that guard a tap would fire pointerup
+       AND click, toggle twice, and appear to do nothing. */
+    onClick: (e: React.MouseEvent) => {
+      if (e.detail === 0) setSheetCollapsed((v) => !v);
+    },
   };
 
   /**
@@ -634,7 +646,18 @@ export function RoutesScreen() {
     () =>
       unblockedWorkers.filter(
         (worker) =>
-          worker.isOnline || (worker.lastSeen != null && Date.now() - worker.lastSeen < RECENT_WINDOW),
+          worker.isOnline ||
+          (worker.lastSeen != null && Date.now() - worker.lastSeen < RECENT_WINDOW) ||
+          /* A fresh POSITION counts as being out there, not just a fresh
+             heartbeat. These are two signals for one fact and the map was
+             reading only the weaker one: a driver whose location was written
+             seconds ago was told to be absent because their presence beat had
+             not landed in the last fifteen minutes. Verified with a friend
+             sharing a position timestamped moments earlier — the roster said
+             "no connections are sharing their location" while the row sat in
+             the query result the screen had already fetched. */
+          (worker.location.timestamp > 0 &&
+            Date.now() - worker.location.timestamp < RECENT_WINDOW),
       ),
     [unblockedWorkers],
   );
@@ -685,8 +708,15 @@ export function RoutesScreen() {
   // tables, so without this a driver who joins — or a friend who starts moving —
   // only appeared after closing and reopening the app. Poll while the map is on
   // screen; the interval is cleared as soon as they navigate away.
+  //
+  // Both map views, not just "maps". This was scoped to the one view where it
+  // matters least and switched off on Friends — the screen whose entire purpose
+  // is watching other people move. Verified by moving a friend 1.5km in the
+  // database with the roster open: their marker and their distance sat still
+  // indefinitely, because nothing on that screen ever asked again.
   useEffect(() => {
-    if (!user || !SupabaseService.enabled || view !== "maps") return undefined;
+    if (!user || !SupabaseService.enabled || (view !== "maps" && view !== "friends"))
+      return undefined;
     void loadCloudCommunity();
     const timer = window.setInterval(() => void loadCloudCommunity(), 10000);
     return () => window.clearInterval(timer);
