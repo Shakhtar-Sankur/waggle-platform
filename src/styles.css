@@ -6259,12 +6259,35 @@ body[data-band] { background: #fbf7f4; }
 /* The field sits on colour now, so it needs its own surface rather than a
    border that disappears against the band. */
 .wa-band .wa-search {
-  background: rgba(255, 255, 255, .16);
-  border: 1px solid rgba(255, 255, 255, .28);
-  border-radius: 14px;
+  /* A pill, not a rounded box. On a coloured band a 14px-radius rectangle reads
+     as a form field borrowed from a settings page; a full-round field reads as
+     search, which is what every phone keyboard and every map app has trained a
+     driver to expect. Slightly deeper fill and no hard border, so it sits IN
+     the band rather than being drawn on top of it. */
+  background: rgba(255, 255, 255, .18);
+  border: 1px solid transparent;
+  border-radius: 999px;
+  min-height: 46px;
+  padding-inline: 16px;
+  /* The pills below are centred, so the field they sit under is centred too and
+     capped, rather than running the full width above a short row of buttons. */
+  max-width: 420px;
+  margin-inline: auto;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+/* Focus is shown on the field itself rather than by a browser outline that the
+   band's colour fights with. */
+.wa-band .wa-search:focus-within {
+  background: rgba(255, 255, 255, .26);
+  border-color: rgba(255, 255, 255, .55);
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, .12);
 }
 .wa-band .wa-search svg { color: rgba(255, 255, 255, .85); }
-.wa-band .wa-search input { color: #fff; background: transparent; }
+.wa-band .wa-search input {
+  color: #fff;
+  background: transparent;
+  font-size: 15px;
+}
 .wa-band .wa-search input::placeholder { color: rgba(255, 255, 255, .72); }
 
 /* New group climbs onto the band as its own row, the way the first card does
@@ -6684,6 +6707,12 @@ html { background: var(--ground, #fbf7f4); }
   -ms-overflow-style: none;
   /* The pills stop at the edge of the band rather than clipping mid-word. */
   padding-inline-end: 2px;
+  /* Centred when the four fit, left-aligned when they do not.
+     `center` alone would be wrong on a narrow phone: a centred row that
+     overflows gets cut off at BOTH ends, so the first pill becomes as hard to
+     reach as the last. safe center keeps the centring where there is room and
+     falls back to the start edge where there is not. */
+  justify-content: safe center;
 }
 .wa-filters::-webkit-scrollbar { display: none; }
 .wa-filters button { flex: none; white-space: nowrap; }
@@ -10194,3 +10223,16 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 /* A message still in the outbox. Dimmer than a tick and a clock rather than a
    mark, so "waiting for signal" never reads as "delivered". */
 .wa-ticks.pending { opacity: .6; display: inline-flex; align-items: center; vertical-align: middle; }
+
+
+/* A notification carrying a long URL pushed the whole page sideways — measured
+   at 238px of horizontal overflow from one OpenStreetMap link. A link has no
+   spaces to break at, so it needs to be told it may break anywhere; and
+   dir="auto" belongs on the body for the same reason it does in the chat, since
+   the text is whatever somebody typed rather than the app's own language. */
+.notification-list article p,
+.notification-list article strong {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  min-width: 0;
+}

@@ -24,8 +24,11 @@ export function NotificationsScreen() {
               <article className={notification.read ? "read" : ""} key={notification.id}>
                 <span />
                 <div>
-                  <strong>{notification.title}</strong>
-                  <p>{notification.description}</p>
+                  {/* Both dir="auto": the text is whatever somebody typed or
+                      whatever a message said, not the app's own language, so it
+                      should read in its own direction rather than the UI's. */}
+                  <strong dir="auto">{notification.title}</strong>
+                  <p dir="auto">{notification.description}</p>
                   <small>{timeAgo(notification.createdAt)}</small>
                 </div>
               </article>

@@ -128,9 +128,28 @@ export default function App() {
     void useCommunityStore.getState().loadBlocks();
     void useCommunityStore.getState().loadBookmarks();
     void NotificationService.initPush(user.id);
-    void SupabaseService.refreshRealtimeAuth();
 
-    const unsubscribe = [
+    /* Realtime has to carry the driver's token BEFORE anything subscribes.
+     *
+     * refreshRealtimeAuth awaits getSession, so `void`-ing it and creating the
+     * channels on the next line is a race the channels always lose: they join
+     * unauthenticated, and postgres_changes on these RLS-heavy tables then
+     * delivers nothing at all — silently, with the channel still reporting
+     * SUBSCRIBED. Measured: zero events on an unauthenticated channel, and the
+     * insert arriving normally on the same channel once setAuth had run. The
+     * app was falling back to its polling timers for everything, which is why
+     * an incoming message took up to nine seconds to appear.
+     *
+     * Subscriptions are built after the token lands. `cancelled` covers the
+     * driver navigating away or signing out in that window, so a channel is
+     * never created after the effect has been torn down. */
+    let cancelled = false;
+    let unsubscribe: Array<() => void> = [];
+
+    void (async () => {
+      await SupabaseService.refreshRealtimeAuth();
+      if (cancelled) return;
+      unsubscribe = [
       SupabaseService.subscribeToTable("feed_posts", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("post_likes", () => void loadCloudCommunity()),
       SupabaseService.subscribeToTable("post_reposts", () => void loadCloudCommunity()),
@@ -139,8 +158,13 @@ export default function App() {
       SupabaseService.subscribeToTable("chat_messages", () => void loadCloudChats(user.id)),
       SupabaseService.subscribeToTable("notifications", () => void loadCloudNotifications(user.id)),
       SupabaseService.subscribeToTable("connections", () => void loadConnections(user.id)),
-    ];
-    return () => unsubscribe.forEach((fn) => fn());
+      ];
+    })();
+
+    return () => {
+      cancelled = true;
+      unsubscribe.forEach((fn) => fn());
+    };
   }, [
     loadCloudChats,
     loadCloudCommunity,

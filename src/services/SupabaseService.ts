@@ -1542,6 +1542,40 @@ export const SupabaseService = {
       updatedAt: new Date(row.chat_threads.updated_at).getTime(),
     }));
 
+    /* How many messages in each thread this driver has not read.
+     *
+     * This was hardcoded to 0 for every thread, so the badge on the chat list
+     * could never appear and the Unread filter could never match anything —
+     * there was no way to see a new message was waiting without opening the
+     * chat and looking. The data was always there: a message is unread when
+     * somebody else sent it and its status is not yet "read".
+     *
+     * One query for every thread rather than one per thread, and only the
+     * thread_id comes back — this runs on every chat-list load, and pulling
+     * message bodies to count them would be the expensive way to learn a
+     * number. Non-fatal: a failure leaves the counts at zero, which is what
+     * they were before. */
+    if (threads.length) {
+      try {
+        const { data: unread } = await supabase
+          .from("chat_messages")
+          .select("thread_id")
+          .in("thread_id", threads.map((thread) => thread.id))
+          .neq("sender_id", userId)
+          .neq("status", "read")
+          .limit(2000);
+        const tally = new Map<string, number>();
+        (unread ?? []).forEach((row: { thread_id: string }) => {
+          tally.set(row.thread_id, (tally.get(row.thread_id) ?? 0) + 1);
+        });
+        threads.forEach((thread) => {
+          thread.unreadCount = tally.get(thread.id) ?? 0;
+        });
+      } catch {
+        // Counts stay at zero; the list still works.
+      }
+    }
+
     // Resolve every member of the user's threads so DMs know who the "other" person
     // is (needed for presence / last-seen). Non-fatal if it fails.
     if (threads.length) {

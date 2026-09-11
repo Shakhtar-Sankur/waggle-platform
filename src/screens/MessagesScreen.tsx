@@ -627,7 +627,7 @@ export function MessagesScreen() {
                     {last?.voiceUrl && last.body ? (
                       <Mic size={13} className="wa-preview-icon" />
                     ) : null}
-                    <span className="wa-preview-text">
+                    <span className="wa-preview-text" dir="auto">
                       {/* A voice note has no body, and `body || photoLabel` sent
                           every one of them to the photo label — so a chat whose
                           last message was a 12-second voice note read "Photo" in
@@ -1033,7 +1033,15 @@ export function MessagesScreen() {
                         <small>{clockOf(message.voiceSeconds ?? 0)}</small>
                       </button>
                     ) : null}
-                    {message.body ? <p>{message.body}</p> : null}
+                    {/* dir="auto" so each message reads in ITS OWN direction,
+                        not the app's. A driver with the UI in Arabic still types
+                        English half the time — the keyboard decides the language,
+                        not the settings screen — and forcing every bubble
+                        right-to-left put the full stop of an English sentence at
+                        the start of the line. The browser picks from the first
+                        strong character in the text, per message, which is the
+                        same rule WhatsApp uses. */}
+                    {message.body ? <p dir="auto">{message.body}</p> : null}
                     <small>
                       {clock(message.createdAt)}
                       {isMe ? (
@@ -1171,6 +1179,7 @@ export function MessagesScreen() {
             </button>
             <input
               value={draft}
+              dir="auto"
               onChange={(event) => { setDraft(event.target.value); noteTyping(); }}
               placeholder={attachment ? t("wa_caption") : t("wa_typeMessage")}
             />
