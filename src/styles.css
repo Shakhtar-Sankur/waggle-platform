@@ -7263,6 +7263,77 @@ body[data-band="profile"]   { --band-a: #a21caf; --band-b: #701a75; --band-flat:
     linear-gradient(160deg, var(--band-a, #4338ca) 0%, var(--band-b, #312e81) 100%);
 }
 
+/* ── light moving inside the band ─────────────────────────────────────
+   Two soft pools of the section's own colour drifting across the band, so the
+   coloured area reads as lit rather than printed. They are the SECTION's
+   tokens, not a new palette: on Messages it is blue moving through blue, on
+   Profile magenta through magenta. Nothing changes hue, only where the light
+   sits.
+
+   Drawn on a ::before behind the content rather than by animating the band's
+   own background. A moving background-position repaints the whole band on
+   every frame — a large filled rectangle behind text, on a phone that is also
+   holding a GPS lock — whereas a transform on a separate layer is composited
+   and costs the main thread nothing.
+
+   Slow on purpose. 22 and 30 seconds, drifting a little over half their own
+   width, is movement you notice only if you stop and look at it. A driver
+   glancing down at a junction should register the colour, not the animation. */
+.screen-band,
+.home-band {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.screen-band > *,
+.home-band > * { position: relative; z-index: 1; }
+
+.screen-band::before,
+.home-band::before {
+  content: "";
+  position: absolute;
+  inset: -30% -20%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(38% 46% at 22% 32%, color-mix(in srgb, var(--band-a, #4338ca) 70%, white) 0%, transparent 62%),
+    radial-gradient(34% 42% at 78% 66%, color-mix(in srgb, var(--band-b, #312e81) 55%, white) 0%, transparent 60%);
+  opacity: .5;
+  filter: blur(18px);
+  animation: band-drift 22s ease-in-out infinite alternate;
+  will-change: transform;
+}
+.screen-band::after,
+.home-band::after {
+  content: "";
+  position: absolute;
+  inset: -25% -15%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(30% 38% at 68% 20%, rgba(255, 255, 255, .22) 0%, transparent 64%);
+  animation: band-drift-2 30s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+@keyframes band-drift {
+  from { transform: translate3d(-6%, -4%, 0) scale(1); }
+  to   { transform: translate3d(7%, 5%, 0) scale(1.12); }
+}
+@keyframes band-drift-2 {
+  from { transform: translate3d(5%, 3%, 0) scale(1.08); }
+  to   { transform: translate3d(-7%, -5%, 0) scale(1); }
+}
+
+/* Ambient motion is the first thing to go for anyone who has asked for less of
+   it. The pools stay — they are part of the colour — they simply stop moving. */
+@media (prefers-reduced-motion: reduce) {
+  .screen-band::before,
+  .home-band::before,
+  .screen-band::after,
+  .home-band::after { animation: none; }
+}
+
 /* And the collapsed header follows it, so scrolling does not change the
    colour of the bar halfway down the screen. */
 body[data-band] .app-header.is-collapsed { background: var(--band-flat, #3730a3); }
@@ -10283,4 +10354,56 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   overflow-wrap: anywhere;
   word-break: break-word;
   min-width: 0;
+}
+
+/* ── names should read as names ───────────────────────────────────────
+   Three places name something — a platform a driver works for, another driver,
+   the app they are on shift with — and all three were set in the same quiet
+   body text as a form label. A name is the thing you scan for; it should carry
+   the weight of a heading at the size of a label.
+
+   All three get the display face, a heavier cut, and tracking pulled in.
+   Tightening is what separates a NAME from a sentence: set at normal spacing a
+   short word looks like a caption, and a touch of negative tracking at this
+   size reads as deliberate rather than cramped. */
+
+/* The platform grid on Profile. These are brands — Ola, Zomato, BigBasket —
+   and they were 13px muted grey under a coloured badge, which read as a
+   checkbox list rather than as the companies somebody drives for. */
+.profile-app-grid button small,
+.app-choice small {
+  font-family: var(--font-display, inherit);
+  font-size: 13.5px;
+  font-weight: 650;
+  letter-spacing: -0.012em;
+  color: var(--foreground);
+  line-height: 1.15;
+}
+/* The one you are on shift with says so in the brand colour, so the grid has
+   an answer as well as a selection. */
+.profile-app-grid button.selected small,
+.app-choice.selected small {
+  color: var(--primary);
+  font-weight: 750;
+}
+
+/* Other drivers — the Routes roster and Today's leaders. A person's name
+   deserves at least as much presence as the distance printed next to it. */
+.sv-friend-who strong,
+.svc-rank strong {
+  font-family: var(--font-display, inherit);
+  font-weight: 700;
+  letter-spacing: -0.014em;
+  color: var(--foreground);
+}
+.sv-friend-who strong { font-size: 15.5px; }
+.svc-rank strong { font-size: 14.5px; }
+
+/* Today's working app on Home. It was the same weight as the words around it,
+   so the one piece of information on that row read as part of the label. */
+.working-app-card strong {
+  font-family: var(--font-display, inherit);
+  font-size: 16px;
+  font-weight: 750;
+  letter-spacing: -0.015em;
 }
