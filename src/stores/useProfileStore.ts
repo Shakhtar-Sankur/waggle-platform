@@ -5,7 +5,7 @@ import { SupabaseService } from "../services/SupabaseService";
 import { defaultDailyGoalFor, defaultRateFor, setCurrency } from "../utils/format";
 import { useAuthStore } from "./useAuthStore";
 import { useNotificationStore } from "./useNotificationStore";
-import { translate } from "../i18n";
+import { translate, useLangStore } from "../i18n";
 
 interface ProfileState extends ProfileSettings {
   /** True once the driver has set their own per-km rate, so auto-detected
@@ -38,6 +38,7 @@ const defaults: ProfileSettings = {
   maintenanceKm: 0,
   shareStats: true,
   currencyCode: "PHP",
+  currencyAuto: true,
 };
 
 export const useProfileStore = create<ProfileState>()(
@@ -62,6 +63,25 @@ export const useProfileStore = create<ProfileState>()(
                change would have written 600 over their 1500 for good. */
             if (settings.baseRate !== undefined) set({ rateCustomised: true });
             if (settings.dailyGoal !== undefined) set({ goalCustomised: true });
+
+            /* Currency needs two extra steps that the plain `set` above does
+               not do for us.
+
+               First, tell the formatter. `set({ currencyCode })` only changes
+               store state; the `currency()` helper reads a module-level active
+               currency that is set by setCurrency(). Without this the driver's
+               stored currency loaded into state and every amount on screen
+               still rendered in the previous one.
+
+               Second, mirror the auto flag into the language store, which is
+               where App.tsx reads it to decide whether to overwrite the
+               currency from region detection. Skipping this is the whole bug
+               the column was added for: the pick would load and then be
+               overwritten moments later on the new device. */
+            if (settings.currencyCode) setCurrency(settings.currencyCode);
+            if (settings.currencyAuto !== undefined) {
+              useLangStore.getState().setAutoRegion(settings.currencyAuto);
+            }
           }
         } catch (error) {
           // Keep locally-persisted settings when the cloud is unreachable.

@@ -14,7 +14,7 @@ import { resolveCountryForLocation } from "../i18n/region";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
 import { SupabaseService } from "../services/SupabaseService";
-import { localAppCount, workAppsForCountry } from "../utils/workApps";
+import { localAppCount, workAppLabel, workAppsForCountry } from "../utils/workApps";
 import { useAuthStore } from "../stores/useAuthStore";
 import { useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
@@ -29,7 +29,7 @@ export function ProfileScreen() {
   useBrandBand("profile");
   const navigate = useNavigate();
   const t = useT();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   // For localising weekday names in the 7-day record, below.
   const lang = useLangStore((state) => state.lang);
   const blocked = useCommunityStore((state) => state.blocked);
@@ -52,6 +52,17 @@ export function ProfileScreen() {
   // the app able to set it, so every driver was an initials circle.
   const [avatarUrl, setAvatarUrl] = useState<string | undefined>(undefined);
   const [avatarBusy, setAvatarBusy] = useState(false);
+
+  // Read back whatever photo the driver set last time. Without this the upload
+  // only lasted until the next reload.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+    SupabaseService.loadAvatar(user.id)
+      .then((url) => { if (!cancelled && url) setAvatarUrl(url); })
+      .catch(() => { /* an initials circle is a fine fallback */ });
+    return () => { cancelled = true; };
+  }, [user?.id]);
 
   const changeAvatar = async () => {
     const picked = await MediaService.pickImage();
@@ -150,6 +161,26 @@ export function ProfileScreen() {
     if (searchParams.get("settings") === "true") setSettingsOpen(true);
   }, [searchParams]);
 
+  /**
+   * Close the settings sheet AND drop the ?settings=true that opened it.
+   *
+   * The header gear and the Home journey card both open settings by navigating
+   * to /profile?settings=true. Leaving the parameter behind meant the next tap
+   * navigated to the URL the app was already on: no change to searchParams, so
+   * the effect above never re-ran and the sheet never reopened. Settings became
+   * unreachable from the gear until a reload.
+   *
+   * replace, not push, so Back does not land on the URL that reopens it.
+   */
+  const closeSettings = () => {
+    setSettingsOpen(false);
+    if (searchParams.has("settings")) {
+      const next = new URLSearchParams(searchParams);
+      next.delete("settings");
+      setSearchParams(next, { replace: true });
+    }
+  };
+
   return (
     <main className="page-shell profile-page has-band">
       {/* Same band as Home. The avatar used to float on near-white with the
@@ -185,7 +216,7 @@ export function ProfileScreen() {
               onClick={() => setActiveApp(app.id)}
             >
               <WorkAppMark app={app} size={30} />
-              <small>{app.name}</small>
+              <small>{workAppLabel(app)}</small>
               {profile.activeApp === app.id ? <em /> : null}
             </button>
           ))}
@@ -223,7 +254,9 @@ export function ProfileScreen() {
           <div className="progress-track">
             <span style={{ width: `${Math.min(100, (profile.maintenanceKm / 1000) * 100)}%` }} />
           </div>
-          <div><span>0 km</span><span>500 km</span><span>1000 km</span></div>
+          {/* dir="ltr" for the same reason the formatters isolate their output:
+              in Arabic these three split into "km 0", "km 500", "km 1000". */}
+          <div dir="ltr"><span>0 km</span><span>500 km</span><span>1000 km</span></div>
         </div>
         <Button variant="outline" onClick={logMaintenance}>{t("profile_logMaintenance")}</Button>
       </section>
@@ -323,9 +356,16 @@ export function ProfileScreen() {
         <Link to="/terms">{t("consent_terms")}</Link>
       </section>
 
+      <Button variant="outline" className="wide-action danger-action" onClick={() => setDeleteOpen(true)}>
+        <Trash2 size={18} /> {t("profile_deleteAccount")}
+      </Button>
+
       {/* The app name appears on Home and here. Community and Routes carry the
           bee alone, so the name is stated where someone looks for it rather
-          than repeated on every screen. */}
+          than repeated on every screen.
+          It closes the page, below the last action: sitting above Delete
+          Account it read as the end of the screen, leaving the most
+          destructive button stranded underneath the sign-off. */}
       <div className="profile-brand">
         {/* Default tone, not solid: the solid variant renders the bee in the
             text colour, which made the logo black here. The bee is orange. */}
@@ -336,11 +376,7 @@ export function ProfileScreen() {
         <GigzenByline />
       </a>
 
-      <Button variant="outline" className="wide-action danger-action" onClick={() => setDeleteOpen(true)}>
-        <Trash2 size={18} /> {t("profile_deleteAccount")}
-      </Button>
-
-      <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} profile={profile} onSave={updateSettings} />
+      <SettingsModal open={settingsOpen} onClose={closeSettings} profile={profile} onSave={updateSettings} />
       <EditProfileModal
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -412,7 +448,12 @@ function SettingsModal({
          than being written. Same shape as baseRate above. */
       dailyGoal: Number(dailyGoal) > 0 ? Number(dailyGoal) : profile.dailyGoal,
       shareStats,
-      // Only persist a manual currency when auto mode is off.
+      /* The toggle itself is saved either way — it is the thing that says
+         whether region detection is allowed to overwrite the code, so it has to
+         travel with the driver rather than living on one handset. The code is
+         only written when auto is off, because in auto mode it is a detection
+         result rather than a choice. */
+      currencyAuto: autoRegion,
       ...(autoRegion ? {} : { currencyCode }),
     });
     onClose();

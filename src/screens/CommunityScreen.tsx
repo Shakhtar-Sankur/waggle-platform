@@ -47,7 +47,7 @@ import { connectionFor, useCommunityStore } from "../stores/useCommunityStore";
 import type { ConnectionState, StoryGroup, Worker } from "../types";
 import { currency, initials, km, timeAgo } from "../utils/format";
 import { isTrending, rankReels } from "../utils/reelRank";
-import { getWorkApp } from "../utils/workApps";
+import { getWorkApp, workAppLabel } from "../utils/workApps";
 
 type FbTab = "home" | "reels" | "friends" | "groups";
 
@@ -988,7 +988,7 @@ export function CommunityScreen() {
                             cannot change is not a rating, it is decoration that
                             claims to be a fact. Same call as the Achievements
                             section, removed for the same reason. */}
-                        <p>{getWorkApp(worker.app)?.logo} {getWorkApp(worker.app)?.name}</p>
+                        <p>{getWorkApp(worker.app)?.logo} {workAppLabel(getWorkApp(worker.app))}</p>
                       </div>
                     </button>
                     {state === "pending_out" ? (
@@ -1396,7 +1396,7 @@ function WorkerProfileModal({
         <div className="worker-profile-head">
           <span className="avatar huge">{initials(worker.name)}<span className={worker.isOnline ? "" : "offline"} /></span>
           <h3>{worker.name}</h3>
-          <p>{app?.logo} {app?.name} • {worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}</p>
+          <p>{app?.logo} {workAppLabel(app)} • {worker.isOnline ? t("fb_onlineNow") : t("fb_offline")}</p>
         </div>
         <div className="worker-profile-stats">
           <ProfileStat icon={<MapPin size={18} />} value={km(worker.distanceKm)} label="today" />

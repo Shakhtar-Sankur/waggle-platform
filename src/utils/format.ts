@@ -140,8 +140,27 @@ export function currencySymbol(): string {
   return activeCurrency.symbol;
 }
 
+/**
+ * Wrap a measurement so right-to-left languages cannot take it apart.
+ *
+ * "13.2 km" is digits, then a space, then Latin letters. Digits are weak in the
+ * bidi algorithm, so inside an Arabic or Hebrew screen the space between them
+ * resolves to the paragraph direction and splits the value from its unit: the
+ * driver saw "km 13.2". Same for "₹244", which flipped to "244₹".
+ *
+ * The isolate characters force the whole thing to lay out as one left-to-right
+ * run wherever it lands. They are invisible, so nothing changes in the other
+ * forty-two languages. Applied in the formatters rather than at each of the
+ * call sites, because every screen in the app renders numbers through these.
+ */
+const LRI = "⁦";
+const PDI = "⁩";
+function ltr(text: string) {
+  return `${LRI}${text}${PDI}`;
+}
+
 export function currency(value: number) {
-  return `${activeCurrency.symbol}${Math.round(value).toLocaleString(activeCurrency.locale)}`;
+  return ltr(`${activeCurrency.symbol}${Math.round(value).toLocaleString(activeCurrency.locale)}`);
 }
 
 /**
@@ -160,17 +179,17 @@ export function currencyPrecise(value: number) {
     minimumFractionDigits: small ? 2 : 0,
     maximumFractionDigits: small ? 2 : 0,
   });
-  return `${activeCurrency.symbol}${n}`;
+  return ltr(`${activeCurrency.symbol}${n}`);
 }
 
 export function km(value: number) {
-  return `${value.toFixed(1)} km`;
+  return ltr(`${value.toFixed(1)} km`);
 }
 
 export function duration(minutes: number) {
   const h = Math.floor(minutes / 60);
   const m = Math.floor(minutes % 60);
-  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+  return ltr(h > 0 ? `${h}h ${m}m` : `${m}m`);
 }
 
 export function initials(name: string) {

@@ -1100,9 +1100,67 @@ select:focus {
   padding-right: 4px;
   margin-right: -4px;
 }
+/* The platform search, matched to the pill in the Messages band.
+   A pill, not a rounded box, for the same reason it is one there: a 16px-radius
+   bordered rectangle reads as a settings field, and this is search. It sits on
+   a white modal rather than a coloured band, so the translucent-white treatment
+   is replaced by a soft tinted fill — the field has to recede until it is used
+   and then come forward, which a hard 1px border cannot do. */
 .app-search {
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  position: relative;
+  min-height: 46px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--muted, #f1f3f6);
+  padding-inline: 16px;
+  gap: 11px;
+  transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
 }
+.app-search svg {
+  color: var(--muted-foreground);
+  flex-shrink: 0;
+  transition: color 160ms ease;
+}
+.app-search:focus-within {
+  background: #fff;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px var(--primary-soft);
+}
+.app-search:focus-within svg { color: var(--primary); }
+.app-search input {
+  font-size: 15px;
+  /* The row is already 46px; letting the input carry its own min-height stacked
+     a second one inside it and made the pill 60px tall. */
+  min-height: 0;
+}
+/* The global focus outline drew a second rounded rectangle INSIDE the pill,
+   so a focused field showed two rings nested in each other. Dropped here only,
+   because the pill's own ring above replaces it — focus stays clearly visible
+   rather than being removed. */
+.app-search input:focus,
+.app-search input:focus-visible {
+  outline: none;
+}
+
+/* Clear, shown only once there is something to clear. Thirty-four platforms
+   means a driver who mistypes is looking at an empty grid, and the way back
+   should not be holding backspace. */
+.app-search-clear {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  margin-inline-end: -4px;   /* logical, so it stays inboard in Arabic */
+  border: 0;
+  border-radius: 999px;
+  background: var(--border);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: background 140ms ease;
+}
+.app-search-clear:hover { background: var(--muted-foreground); color: #fff; }
 .app-group-label {
   margin: 0 0 8px;
   font-size: 12px;

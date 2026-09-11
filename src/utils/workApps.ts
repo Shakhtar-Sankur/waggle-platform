@@ -1,8 +1,22 @@
 import { WORK_APPS } from "../config/constants";
+import { translate } from "../i18n";
 import type { WorkApp, WorkAppId } from "../types";
 
 export function getWorkApp(id: WorkAppId | null | undefined) {
   return WORK_APPS.find((app) => app.id === id) ?? null;
+}
+
+/**
+ * What to print on a platform tile or pill.
+ *
+ * Every entry in the catalogue is a brand and stays in its own spelling — Uber
+ * is Uber in Arabic. The single exception is the "Others" fallback, which is an
+ * ordinary word and was showing in English on every screen that names a
+ * platform. Kept here so the five places that render one cannot drift apart.
+ */
+export function workAppLabel(app: WorkApp | null | undefined): string {
+  if (!app) return "";
+  return app.id === "others" ? translate("picker_others") : app.name;
 }
 
 /** True when the platform operates in the given country. */

@@ -25,6 +25,19 @@ export function Modal({ open, title, description, children, onClose }: ModalProp
     };
   }, [open]);
 
+  // Escape closes, which every modal in the app was missing: Settings, Edit
+  // Profile and the delete confirm could only be dismissed by finding the X.
+  // Escape cancels rather than confirms, so this is safe on the destructive
+  // ones too — it is the same as tapping Close.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, onClose]);
+
   if (!open) return null;
 
   // Rendered into <body> via a portal so the fixed, centered overlay is always

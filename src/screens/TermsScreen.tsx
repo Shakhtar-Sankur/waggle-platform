@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { LegalBackLink } from "../components/LegalBackLink";
 import { APP_NAME, SUPPORT_EMAIL } from "../config/constants";
 import { useT } from "../i18n";
 import { LegalNotice, LegalOperator } from "../components/LegalNotice";
@@ -10,7 +10,7 @@ export function TermsScreen() {
   return (
     <main className="legal-page">
       <header>
-        <Link to="/auth">← {t("legal_back")}</Link>
+        <LegalBackLink />
         <h1>{t("terms_title")}</h1>
         <p>{t("legal_updated")}</p>
       </header>

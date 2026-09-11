@@ -43,7 +43,7 @@ import { useLocationStore } from "../stores/useLocationStore";
 import { useProfileStore } from "../stores/useProfileStore";
 import type { Challenge, ChallengeMetric, LocationPoint } from "../types";
 import { currency, duration, initials, km, timeAgo, weeklyGoalFrom } from "../utils/format";
-import { getWorkApp } from "../utils/workApps";
+import { getWorkApp, workAppLabel } from "../utils/workApps";
 
 /*
  * Tiles.
@@ -891,6 +891,11 @@ export function RoutesScreen() {
 
   const tile = TILES[mapStyle];
   const featured = challenges[0];
+  // The hero already shows challenges[0] in full. Listing it again as the first
+  // "Recommended For You" card spent a third of a three-item list repeating what
+  // was directly above it, and made the two look like separate challenges with
+  // the same name. The list is what is left over once the hero has had its pick.
+  const recommended = featured ? challenges.filter((c) => c.id !== featured.id) : challenges;
   const dateRange = useMemo(() => {
     const fmt = (d: Date) => d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
     return `${fmt(new Date())} – ${fmt(new Date(Date.now() + 14 * 86400000))}`;
@@ -1528,7 +1533,7 @@ export function RoutesScreen() {
                   : isTracking ? t("sv_recording") : t("sv_ready")}
               </strong>
               <span className={`sv-live ${isTracking ? "on" : ""}`}>
-                {dayStats ? t("sv_myPath") : isTracking ? "● LIVE" : app ? `${app.logo} ${app.name}` : t("sv_gpsReady")}
+                {dayStats ? t("sv_myPath") : isTracking ? "● LIVE" : app ? `${app.logo} ${workAppLabel(app)}` : t("sv_gpsReady")}
               </span>
             </div>
             <div className="sv-stats">
@@ -1571,14 +1576,16 @@ export function RoutesScreen() {
             </article>
           ) : null}
 
+          {recommended.length ? (
           <div className="svc-section-head">
             <div>
               <h4>{t("sv_recommended")}</h4>
               <span>{t("sv_basedOn")}</span>
             </div>
           </div>
+          ) : null}
           <div className="svc-list">
-            {challenges.map((challenge) => {
+            {recommended.map((challenge) => {
               const progress = progressFor(challenge);
               const pct = Math.min(100, Math.round((progress / targetOf(challenge)) * 100));
               return (

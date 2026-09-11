@@ -1,4 +1,4 @@
-import { Search } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { WorkAppMark } from "./WorkAppMark";
 import { useMemo, useState } from "react";
 import { useT } from "../i18n";
@@ -42,6 +42,16 @@ export function WorkAppPicker({ open, onClose }: WorkAppPickerProps) {
           onChange={(event) => setQuery(event.target.value)}
           placeholder={t("picker_search")}
         />
+        {query ? (
+          <button
+            type="button"
+            className="app-search-clear"
+            onClick={() => setQuery("")}
+            aria-label={t("a11y_close")}
+          >
+            <X size={14} />
+          </button>
+        ) : null}
       </div>
 
       {/* workAppsForCountry returns local platforms first, then the rest — so

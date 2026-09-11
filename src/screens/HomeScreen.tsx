@@ -13,7 +13,7 @@ import { useConsentStore } from "../stores/useConsentStore";
 import { useNavigate } from "react-router-dom";
 import { useProfileStore } from "../stores/useProfileStore";
 import { currency, currencyPrecise, duration, initials } from "../utils/format";
-import { getWorkApp } from "../utils/workApps";
+import { getWorkApp, workAppLabel } from "../utils/workApps";
 
 export function HomeScreen() {
   const navigate = useNavigate();
@@ -99,7 +99,7 @@ export function HomeScreen() {
         <button className="working-app-card" onClick={() => setShowPicker(true)}>
           <span>{t("home_workingApp")}</span>
           {app ? (
-            <strong><WorkAppMark app={app} size={20} /> {app.name} <small>{t("common_change")}</small></strong>
+            <strong><WorkAppMark app={app} size={20} /> {workAppLabel(app)} <small>{t("common_change")}</small></strong>
           ) : (
             <strong>{t("home_selectApp")} →</strong>
           )}

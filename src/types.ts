@@ -69,6 +69,10 @@ export interface ProfileSettings {
   shareStats: boolean;
   /** ISO 4217 code the driver's earnings/rates are shown in (e.g. "PHP", "USD"). */
   currencyCode: string;
+  /** False once the driver turns off automatic currency and picks one. Stored
+   *  so the pick survives a new handset: without it, region detection quietly
+   *  overrides a deliberate choice on the next device. */
+  currencyAuto: boolean;
 }
 
 export interface LocationPoint {
@@ -280,6 +284,10 @@ export interface AppNotification {
   createdAt: number;
   read: boolean;
   kind: "job" | "chat" | "system" | "location";
+  /** Raised by the app itself, with no row on the server behind it — "Maintenance
+   *  recorded", "Profile updated". The cloud sync replaces the list with what the
+   *  server holds, so these have to be recognisable to survive it. */
+  local?: boolean;
 }
 
 /**

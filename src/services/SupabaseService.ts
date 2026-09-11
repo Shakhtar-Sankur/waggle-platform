@@ -403,6 +403,24 @@ export const SupabaseService = {
     return thumbUrl;
   },
 
+  /**
+   * Read the driver's saved profile photo back.
+   *
+   * setAvatar wrote avatar_url and nothing ever read it, so a photo survived
+   * exactly as long as the screen that uploaded it: reload, and the driver was
+   * an initials circle again with their picture still sitting in the bucket.
+   */
+  async loadAvatar(userId: string): Promise<string | undefined> {
+    if (!supabase) return undefined;
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("avatar_url")
+      .eq("id", userId)
+      .maybeSingle();
+    if (error) throw error;
+    return resolveMediaUrl(data?.avatar_url);
+  },
+
   async loadSettings(userId: string): Promise<Partial<ProfileSettings> | null> {
     if (!supabase) return null;
     const { data, error } = await supabase
@@ -420,6 +438,10 @@ export const SupabaseService = {
       vehicleType: data.vehicle_type ?? "car",
       maintenanceKm: Number(data.maintenance_km ?? 0),
       shareStats: Boolean(data.share_stats ?? true),
+      /* Null means this driver predates the column, not "they chose nothing" —
+         so fall through to the local value rather than forcing a currency. */
+      ...(data.currency_code ? { currencyCode: data.currency_code as string } : {}),
+      currencyAuto: Boolean(data.currency_auto ?? true),
     };
   },
 
@@ -434,6 +456,8 @@ export const SupabaseService = {
       vehicle_type: settings.vehicleType,
       maintenance_km: settings.maintenanceKm,
       share_stats: settings.shareStats,
+      currency_code: settings.currencyCode,
+      currency_auto: settings.currencyAuto,
       updated_at: new Date().toISOString(),
     });
   },
@@ -845,15 +869,41 @@ export const SupabaseService = {
     }
   },
 
-  // Remove a message the driver sent (chat_messages_delete_own).
+  /**
+   * Remove a message the driver sent (chat_messages_delete_own).
+   *
+   * Take the uploads with it. Deleting the row alone left the photo and the
+   * voice note sitting in a PUBLIC bucket at a URL that still played — so a
+   * driver who recorded something into a private chat and then deleted it had
+   * not deleted it at all. Posts and stories were fixed for this; messages,
+   * where the expectation of privacy is strongest, were missed.
+   *
+   * Read the attachments before the delete, because afterwards there is nothing
+   * left to read them from.
+   */
   async deleteMessage(messageId: string, userId: string) {
     assertSupabase();
+    const { data: attachments } = await supabase!
+      .from("chat_messages")
+      .select("attachment_url, attachment_thumb_url, voice_url")
+      .eq("id", messageId)
+      .eq("sender_id", userId)
+      .maybeSingle();
+
     const { error } = await supabase!
       .from("chat_messages")
       .delete()
       .eq("id", messageId)
       .eq("sender_id", userId);
     if (error) throw error;
+
+    if (attachments) {
+      await removeStoredMedia([
+        attachments.attachment_url,
+        attachments.attachment_thumb_url,
+        attachments.voice_url,
+      ]);
+    }
   },
 
   async setLike(postId: string, userId: string, liked: boolean) {

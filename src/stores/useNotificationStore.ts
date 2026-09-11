@@ -52,11 +52,21 @@ export const useNotificationStore = create<NotificationState>()(
         try {
           const incoming = await SupabaseService.loadNotifications(userId);
           if (!incoming.length) return;
+          /* Keep what the app raised itself. This used to be a plain
+             `set({ notifications: incoming })`, which meant a driver who logged
+             a service watched the confirmation disappear from the bell the next
+             time the cloud list synced — the notification the app had just told
+             them about was not a row on the server, so the server's copy
+             overwrote it. Merge by recency instead, capped like `push` does. */
+          const merge = (fresh: AppNotification[]) => {
+            const kept = get().notifications.filter((n) => n.local);
+            return [...fresh, ...kept].sort((a, b) => b.createdAt - a.createdAt).slice(0, 20);
+          };
           if (firstNotificationLoad) {
             // First load after login is existing history — don't pop banners for it.
             firstNotificationLoad = false;
             incoming.forEach((n) => announced.add(n.id));
-            set({ notifications: incoming });
+            set({ notifications: merge(incoming) });
             return;
           }
           // Newly-arrived (via live sync) unread notifications get a device banner.
@@ -72,7 +82,7 @@ export const useNotificationStore = create<NotificationState>()(
                 void NotificationService.sendNative(n).catch(() => undefined);
               }
             });
-          set({ notifications: incoming });
+          set({ notifications: merge(incoming) });
         } catch (error) {
           console.warn("Could not load cloud notifications:", error);
         }
@@ -107,7 +117,7 @@ export const useNotificationStore = create<NotificationState>()(
       },
 
       push: (title, description, kind = "system") => {
-        const notification = NotificationService.create(title, description, kind);
+        const notification = { ...NotificationService.create(title, description, kind), local: true };
         if (wanted(kind, get().prefs)) {
           void NotificationService.sendNative(notification).catch((error) => {
             console.warn("Could not schedule native notification:", error);
