@@ -998,6 +998,26 @@ export const SupabaseService = {
     if (error) throw error;
   },
 
+  /**
+   * Drop a connection: decline a request, take back one you sent, or remove
+   * someone from your friends. All three are the same row going away.
+   *
+   * There was no way to do any of them. Add and Confirm were the only two
+   * actions the app offered, so a request from somebody a driver did not want
+   * sat in their list permanently, a request sent by mistake read "Requested"
+   * forever, and a friend could never be removed. The only escape was Block,
+   * which the app itself describes as never seeing that person's posts,
+   * comments or messages again — far too heavy an answer to "no thanks".
+   *
+   * The "connections remove" policy has always allowed this, and it scopes the
+   * delete to rows the caller is actually part of.
+   */
+  async removeConnection(id: string) {
+    assertSupabase();
+    const { error } = await supabase!.from("connections").delete().eq("id", id);
+    if (error) throw error;
+  },
+
   async startDirectThread(otherUserId: string): Promise<string> {
     assertSupabase();
     const { data, error } = await supabase!.rpc("start_direct_thread", { p_other: otherUserId });

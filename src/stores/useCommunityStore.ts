@@ -40,6 +40,8 @@ interface CommunityState {
   loadConnections: (userId: string) => Promise<void>;
   sendConnection: (workerId: string) => Promise<void>;
   acceptConnection: (connectionId: string) => Promise<void>;
+  /** Decline a request, cancel one you sent, or remove a friend. Same row. */
+  removeConnection: (connectionId: string) => Promise<void>;
   toggleChallenge: (id: string) => void;
   toggleGroup: (id: string) => void;
   /** Ids of people this driver has blocked. Their posts, comments and messages
@@ -324,6 +326,19 @@ export const useCommunityStore = create<CommunityState>()(
           set((state) => ({ connections: [...state.connections, connection] }));
         } catch (error) {
           console.warn("Could not send connection request:", error);
+        }
+      },
+      removeConnection: async (connectionId) => {
+        if (!SupabaseService.enabled) return;
+        const previous = get().connections;
+        // Optimistic: the row leaves the list now and comes back if the server
+        // refuses, so declining does not look like a button that did nothing.
+        set((state) => ({ connections: state.connections.filter((c) => c.id !== connectionId) }));
+        try {
+          await SupabaseService.removeConnection(connectionId);
+        } catch (error) {
+          console.warn("Could not remove connection:", error);
+          set({ connections: previous });
         }
       },
       acceptConnection: async (connectionId) => {

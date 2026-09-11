@@ -103,6 +103,7 @@ export function CommunityScreen() {
   const deleteComment = useCommunityStore((state) => state.deleteComment);
   const sendConnection = useCommunityStore((state) => state.sendConnection);
   const acceptConnection = useCommunityStore((state) => state.acceptConnection);
+  const removeConnection = useCommunityStore((state) => state.removeConnection);
 
   // Keep the feed current while it is open.
   //
@@ -473,6 +474,10 @@ export function CommunityScreen() {
                     onOpen={() => setSelectedWorker(worker)}
                     onAdd={() => void sendConnection(worker.id)}
                     onMessage={() => void messageDriver(worker.id)}
+                    onCancel={() => {
+                      const c = connectionFor(connections, user?.id, worker.id).connection;
+                      if (c) void removeConnection(c.id);
+                    }}
                   />
                 ))
               ) : (
@@ -620,6 +625,29 @@ export function CommunityScreen() {
                   </div>
 
                   {post.body ? <p className="tw-body">{post.body}</p> : null}
+                  {/* A post carrying a video rendered as text and nothing else
+                      here, while the same post played in the Reels tab — so a
+                      reel showed up in the timeline as a blank post from
+                      somebody, and there was no way to tell there was a video
+                      in it at all. It plays where it is. */}
+                  {post.videoUrl && !post.imageUrl ? (
+                    <video
+                      className="tw-video"
+                      src={post.videoUrl}
+                      playsInline
+                      muted
+                      loop
+                      controls
+                      preload="metadata"
+                      onError={() => setDeadReels((prev) => (prev.includes(post.id) ? prev : [...prev, post.id]))}
+                      hidden={deadReels.includes(post.id)}
+                    />
+                  ) : null}
+                  {post.videoUrl && !post.imageUrl && deadReels.includes(post.id) ? (
+                    <div className="tw-video-dead">
+                      <Clapperboard size={18} /> <span>{t("fb_reelUnavailable")}</span>
+                    </div>
+                  ) : null}
                   {post.imageUrl ? (
                     <img
                       className="tw-image"
@@ -807,9 +835,32 @@ export function CommunityScreen() {
                   {isTrending(reel, posts) ? (
                     <span className="fb-reel-trending">{t("fb_trending")}</span>
                   ) : null}
+                  {/* The tile showed a like count and offered no way to like,
+                      and no way to save either — so the only route to either
+                      action was to find the same post back in the timeline,
+                      where it did not announce itself as a video. A number you
+                      cannot act on is decoration. */}
                   <div className="fb-reel-overlay">
                     <strong>{reel.author}</strong>
-                    <span className="fb-reel-likes"><Heart size={13} fill="currentColor" /> {reel.likes}</span>
+                    <div className="fb-reel-acts">
+                      <button
+                        className={reel.likedByMe ? "fb-reel-act active" : "fb-reel-act"}
+                        aria-label={t("fb_like")}
+                        aria-pressed={reel.likedByMe}
+                        onClick={() => toggleLike(reel.id)}
+                      >
+                        <Heart size={14} fill={reel.likedByMe ? "currentColor" : "none"} />
+                        {reel.likes ? <span>{reel.likes}</span> : null}
+                      </button>
+                      <button
+                        className={bookmarks.includes(reel.id) ? "fb-reel-act active" : "fb-reel-act"}
+                        aria-label={t("fb_save")}
+                        aria-pressed={bookmarks.includes(reel.id)}
+                        onClick={() => void toggleBookmark(reel.id).catch(() => {})}
+                      >
+                        <Bookmark size={14} fill={bookmarks.includes(reel.id) ? "currentColor" : "none"} />
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -892,6 +943,22 @@ export function CommunityScreen() {
                     >
                       {t("fb_confirm")}
                     </Button>
+                    {/* Confirm was the only answer a driver could give. A
+                        request they did not want stayed in this list forever
+                        unless they blocked the person, and blocking is
+                        described right here in the app as never seeing their
+                        posts, comments or messages again. "No thanks" needed a
+                        button of its own. */}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        const c = connectionFor(connections, user?.id, worker.id).connection;
+                        if (c) void removeConnection(c.id);
+                      }}
+                    >
+                      {t("fb_decline")}
+                    </Button>
                     <Button size="sm" variant="outline" onClick={() => void messageDriver(worker.id)}>
                       {t("fb_message")}
                     </Button>
@@ -925,7 +992,19 @@ export function CommunityScreen() {
                       </div>
                     </button>
                     {state === "pending_out" ? (
-                      <Button size="sm" variant="outline" disabled>{t("fb_requested")}</Button>
+                      /* This was a disabled button reading "Requested", which
+                         meant a request sent by mistake could never be taken
+                         back. Tapping it now cancels. */
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          const c = connectionFor(connections, user?.id, worker.id).connection;
+                          if (c) void removeConnection(c.id);
+                        }}
+                      >
+                        {t("fb_cancelRequest")}
+                      </Button>
                     ) : (
                       <Button size="sm" className="fb-add" onClick={() => void sendConnection(worker.id)}>
                         <UserPlus size={15} /> {t("fb_add")}
@@ -1105,6 +1184,13 @@ export function CommunityScreen() {
           setSelectedWorker(null);
           setReportTarget({ type: "user", id: w.id, userId: w.id, authorName: w.name });
         }}
+        onRemoveFriend={() => {
+          const w = selectedWorker;
+          if (!w) return;
+          const c = connectionFor(connections, user?.id, w.id).connection;
+          setSelectedWorker(null);
+          if (c) void removeConnection(c.id);
+        }}
         onClose={() => setSelectedWorker(null)}
         onConnect={(id) => void sendConnection(id)}
         onAccept={(id) => void acceptConnection(id)}
@@ -1229,6 +1315,7 @@ function PersonRow({
   onOpen,
   onAdd,
   onMessage,
+  onCancel,
 }: {
   worker: Worker;
   state: ConnectionState;
@@ -1236,6 +1323,7 @@ function PersonRow({
   onOpen: () => void;
   onAdd: () => void;
   onMessage: () => void;
+  onCancel: () => void;
 }) {
   const app = getWorkApp(worker.app);
   return (
@@ -1254,8 +1342,10 @@ function PersonRow({
           <MessageCircle size={15} /> {t("fb_message")}
         </Button>
       ) : state === "pending_out" ? (
-        <Button size="sm" variant="outline" disabled>
-          {t("fb_requested")}
+        // Cancellable, for the same reason as the suggestions list: a request
+        // sent to the wrong person was permanent.
+        <Button size="sm" variant="outline" onClick={onCancel}>
+          {t("fb_cancelRequest")}
         </Button>
       ) : state === "pending_in" ? (
         // They have already asked to connect. Offering "Add" back would be
@@ -1283,6 +1373,7 @@ function WorkerProfileModal({
   onMessage,
   onBlock,
   onReport,
+  onRemoveFriend,
 }: {
   worker: Worker | null;
   connectionState: { state: ConnectionState; connection?: { id: string } };
@@ -1293,6 +1384,7 @@ function WorkerProfileModal({
   onMessage: () => void;
   onBlock: () => void;
   onReport: () => void;
+  onRemoveFriend: () => void;
 }) {
   // Above the early return: hooks must run on every render.
   const t = useT();
@@ -1325,6 +1417,15 @@ function WorkerProfileModal({
             rather than only on one of their posts — someone who wants a driver
             gone should not have to find a post of theirs first. */}
         <div className="worker-profile-safety">
+          {/* Unfriending had no control anywhere in the app, so the only way to
+              undo a connection was to block the person outright. It sits here
+              rather than on the friends row because it is destructive and the
+              row is a place people tap quickly. */}
+          {connectionState.state === "connected" ? (
+            <button type="button" className="safety-action" onClick={onRemoveFriend}>
+              <UserPlus size={16} /> {t("fb_removeFriend")}
+            </button>
+          ) : null}
           <button type="button" className="safety-action" onClick={onReport}>
             <Flag size={16} /> {t("mod_reportUser")}
           </button>
