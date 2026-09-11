@@ -37,6 +37,8 @@ interface ChatState {
   toggleReaction: (messageId: string, emoji: string) => Promise<void>;
   deleteMessage: (messageId: string) => Promise<void>;
   createGroup: (title: string, memberIds: string[]) => Promise<void>;
+  /** Add people to a group that already exists. */
+  addMembers: (threadId: string, memberIds: string[]) => Promise<void>;
   openDirectThread: (otherUserId: string) => Promise<void>;
   leaveThread: (threadId: string) => Promise<void>;
 }
@@ -254,6 +256,28 @@ export const useChatStore = create<ChatState>()(
           }));
           useNotificationStore.getState().push(translate("notif_newMessage"), reply.body, "chat");
         }, 1200);
+      },
+      addMembers: async (threadId, memberIds) => {
+        /* The service call for this has existed since groups were built and was
+           only ever used at creation time, so a group could be made with people
+           and then never grow. A driver group that cannot take the new driver is
+           a group you have to delete and rebuild. */
+        if (!memberIds.length) return;
+        const previous = get().threads;
+        set((state) => ({
+          threads: state.threads.map((t) =>
+            t.id === threadId
+              ? { ...t, participantIds: [...new Set([...t.participantIds, ...memberIds])] }
+              : t,
+          ),
+        }));
+        if (!SupabaseService.enabled) return;
+        try {
+          await SupabaseService.addThreadMembers(threadId, memberIds);
+        } catch (error) {
+          console.warn("Could not add members:", error);
+          set({ threads: previous });
+        }
       },
       createGroup: async (title, memberIds) => {
         const user = useAuthStore.getState().user;

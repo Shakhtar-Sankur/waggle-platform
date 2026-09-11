@@ -42,6 +42,35 @@ function presenceLabel(worker: Worker | undefined, t: Translator): string {
   return t("wa_offline");
 }
 
+/**
+ * Dialog semantics for the two bespoke confirms in this screen.
+ *
+ * Both were a plain div over a scrim: no role, no accessible name, and focus
+ * left wherever it was — so a screen reader announced nothing at all when
+ * "delete this message for everyone" appeared, and a keyboard user had to tab
+ * from the top of the document to reach Cancel, with the thread behind still
+ * in the tab order. Everything else in the app goes through <Modal>, which
+ * does this properly; these two predate it.
+ *
+ * Moves focus to the first control, sends Escape to the same place the scrim
+ * click goes, and restores focus to whatever opened it.
+ */
+function useConfirmDialog(open: boolean, onClose: () => void) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    if (!open) return undefined;
+    const previous = document.activeElement as HTMLElement | null;
+    ref.current?.querySelector<HTMLElement>("button")?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      previous?.focus?.();
+    };
+  }, [open, onClose]);
+  return ref;
+}
+
 export function MessagesScreen() {
   useBrandBand("messages");
   const location = useLocation();
@@ -56,6 +85,7 @@ export function MessagesScreen() {
   const toggleReaction = useChatStore((state) => state.toggleReaction);
   const leaveThread = useChatStore((state) => state.leaveThread);
   const createGroup = useChatStore((state) => state.createGroup);
+  const addMembers = useChatStore((state) => state.addMembers);
   const loadCloudChats = useChatStore((state) => state.loadCloudChats);
   const chatsLoaded = useChatStore((state) => state.chatsLoaded);
   const loadCloudCommunity = useCommunityStore((state) => state.loadCloudCommunity);
@@ -73,6 +103,10 @@ export function MessagesScreen() {
   const [jumpTo, setJumpTo] = useState<string | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const closeConfirmDelete = () => setConfirmDelete(null);
+  const closeConfirmLeave = () => setConfirmLeave(false);
+  const deleteDialogRef = useConfirmDialog(confirmDelete !== null, closeConfirmDelete);
+  const leaveDialogRef = useConfirmDialog(confirmLeave, closeConfirmLeave);
   const blockUser = useCommunityStore((state) => state.blockUser);
   const blockedIds = useCommunityStore((state) => state.blocked);
   const [reportTarget, setReportTarget] = useState<ReportTarget | null>(null);
@@ -166,6 +200,8 @@ export function MessagesScreen() {
   // It used to make a thread called "New Driver Group" the instant the button
   // was pressed — a ready-made room with nobody in it.
   const [groupOpen, setGroupOpen] = useState(false);
+  /** Who is ticked in the "add people" list inside an existing group. */
+  const [addPicks, setAddPicks] = useState<string[]>([]);
   const [groupName, setGroupName] = useState("");
   const [groupPicks, setGroupPicks] = useState<string[]>([]);
   const [membersOpen, setMembersOpen] = useState(false);
@@ -1027,7 +1063,14 @@ export function MessagesScreen() {
 
           {confirmDelete ? (
             <div className="wa-confirm-scrim" onClick={() => setConfirmDelete(null)}>
-              <div className="wa-confirm" onClick={(event) => event.stopPropagation()}>
+              <div
+                className="wa-confirm"
+                role="dialog"
+                aria-modal="true"
+                aria-label={t("wa_deleteMessage")}
+                ref={deleteDialogRef}
+                onClick={(event) => event.stopPropagation()}
+              >
                 <strong>{t("wa_deleteMessage")}</strong>
                 <p>{t("wa_deleteMessageSure")}</p>
                 <div className="wa-confirm-actions">
@@ -1066,12 +1109,66 @@ export function MessagesScreen() {
                   );
                 })}
               </ul>
+
+              {/* A group could be created with people and then never grow: the
+                  service call to add them has existed since groups were built
+                  and was only ever used at creation. A driver group that cannot
+                  take the new driver is one you have to delete and rebuild.
+                  Only friends who are not already in it are offered. */}
+              {(() => {
+                const candidates = friends.filter((f) => !openThread.participantIds.includes(f.id));
+                if (!candidates.length) return null;
+                return (
+                  <div className="wa-addmembers">
+                    <h4>{t("wa_addPeople")}</h4>
+                    <ul className="wa-group-friends">
+                      {candidates.map((f) => {
+                        const picked = addPicks.includes(f.id);
+                        return (
+                          <li key={f.id}>
+                            <button
+                              type="button"
+                              className={picked ? "wa-group-friend is-picked" : "wa-group-friend"}
+                              aria-pressed={picked}
+                              onClick={() =>
+                                setAddPicks((prev) =>
+                                  prev.includes(f.id) ? prev.filter((x) => x !== f.id) : [...prev, f.id],
+                                )
+                              }
+                            >
+                              <span className="wa-avatar">{initials(f.name)}</span>
+                              <span className="wa-group-friend-name">{f.name}</span>
+                              <span className="wa-group-check">{picked ? "✓" : ""}</span>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                    <Button
+                      disabled={!addPicks.length}
+                      onClick={async () => {
+                        await addMembers(openThread.id, addPicks);
+                        setAddPicks([]);
+                      }}
+                    >
+                      {addPicks.length ? `${t("wa_addPeople")} (${addPicks.length})` : t("wa_addPeople")}
+                    </Button>
+                  </div>
+                );
+              })()}
             </Modal>
           ) : null}
 
           {confirmLeave && openThread ? (
             <div className="wa-confirm-scrim" onClick={() => setConfirmLeave(false)}>
-              <div className="wa-confirm" onClick={(event) => event.stopPropagation()}>
+              <div
+                className="wa-confirm"
+                role="dialog"
+                aria-modal="true"
+                aria-label={t("wa_leaveGroup")}
+                ref={leaveDialogRef}
+                onClick={(event) => event.stopPropagation()}
+              >
                 <strong>{t("wa_leaveGroup")}</strong>
                 <p>{t("wa_leaveGroupSure", { name: openThread.title })}</p>
                 <div className="wa-confirm-actions">

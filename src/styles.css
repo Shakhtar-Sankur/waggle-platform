@@ -10114,3 +10114,17 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   font-weight: 650;
   color: var(--fb-secondary);
 }
+
+/* Adding people to a group that already exists. Sits under the member list
+   rather than behind another step, because "who is in here" and "add someone"
+   are the same errand. */
+.wa-addmembers { margin-top: 14px; border-top: 1px solid var(--border); padding-top: 12px; }
+.wa-addmembers h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--fb-secondary);
+}
+.wa-addmembers .wa-group-friends { max-height: 190px; overflow-y: auto; }
