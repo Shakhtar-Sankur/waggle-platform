@@ -9,12 +9,20 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
 
+        <!-- windowSoftInputMode is stated rather than inherited. With none the
+             activity takes the system default, which differs by version and by
+             manufacturer, and sign-in is the one screen where getting it wrong
+             is fatal: the form is vertically centred, so a window that
+             mis-measures the keyboard leaves it as a strip at the top with the
+             window's own background filling the rest. Resize, on every
+             version, said out loud. -->
         <activity
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|locale|smallestScreenSize|screenLayout|uiMode|navigation|density"
             android:name=".MainActivity"
             android:label="@string/title_activity_main"
             android:theme="@style/AppTheme.NoActionBarLaunch"
             android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize"
             android:exported="true">
 
             <intent-filter>

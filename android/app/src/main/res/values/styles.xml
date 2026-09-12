@@ -9,44 +9,27 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <!-- Forced light: the app has no dark mode, so never follow system dark. -->
+    <!-- Forced light: the app has no dark mode, so never follow system dark.
+
+         NO edge-to-edge in this bucket, deliberately, and this is the second
+         time that decision has had to be made.
+
+         Drawing under the system bars broke the sign-in screen on Android 7 and
+         8: with the keyboard open the web view was resized to the wrong height,
+         so the form shrank to a strip at the top and the window's own white
+         background filled everything between it and the keyboard. Sign-in is
+         the first screen anyone sees and it was unusable.
+
+         Edge-to-edge is a real improvement and it is verified working on a
+         modern handset, so it lives in values-v27 where it was tested. These
+         older releases keep exactly the layout they had before any of this
+         started — which is the behaviour that was known to work. An app that
+         fills the screen is worth having; an app you cannot sign in to is not,
+         and I cannot test those versions from here. -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
-
-        <!-- Edge to edge, which is the difference between an app and a web page
-             in a box. The window was laid out INSIDE the system bars, so the
-             coloured band stopped short of the top and a white strip sat above
-             the navigation buttons.
-
-             Transparent bars plus drawsSystemBarBackgrounds lets the app paint
-             the full height; viewport-fit=cover in index.html is the other half,
-             and without both the safe-area insets in the stylesheet read 0. -->
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:statusBarColor">@android:color/transparent</item>
-
-        <!-- The band behind the status bar is the brand indigo on every screen
-             that has one, so the clock and icons must be light. windowLightStatusBar
-             false means light content, which reads correctly on indigo.
-             Available since API 23; minSdk here is 24, so it always applies. -->
-        <item name="android:windowLightStatusBar">false</item>
-
-        <!-- NAVIGATION BAR: left at the system default here, deliberately.
-
-             windowLightNavigationBar — the attribute that makes the gesture pill
-             and the back/home buttons DARK so they can be seen against this
-             app's white bottom nav — does not exist before API 27. Setting a
-             transparent navigationBarColor in this bucket made the bar
-             see-through on Android 7 and 8 while its icons stayed white, so the
-             navigation buttons became white-on-white and effectively vanished.
-             Reported from a real handset: fine on a new phone, broken on an old
-             one, which is exactly the shape of an unqualified API-gated attr.
-
-             So these two live in values-v27 together, where they work as a pair,
-             and Android 7 and 8 keep a solid system-coloured bar with visible
-             buttons. A black strip there is the correct look for that era; an
-             invisible back button is not. -->
     </style>
 
 
