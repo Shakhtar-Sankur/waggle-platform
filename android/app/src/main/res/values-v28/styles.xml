@@ -1,15 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-  Android 9 (API 28) and up: display cutouts.
+  Android 9 (API 28) and up. Edge to edge lives here and nowhere else.
 
-  windowLayoutInDisplayCutoutMode arrived in API 28, so it cannot sit in the
-  base bucket — the same mistake that made the navigation buttons invisible on
-  Android 7 and 8. Phones older than this have no notch to reason about, so
-  nothing is lost by leaving it out for them.
+  It was split across values-v27 and values-v28 for a morning, which created a
+  version — Android 8.1 — that got the theme while index.html decided
+  separately whether to send viewport-fit=cover. The two have to agree: the
+  theme makes the window draw under the system bars, cover makes the web view
+  lay out for that, and either one alone is wrong.
 
-  shortEdges lets the coloured band run into the notch area rather than the
-  system letterboxing around it, which is the whole point of drawing edge to
-  edge on a phone that has one.
+  One boundary now, and both sides of the change read it the same way: API 28
+  here, `major >= 9` in the launch script. Android 7 and 8 keep the window they
+  have always had, because that is the configuration their sign-in screen is
+  known to work in and I cannot test those versions.
 -->
 <resources>
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">

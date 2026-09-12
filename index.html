@@ -2,14 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- viewport-fit=cover is what lets the app own the whole screen.
-         Without it Android lays the web view out INSIDE the system bars, so
-         the app sits in a letterbox with a grey strip above and a white one
-         below — which is exactly what a web page looks like and not what an
-         app does. It is also the switch that makes env(safe-area-inset-*)
-         return real numbers; without it they are all 0, so the insets already
-         written into this stylesheet were doing nothing. -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <!-- NOTE the missing viewport-fit=cover. It is added at runtime, and only
+         on Android 9 and up — see the script below.
+
+         cover is what lets the app own the whole screen, and on a modern phone
+         it does exactly that. On Android 7 and 8 it broke sign-in: with the
+         keyboard open the web view was resized to the wrong height, so the
+         centred form became a strip at the top and the window's own white
+         background filled the rest. Shipping it unconditionally was the
+         mistake; it is a native-layout change dressed as a meta tag, so it has
+         to be gated the same way the theme is. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#4F46E5" />
     <meta name="color-scheme" content="light" />
     <meta
@@ -95,6 +98,17 @@
         var m = /Android (\d+)/.exec(navigator.userAgent);
         var major = m ? parseInt(m[1], 10) : 0;
         if (!m || major < 12) boot.classList.add("draw");
+
+        /* Edge-to-edge, gated to match the theme in values-v28.
+           Android 7 and 8 keep the window they always had: the theme has no
+           edge-to-edge for them, and cover here would put the web view into a
+           layout those versions mis-measure the moment a keyboard opens. The
+           two must agree — a cover viewport without the theme, or the theme
+           without cover, are both wrong in their own way. */
+        if (major >= 9) {
+          var vp = document.querySelector('meta[name="viewport"]');
+          vp.setAttribute("content", vp.getAttribute("content") + ", viewport-fit=cover");
+        }
 
         // Hand over once the app has actually painted, not on a timer: a slow
         // handset is exactly the one that must not be shown an empty screen.
