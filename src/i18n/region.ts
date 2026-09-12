@@ -51,6 +51,13 @@ const COUNTRY_CURRENCY: Record<string, string> = {
   HK: "HKD", TW: "TWD", NZ: "NZD", LK: "LKR", NP: "NPR", KH: "KHR", MM: "MMK",
   // Latin America not on the dollar
   CR: "CRC", DO: "DOP", UY: "UYU",
+  /* The nine that COUNTRY_LANG already knew about and this map did not.
+     A country listed there and missing here is the worst combination: the app
+     confidently switches to Spanish for a driver in Asunción and then quotes
+     their per-km rate in US dollars, because this lookup falls through to a
+     USD default. Silent, and wrong in the one number they care about. */
+  BO: "BOB", GT: "GTQ", HN: "HNL", NI: "NIO", PY: "PYG", VE: "VES",
+  DZ: "DZD", BY: "BYN", MD: "MDL",
 };
 
 // Country → app UI language. Falls through to the device UI language, then English.

@@ -75,6 +75,22 @@ export const CURRENCIES: CurrencyOption[] = [
   { code: "CRC", symbol: "₡", label: "Costa Rican Colón", locale: "es-CR" },
   { code: "DOP", symbol: "RD$", label: "Dominican Peso", locale: "es-DO" },
   { code: "UYU", symbol: "$U", label: "Uruguayan Peso", locale: "es-UY" },
+
+  /* The last nine, and the reason they matter more than their number suggests.
+     These countries were already in COUNTRY_LANG — the app knew to speak
+     Spanish to a driver in Bolivia — but had no currency, so countryToCurrency
+     fell through to its USD default and showed them dollars. Worse than a
+     missing translation: a driver reads "$10/km" as a real rate and it is not
+     their money. Every one of them is now mapped in region.ts too. */
+  { code: "BOB", symbol: "Bs", label: "Bolivian Boliviano", locale: "es-BO" },
+  { code: "GTQ", symbol: "Q", label: "Guatemalan Quetzal", locale: "es-GT" },
+  { code: "HNL", symbol: "L", label: "Honduran Lempira", locale: "es-HN" },
+  { code: "NIO", symbol: "C$", label: "Nicaraguan Córdoba", locale: "es-NI" },
+  { code: "PYG", symbol: "₲", label: "Paraguayan Guaraní", locale: "es-PY" },
+  { code: "VES", symbol: "Bs.", label: "Venezuelan Bolívar", locale: "es-VE" },
+  { code: "DZD", symbol: "د.ج", label: "Algerian Dinar", locale: "ar-DZ" },
+  { code: "BYN", symbol: "Br", label: "Belarusian Rouble", locale: "ru-BY" },
+  { code: "MDL", symbol: "L", label: "Moldovan Leu", locale: "ro-MD" },
 ];
 
 let activeCurrency: CurrencyOption = CURRENCIES[0];
