@@ -57,8 +57,12 @@ android {
         // Android 7 and 8 with a see-through bar and white icons over a white
         // nav — invisible back and home buttons. The pair now lives in
         // values-v27 and the cutout mode in values-v28.
-        versionCode 8
-        versionName "1.3.1"
+        // 9: a launch animation for the phones Android never gave one to.
+        // The animated splash is API 31+, so 7 through 11 saw a still mark and
+        // then the app. The web view draws the same W on those, and holds the
+        // finished mark on 12+ so nobody watches it drawn twice.
+        versionCode 9
+        versionName "1.3.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
