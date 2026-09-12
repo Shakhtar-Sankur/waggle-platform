@@ -1,20 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Waggle launch background, for Android 11 and older.
+<!-- Waggle launch/splash: the white dance mark on Waggle indigo.
 
-     Just the indigo. No mark.
-
-     Android 12+ never reads this: it uses windowSplashScreenBackground and the
-     animated icon, and draws the W itself. Older releases have no animated
-     splash at all, so the W is drawn by the web view instead — and this drawable
-     is what sits on screen for the moment before that starts.
-
-     It used to carry the still mark, which produced two launches in a row on a
-     phone: the icon appeared, then the web view drew the same icon again. The
-     mark is gone from here so the sequence is one movement — indigo, the W
-     drawing itself, the app — rather than a logo followed by a logo.
-
-     The colour is the same indigo the web launch screen paints, so the handover
-     between them is invisible. -->
+     The STILL fallback. Android 12+ uses the animated icon named in
+     values/styles.xml; this is what older releases and any non-SplashScreen
+     path draw, so it points at the plain vector rather than the AVD. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item android:drawable="@color/ic_launcher_background" />
+    <item
+        android:width="220dp"
+        android:height="220dp"
+        android:drawable="@drawable/ic_launcher_waggle"
+        android:gravity="center" />
 </layer-list>

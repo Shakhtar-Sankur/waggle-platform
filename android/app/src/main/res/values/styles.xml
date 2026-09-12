@@ -9,23 +9,7 @@
         <item name="colorAccent">@color/colorAccent</item>
     </style>
 
-    <!-- Forced light: the app has no dark mode, so never follow system dark.
-
-         NO edge-to-edge in this bucket, deliberately, and this is the second
-         time that decision has had to be made.
-
-         Drawing under the system bars broke the sign-in screen on Android 7 and
-         8: with the keyboard open the web view was resized to the wrong height,
-         so the form shrank to a strip at the top and the window's own white
-         background filled everything between it and the keyboard. Sign-in is
-         the first screen anyone sees and it was unusable.
-
-         Edge-to-edge is a real improvement and it is verified working on a
-         modern handset, so it lives in values-v27 where it was tested. These
-         older releases keep exactly the layout they had before any of this
-         started — which is the behaviour that was known to work. An app that
-         fills the screen is worth having; an app you cannot sign in to is not,
-         and I cannot test those versions from here. -->
+    <!-- Forced light: the app has no dark mode, so never follow system dark. -->
     <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>

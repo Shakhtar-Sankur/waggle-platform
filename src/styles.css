@@ -244,13 +244,6 @@ select:focus {
   background: transparent;
   border-bottom: 1px solid transparent;
   box-shadow: none;
-  /* The window now runs under the status bar, so the header carries the
-     clearance instead of the system doing it. The band measures THIS element's
-     height to know how far to pull up, so growing the header by the inset moves
-     the colour up behind the clock automatically — which is the behaviour the
-     band rule was written to expect and never got, because viewport-fit was
-     missing and every inset read 0. */
-  padding-top: env(safe-area-inset-top, 0px);
   transition: background-color 160ms ease, border-color 160ms ease,
     box-shadow 160ms ease;
 }
@@ -359,11 +352,7 @@ select:focus {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   align-items: center;
-  /* The bar's own background now runs to the bottom of the screen, under the
-     gesture pill or the three buttons; this keeps the labels off them. It was
-     a flat 10px, which is what left a white strip between the nav and the
-     system buttons instead of one continuous surface. */
-  padding: 8px 8px calc(10px + env(safe-area-inset-bottom, 0px));
+  padding: 8px 8px 10px;
 }
 
 .nav-item {
