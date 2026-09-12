@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Android 8.1 (API 27) and up.
+
+  windowLightNavigationBar arrived in API 27. It is what turns the gesture pill
+  and the navigation buttons DARK, which is the only thing that makes them
+  visible against this app's white bottom nav.
+
+  It is paired here with the transparent navigation bar on purpose. The two
+  belong together: transparent without it is what made the buttons white on
+  white for anyone on Android 7 or 8, so the base values/ bucket keeps the
+  system's own opaque bar and neither attribute appears there.
+-->
+<resources>
+    <style name="AppTheme.NoActionBar" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:background">@null</item>
+
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- The pair. Neither is safe without the other. -->
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowLightNavigationBar">true</item>
+    </style>
+</resources>

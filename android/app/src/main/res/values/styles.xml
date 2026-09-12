@@ -25,19 +25,28 @@
              and without both the safe-area insets in the stylesheet read 0. -->
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:statusBarColor">@android:color/transparent</item>
-        <item name="android:navigationBarColor">@android:color/transparent</item>
 
         <!-- The band behind the status bar is the brand indigo on every screen
              that has one, so the clock and icons must be light. windowLightStatusBar
-             false means light content, which reads correctly on indigo. -->
+             false means light content, which reads correctly on indigo.
+             Available since API 23; minSdk here is 24, so it always applies. -->
         <item name="android:windowLightStatusBar">false</item>
 
-        <!-- The bottom nav is white, so the gesture pill has to be dark to be
-             visible against it. Opposite of the status bar, deliberately. -->
-        <item name="android:windowLightNavigationBar">true</item>
+        <!-- NAVIGATION BAR: left at the system default here, deliberately.
 
-        <!-- Use the notch area rather than letterboxing around it. -->
-        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
+             windowLightNavigationBar — the attribute that makes the gesture pill
+             and the back/home buttons DARK so they can be seen against this
+             app's white bottom nav — does not exist before API 27. Setting a
+             transparent navigationBarColor in this bucket made the bar
+             see-through on Android 7 and 8 while its icons stayed white, so the
+             navigation buttons became white-on-white and effectively vanished.
+             Reported from a real handset: fine on a new phone, broken on an old
+             one, which is exactly the shape of an unqualified API-gated attr.
+
+             So these two live in values-v27 together, where they work as a pair,
+             and Android 7 and 8 keep a solid system-coloured bar with visible
+             buttons. A black strip there is the correct look for that era; an
+             invisible back button is not. -->
     </style>
 
 

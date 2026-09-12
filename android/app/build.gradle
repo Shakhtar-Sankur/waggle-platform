@@ -51,8 +51,14 @@ android {
         // nav — reported from a real handset, and invisible in any browser.
         // Also restores the options menu in a chat whose counterpart cannot be
         // resolved, where favourite, block and report were all unreachable.
-        versionCode 7
-        versionName "1.3"
+        // 8: the edge-to-edge work in 7 was correct on a new phone and broke an
+        // old one. windowLightNavigationBar is API 27+; setting a transparent
+        // navigation bar alongside it in the DEFAULT resource bucket left
+        // Android 7 and 8 with a see-through bar and white icons over a white
+        // nav — invisible back and home buttons. The pair now lives in
+        // values-v27 and the cutout mode in values-v28.
+        versionCode 8
+        versionName "1.3.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
