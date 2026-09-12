@@ -14,6 +14,30 @@
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
         <item name="android:background">@null</item>
+
+        <!-- Edge to edge, which is the difference between an app and a web page
+             in a box. The window was laid out INSIDE the system bars, so the
+             coloured band stopped short of the top and a white strip sat above
+             the navigation buttons.
+
+             Transparent bars plus drawsSystemBarBackgrounds lets the app paint
+             the full height; viewport-fit=cover in index.html is the other half,
+             and without both the safe-area insets in the stylesheet read 0. -->
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+
+        <!-- The band behind the status bar is the brand indigo on every screen
+             that has one, so the clock and icons must be light. windowLightStatusBar
+             false means light content, which reads correctly on indigo. -->
+        <item name="android:windowLightStatusBar">false</item>
+
+        <!-- The bottom nav is white, so the gesture pill has to be dark to be
+             visible against it. Opposite of the status bar, deliberately. -->
+        <item name="android:windowLightNavigationBar">true</item>
+
+        <!-- Use the notch area rather than letterboxing around it. -->
+        <item name="android:windowLayoutInDisplayCutoutMode">shortEdges</item>
     </style>
 
 

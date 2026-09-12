@@ -754,22 +754,27 @@ export function MessagesScreen() {
                 );
               })()}
             </div>
-            {/* Shown for a group (members, leave) and now for a direct chat
-                too (report, block). Somebody being harassed in a DM should not
-                have to go and find the sender in Community to stop it. */}
-            {openThread.isGroup || openOther ? (
-              <button
-                type="button"
-                className="wa-back"
-                aria-label={t("a11y_options")}
-                aria-expanded={menuOpen}
-                onClick={() => setMenuOpen((open) => !open)}
-              >
-                <MoreVertical size={20} />
-              </button>
-            ) : (
-              <span className="wa-header-spacer" />
-            )}
+            {/* Always shown. This was gated on `openThread.isGroup || openOther`,
+                which hid the ENTIRE menu whenever the other participant could
+                not be resolved — a thread whose participantIds never loaded, or
+                one whose title does not match a known worker. The items inside
+                are already conditional on their own terms, so gating the trigger
+                as well took favourite and shared media away with the person:
+                neither has anything to do with identifying who you are talking
+                to, and favouriting is a fact about the THREAD.
+
+                Reported from a real handset: a chat with no resolvable
+                counterpart showed no options at all, so there was no way to
+                favourite it and no way to reach block or report from it. */}
+            <button
+              type="button"
+              className="wa-back"
+              aria-label={t("a11y_options")}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen((open) => !open)}
+            >
+              <MoreVertical size={20} />
+            </button>
           </header>
 
           {/* Group actions. One entry, because one action exists — leaving.
