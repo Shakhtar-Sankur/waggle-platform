@@ -17,14 +17,17 @@ this app and then became a product of its own.
 
 ## Where it stands
 
-- **43 languages**, right-to-left included; **61 currencies** across **83 countries** and
+- **43 languages**, right-to-left included; **70 currencies** across **92 countries** and
   **33 gig platforms**, selected from where the rider actually is.
-- **Version 1.0 (build 2)**, signed release, uploaded to Google Play internal testing.
-  Not yet publicly on Google Play.
-- Verified by a six-user concurrent simulation against the live backend: **400 API calls, no
-  failures**, 13/13 adapter methods covered, every test account deleted afterwards.
-- The run before that one found **five real defects** in this app after it had already passed a
-  full manual test — including one that stopped account creation entirely.
+- **Version 1.4 (build 12)**, signed release, in closed testing. Not yet on Google Play, so the
+  APK above is the way to install it.
+- Populace's first run against this app, while it was still pre-launch, found **five defects in
+  three and a half minutes** after a full manual test had passed. Three were in the app, including
+  one that stopped account creation entirely; two were in Populace's own adapter. A fourth app
+  defect turned up in a later run.
+- The largest hosted run since put **36 simulated riders through 7,485 API calls with no
+  failures**, across twelve of the thirteen contract methods, with every test account deleted
+  afterwards. That checks correctness, not load.
 
 The paths that still need real handsets — push notification delivery, and one rider watching
 another move on the map — are written up in [`TWO_USER_TEST.md`](TWO_USER_TEST.md) and have not
@@ -162,7 +165,7 @@ able to `SELECT` the thread they just inserted, and members have to be able to `
 ## Status
 
 Feature-complete, signed for release, and verified end to end against a live backend with two real
-accounts. The signed AAB is uploaded to Google Play internal testing; not yet published publicly.
+accounts. Version 1.4 is in closed testing; it is not yet published on Google Play.
 
 Two things have not been exercised on real hardware and are written up as untested rather than
 claimed: push notification delivery, and one rider watching another move on the map.
