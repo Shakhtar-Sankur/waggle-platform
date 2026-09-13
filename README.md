@@ -10,8 +10,8 @@ across all of them.
 Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populace), which was written for
 this app and then became a product of its own.
 
-**Website:** https://shakhtar-sankur.github.io/waggle/ &nbsp;·&nbsp;
-**Download:** [Waggle-1.0.apk](https://shakhtar-sankur.github.io/waggle/Waggle-1.0.apk)
+**Website:** https://shakhtar-sankur.github.io/gigzen/waggle.html &nbsp;·&nbsp;
+**Download:** [Waggle-1.4.apk](https://shakhtar-sankur.github.io/gigzen/Waggle-1.4.apk)
 (8.2 MB, Android 7.0+) &nbsp;·&nbsp;
 **Test report:** [gigzen.github.io/test-report](https://shakhtar-sankur.github.io/gigzen/test-report.html)
 
