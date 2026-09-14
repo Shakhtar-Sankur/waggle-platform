@@ -528,7 +528,19 @@ export function RoutesScreen() {
       // appended to as the driver moves. Any other day has to be read back from
       // route_points, which the app has written to since the beginning and never
       // once read.
-      const points = isToday ? route : await SupabaseService.routePointsForDay(pathDay);
+      //
+      // But the phone's copy of today can be empty while the server's is not: a
+      // reinstall, signing out and back in, or a morning driven on another phone.
+      // Home already loads the day's distance back from the server, so it read
+      // "3.47 km today" while this map said "No route recorded on this day". When
+      // the store has nothing to draw, read today from the server like any other
+      // day. Only then — once tracking has points, the store is the live source,
+      // and fetching on every fix would hit the database every few seconds.
+      const points = isToday
+        ? route.length >= 2
+          ? route
+          : await SupabaseService.routePointsForDay(pathDay).catch(() => route)
+        : await SupabaseService.routePointsForDay(pathDay);
       if (cancelled) return;
 
       setDayPoints(points);
