@@ -1171,7 +1171,10 @@ export function RoutesScreen() {
               <VectorBasemap />
             )}
             <MapFollow lat={currentLocation.lat} lng={currentLocation.lng} follow={isTracking && !followPaused} />
-            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={meIcon} />
+            {/* Not interactive: Leaflet makes every marker a focusable role="button"
+                by default, and this one has nothing to do when tapped — a button
+                that does nothing reads as broken. Same for the stop markers. */}
+            <Marker position={[currentLocation.lat, currentLocation.lng]} icon={meIcon} interactive={false} keyboard={false} />
             {/* Your path belongs to "Me". In Friends mode it would just be
                 clutter under other people's pins. Dashed while it is a raw
                 trace, solid once it is sitting on real roads — so the map says
@@ -1218,6 +1221,8 @@ export function RoutesScreen() {
                 {stops.map((stop, i) => (
                   <Marker
                     key={`stop-${i}`}
+                    interactive={false}
+                    keyboard={false}
                     position={[stop.lat, stop.lng]}
                     icon={L.divIcon({
                       className: "stop-marker-wrap",
@@ -1301,6 +1306,14 @@ export function RoutesScreen() {
               <Marker
                 key={worker.id}
                 position={[worker.location.lat, worker.location.lng]}
+                title={worker.name}
+                // Tapping a friend on the map does what tapping them in the list does.
+                eventHandlers={{
+                  click: () => {
+                    setFollowPaused(true);
+                    map?.setView([worker.location.lat, worker.location.lng], 15, { animate: true });
+                  },
+                }}
                 icon={L.divIcon({
                   className: worker.isOnline ? "driver-marker-wrap" : "driver-marker-wrap is-stale",
                   // The name rides above the circle in a small callout. It is

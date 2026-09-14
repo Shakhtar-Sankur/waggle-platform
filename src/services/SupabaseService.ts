@@ -289,7 +289,23 @@ export const SupabaseService = {
   async getSessionUser(): Promise<UserSession | null> {
     if (!supabase) return null;
     const { data } = await supabase.auth.getUser();
-    return data.user ? toUserSession(data.user) : null;
+    if (!data.user) return null;
+    return this.withProfileName(toUserSession(data.user));
+  },
+
+  /**
+   * The driver's name as the profile holds it.
+   *
+   * toUserSession reads the name typed at sign-up, from the auth metadata. Edit
+   * Profile writes profiles.full_name — which is what every OTHER driver sees —
+   * so after a rename the driver's own greeting and Edit Profile kept showing
+   * the old name on every sign-in and every new phone. The profile row wins.
+   */
+  async withProfileName(session: UserSession): Promise<UserSession> {
+    if (!supabase) return session;
+    const { data } = await supabase.from("profiles").select("full_name").eq("id", session.id).maybeSingle();
+    const name = (data?.full_name ?? "").trim();
+    return name ? { ...session, fullName: name } : session;
   },
 
   async signIn(phone: string, password: string): Promise<UserSession> {
@@ -303,7 +319,7 @@ export const SupabaseService = {
     if (error) throw describeNetworkFailure(error) ?? error;
     if (!data.user) throw new Error("No user returned from Supabase.");
     await this.ensureProfile(data.user, phone);
-    return toUserSession(data.user, phone);
+    return this.withProfileName(toUserSession(data.user, phone));
   },
 
   async signUp(phone: string, password: string, fullName: string): Promise<UserSession> {
@@ -383,6 +399,11 @@ export const SupabaseService = {
       })
       .eq("id", user.id);
     if (error) throw error;
+    // Keep the sign-up metadata in step too, so nothing that still reads it
+    // (an old app build, a support query) shows the previous name.
+    if (updates.fullName) {
+      await supabase.auth.updateUser({ data: { full_name: updates.fullName } }).catch(() => undefined);
+    }
   },
 
   /**
@@ -2165,6 +2186,19 @@ export const SupabaseService = {
       read: notification.read,
       createdAt: new Date(notification.created_at).getTime(),
     }));
+  },
+
+  /** Persist "mark all read". Without this the flag lived only in the phone's
+   *  store, and the 20-second cloud sync brought every notification back as
+   *  unread — the bell dot returned within a minute of clearing it. */
+  async markAllNotificationsRead(userId: string) {
+    if (!supabase) return;
+    const { error } = await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", userId)
+      .eq("read", false);
+    if (error) throw error;
   },
 
   async saveNotification(userId: string, notification: AppNotification) {

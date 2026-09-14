@@ -127,10 +127,19 @@ export const useNotificationStore = create<NotificationState>()(
           notifications: [notification, ...state.notifications].slice(0, 20),
         }));
       },
-      markAllRead: () =>
+      /* Optimistic on the phone, then written to the server — the cloud copy is
+         what the next sync reloads, so a local-only flag was undone every 20s. */
+      markAllRead: () => {
         set((state) => ({
           notifications: state.notifications.map((notification) => ({ ...notification, read: true })),
-        })),
+        }));
+        const user = useAuthStore.getState().user;
+        if (user && SupabaseService.enabled) {
+          void SupabaseService.markAllNotificationsRead(user.id).catch((error) => {
+            console.warn("Could not mark notifications read on the server:", error);
+          });
+        }
+      },
       remove: (id) =>
         set((state) => ({
           notifications: state.notifications.filter((notification) => notification.id !== id),

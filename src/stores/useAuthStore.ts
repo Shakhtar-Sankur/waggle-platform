@@ -66,7 +66,21 @@ export const useAuthStore = create<AuthState>()(
           authListenerRegistered = true;
           SupabaseService.onSignedOut(() => set({ user: null }));
         }
-        if (get().user) return;
+        const saved = get().user;
+        if (saved) {
+          /* Already signed in on this phone: open instantly from the saved user,
+             then pick up a name changed elsewhere (another phone, or before the
+             fix that made the profile row the source of the name). */
+          void SupabaseService.getSessionUser()
+            .then((cloudUser) => {
+              const current = get().user;
+              if (cloudUser && current && current.id === cloudUser.id && cloudUser.fullName !== current.fullName) {
+                set({ user: { ...current, fullName: cloudUser.fullName } });
+              }
+            })
+            .catch(() => undefined);
+          return;
+        }
         const cloudUser = await SupabaseService.getSessionUser();
         if (cloudUser) set({ user: cloudUser });
       },

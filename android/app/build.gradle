@@ -62,8 +62,12 @@ android {
         // Edge-to-edge is still worth having. It needs a person holding an
         // Android 7 or 8 phone to test each attempt, and guessing from a
         // desktop was the mistake, not the goal.
-        versionCode 12
-        versionName "1.4"
+        // 13: fixes from a screen-by-screen tap test — own name read from the
+        // profile, Mark all read saved to the server, map credit above the sheet,
+        // no dead Close on the consent sheet, tappable friend markers. No window
+        // or layout changes, so 12's behaviour on older handsets is untouched.
+        versionCode 13
+        versionName "1.4.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

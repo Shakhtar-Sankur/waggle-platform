@@ -10567,3 +10567,13 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
   opacity: .62;
   margin-inline-start: 2px;
 }
+
+/* ── Map credit above the record/friends sheet ─────────────────────────
+   The earlier lift cleared the bottom nav, but on the Routes screen the sheet
+   sits on top of that and covered the whole credit line (measured: the line at
+   y645-660, the sheet's top at ~y500). OpenFreeMap, OpenMapTiles and
+   OpenStreetMap require visible attribution, so it rides above the sheet,
+   using the height the screen already publishes as --sv-sheet-h. */
+.strava-screen .leaflet-control-attribution {
+  margin-bottom: calc(var(--nav-h, 74px) + var(--sv-sheet-h, 236px) + 6px) !important;
+}

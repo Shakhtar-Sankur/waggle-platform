@@ -10,7 +10,10 @@ interface ModalProps {
   title: string;
   description?: string;
   children: ReactNode;
-  onClose: () => void;
+  /* Omit for a modal that must be answered, not dismissed (the consent gate).
+     It then shows no Close button — a button that does nothing reads as broken —
+     and Escape is ignored. */
+  onClose?: () => void;
 }
 
 export function Modal({ open, title, description, children, onClose }: ModalProps) {
@@ -30,7 +33,7 @@ export function Modal({ open, title, description, children, onClose }: ModalProp
   // Escape cancels rather than confirms, so this is safe on the destructive
   // ones too — it is the same as tapping Close.
   useEffect(() => {
-    if (!open) return;
+    if (!open || !onClose) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -51,9 +54,11 @@ export function Modal({ open, title, description, children, onClose }: ModalProp
             <h2>{title}</h2>
             {description ? <p>{description}</p> : null}
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("a11y_close")}>
-            <X size={18} />
-          </Button>
+          {onClose ? (
+            <Button variant="ghost" size="icon" onClick={onClose} aria-label={t("a11y_close")}>
+              <X size={18} />
+            </Button>
+          ) : null}
         </div>
         {children}
       </section>

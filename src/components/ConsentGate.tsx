@@ -27,7 +27,6 @@ export function ConsentGate() {
   return (
     <Modal
       open
-      onClose={() => undefined}
       title={t("consent_title")}
       description={t("consent_intro")}
     >
@@ -39,7 +38,7 @@ export function ConsentGate() {
             <p>{t("consent_locationBody")}</p>
           </div>
           <label className="toggle-row">
-            <input type="checkbox" checked={locationAck} onChange={(e) => setLocationAck(e.target.checked)} />
+            <input type="checkbox" aria-label={t("consent_locationTitle")} checked={locationAck} onChange={(e) => setLocationAck(e.target.checked)} />
           </label>
         </article>
 
@@ -60,7 +59,7 @@ export function ConsentGate() {
             </p>
           </div>
           <label className="toggle-row">
-            <input type="checkbox" checked={privacyAck} onChange={(e) => setPrivacyAck(e.target.checked)} />
+            <input type="checkbox" aria-label={t("consent_privacyTitle")} checked={privacyAck} onChange={(e) => setPrivacyAck(e.target.checked)} />
           </label>
         </article>
 
