@@ -11,7 +11,7 @@ Built at Gigzen. Tested by [Populace](https://github.com/Shakhtar-Sankur/populac
 this app and then became a product of its own.
 
 **Website:** https://shakhtar-sankur.github.io/gigzen/waggle.html &nbsp;·&nbsp;
-**Download:** [Waggle-1.4.apk](https://shakhtar-sankur.github.io/gigzen/Waggle-1.4.apk)
+**Download:** [Waggle-1.4.1.apk](https://shakhtar-sankur.github.io/gigzen/Waggle-1.4.1.apk)
 (8.2 MB, Android 7.0+) &nbsp;·&nbsp;
 **Test report:** [gigzen.github.io/test-report](https://shakhtar-sankur.github.io/gigzen/test-report.html)
 
@@ -19,7 +19,7 @@ this app and then became a product of its own.
 
 - **43 languages**, right-to-left included; **70 currencies** across **92 countries** and
   **33 gig platforms**, selected from where the rider actually is.
-- **Version 1.4 (build 12)**, signed release, in closed testing. Not yet on Google Play, so the
+- **Version 1.4.1 (build 13)**, signed release, in closed testing. Not yet on Google Play, so the
   APK above is the way to install it.
 - Populace's first run against this app, while it was still pre-launch, found **five defects in
   three and a half minutes** after a full manual test had passed. Three were in the app, including
