@@ -72,8 +72,17 @@ export const useChatStore = create<ChatState>()(
           const IN_FLIGHT_MS = 60_000;
           const serverIds = new Set(fromServer.map((m) => m.id));
           const now = Date.now();
+          /* Only YOUR messages can be in flight. Someone else's message reaches
+             this phone only by being on the server, so if the server no longer
+             returns it, it was deleted. Applying the grace period to everyone's
+             messages kept a message the sender had just deleted ("removes it for
+             everyone") on the other person's open chat for up to a minute —
+             measured: still visible 20 s after the sender's delete. */
           const stillInFlight = get().messages.filter(
-            (m) => !serverIds.has(m.id) && now - m.createdAt < IN_FLIGHT_MS,
+            (m) =>
+              !serverIds.has(m.id) &&
+              (m.senderId === userId || m.senderId === "me") &&
+              now - m.createdAt < IN_FLIGHT_MS,
           );
           const messages = [...fromServer, ...stillInFlight].sort(
             (a, b) => a.createdAt - b.createdAt,
