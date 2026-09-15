@@ -153,6 +153,35 @@ const COARSE_RUN_BEFORE_WARNING = 20;
 let coarseRun = 0;
 let coarseWarned = false;
 
+/**
+ * Every fix that passed the accuracy and plausibility checks in the last few
+ * minutes — including the ones too small to count as movement.
+ *
+ * Two checks below need recent raw history rather than the last COUNTED point.
+ * Measured on an 18.8 km Mumbai route replayed through this store:
+ *
+ *  - Plausibility was judged against the last counted point, which can be many
+ *    seconds old because the movement gate rejects most fixes at city speeds. A
+ *    300 m multipath jump claiming 15 m accuracy then looked like 180 km/h over
+ *    six seconds instead of 540 km/h over two, and passed — twice, out and back.
+ *    +5.4% on the trip.
+ *  - A parked phone that reports no speed drifted past the movement gate often
+ *    enough to book 0.5 km in twenty minutes (₹16 an hour at ₹10/km).
+ */
+let recentFixes: LocationPoint[] = [];
+const RECENT_WINDOW_MS = 3 * 60 * 1000;
+
+/** How far back to look for the "has the driver actually gone anywhere" test. */
+const PROGRESS_WINDOW_MS = 60 * 1000;
+
+/**
+ * Below this net speed across the last minute, the fixes are wandering, not
+ * travelling. 2 km/h is under a slow walk; a rider crawling in a jam at 3-4 km/h
+ * still clears it, while GPS drift around a parked phone nets close to zero
+ * however much it zigzags.
+ */
+const MIN_PROGRESS_KMH = 2;
+
 export const useLocationStore = create<LocationState>()(
   persist(
     (set, get) => ({
@@ -222,6 +251,7 @@ export const useLocationStore = create<LocationState>()(
           // last time — a car park, a tunnel — is not necessarily true now.
           coarseRun = 0;
           coarseWarned = false;
+          recentFixes = [];
           set({
             currentLocation: point,
             route: [point],
@@ -274,6 +304,22 @@ export const useLocationStore = create<LocationState>()(
         }
         coarseRun = 0;
 
+        /* Plausibility against the previous RAW fix, seconds ago — not against the
+           last counted point, which may be much older. A jump that is impossible
+           over two seconds is a bad fix even if it would be possible over six. A
+           long silence is left to the session-gap rule further down. */
+        const prevRaw = recentFixes[recentFixes.length - 1];
+        if (prevRaw) {
+          const gapMs = point.timestamp - prevRaw.timestamp;
+          if (gapMs >= 0 && gapMs < SESSION_GAP_MS) {
+            const hours = Math.max(1, gapMs / 1000) / 3600;
+            if (LocationService.betweenKm(prevRaw, point) / hours > MAX_PLAUSIBLE_KMH) return;
+          }
+        }
+        recentFixes.push(point);
+        while (recentFixes.length && point.timestamp - recentFixes[0].timestamp > RECENT_WINDOW_MS) recentFixes.shift();
+        if (recentFixes.length > 400) recentFixes = recentFixes.slice(-400);
+
         const last = state.route[state.route.length - 1];
         let movedKm = 0;
         if (last) {
@@ -288,6 +334,25 @@ export const useLocationStore = create<LocationState>()(
              positions can disagree by more than the gate through nothing but
              noise; a speed reading cannot drift a driver into motion. */
           if (typeof point.speed === "number" && point.speed >= 0 && point.speed < STATIONARY_MS) return;
+          /* No speed reading to trust: ask whether the driver has actually got
+             anywhere over the last minute. Drift clears the step gate now and
+             then, but it wanders around one spot, so its net progress is tiny. */
+          const hasSpeed = typeof point.speed === "number" && point.speed >= 0;
+          if (!hasSpeed) {
+            let ref: LocationPoint | undefined;
+            for (let i = recentFixes.length - 1; i >= 0; i--) {
+              if (point.timestamp - recentFixes[i].timestamp >= PROGRESS_WINDOW_MS) { ref = recentFixes[i]; break; }
+            }
+            if (ref) {
+              const hours = (point.timestamp - ref.timestamp) / 3_600_000;
+              const netKm = LocationService.betweenKm(ref, point);
+              /* And the minute's progress must also beat three times what the
+                 fixes admit they could be wrong by. Drift wanders inside that
+                 circle; a 3.5 km/h crawl covers ~58 m a minute and clears it. */
+              const uncertaintyKm = (3 * Math.max(ref.accuracy ?? 5, point.accuracy ?? 5)) / 1000;
+              if (netKm / hours < MIN_PROGRESS_KMH || netKm < uncertaintyKm) return;
+            }
+          }
           // …and reject teleports (a lost then re-acquired fix), which would
           // otherwise credit a driver kilometres they never drove.
           const seconds = Math.max(1, (point.timestamp - last.timestamp) / 1000);
@@ -335,6 +400,7 @@ export const useLocationStore = create<LocationState>()(
         stopWatching?.();
         stopWatching = null;
         trackingStartedAt = null;
+        recentFixes = [];
         set({
           route: [],
           totalDistanceKm: 0,
