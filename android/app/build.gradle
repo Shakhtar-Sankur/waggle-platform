@@ -70,8 +70,10 @@ android {
         // fix (a 300 m multipath jump no longer passes), and parked drift from a
         // phone that reports no speed no longer books distance. Plus a deleted
         // chat message leaving the other person's screen at once.
-        versionCode 14
-        versionName "1.4.2"
+        // 15: Routes map controls in one column that cannot overlap on short
+        // screens, the map credit back above the sheet, a calmer chat wallpaper.
+        versionCode 15
+        versionName "1.4.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
