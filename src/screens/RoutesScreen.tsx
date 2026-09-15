@@ -1411,25 +1411,29 @@ export function RoutesScreen() {
               least-used control here — a driver switches to satellite rarely
               and re-centres constantly — and top-right beside the search is
               where map apps put a layer toggle anyway. */}
-          <button
-            className="sv-chromebtn"
-            aria-label={t(mapChrome ? "sv_hideLabels" : "sv_showLabels")}
-            aria-pressed={!mapChrome}
-            onClick={() => setMapChrome((v) => !v)}
-          >
-            {mapChrome ? <EyeOff size={18} /> : <Eye size={18} />}
-          </button>
-
-          <button
-            className="sv-layerbtn"
-            aria-label={t("a11y_changeMapLayer")}
-            aria-pressed={mapStyle === "satellite"}
-            onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
-          >
-            <Layers size={18} />
-          </button>
-
+          {/* One column, top to bottom: what the map shows (labels, layer), then
+              where it is (locate, zoom). They were three separately positioned
+              pieces — labels top-anchored, layer and rail anchored above the
+              sheet — so on a short screen the sheet pushed the rail up into the
+              other two and they sat on top of each other. As children of one
+              flex column they cannot overlap whatever the height. */}
           <div className="sv-rail" ref={railRef}>
+            <button
+              className="sv-chromebtn"
+              aria-label={t(mapChrome ? "sv_hideLabels" : "sv_showLabels")}
+              aria-pressed={!mapChrome}
+              onClick={() => setMapChrome((v) => !v)}
+            >
+              {mapChrome ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+            <button
+              className="sv-layerbtn"
+              aria-label={t("a11y_changeMapLayer")}
+              aria-pressed={mapStyle === "satellite"}
+              onClick={() => setMapStyle((s) => (s === "standard" ? "satellite" : "standard"))}
+            >
+              <Layers size={18} />
+            </button>
             <button className="sv-rail-btn" aria-label={t("a11y_centerOnMe")} onClick={recenter}>
               <LocateFixed size={19} />
             </button>

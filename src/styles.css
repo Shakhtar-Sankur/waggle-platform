@@ -10575,5 +10575,105 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    OpenStreetMap require visible attribution, so it rides above the sheet,
    using the height the screen already publishes as --sv-sheet-h. */
 .strava-screen .leaflet-control-attribution {
-  margin-bottom: calc(var(--nav-h, 74px) + var(--sv-sheet-h, 236px) + 6px) !important;
+  /* The map already ends at the top of the bottom nav (measured: map bottom
+     513, nav top 506, sheet bottom 503), so adding the nav height as well put
+     the credit 74px too high — into the control column on short screens.
+     Sheet height plus the 10px the sheet floats above the map edge, plus 6. */
+  margin-bottom: calc(var(--sv-sheet-h, 236px) + 16px) !important;
+}
+
+/* ══ Routes map chrome: two columns that cannot collide ═══════════════
+   Reported as "congested" at 435x587, and measured there: the labels toggle
+   was top-anchored at 68px while the layer button and the locate/zoom rail
+   were anchored ABOVE the record sheet. The sheet is ~260px tall, so on a
+   short screen the rail rose to y92-237 — over the search bar, over the
+   labels toggle, beside a date picker it shared pixels with — and the map
+   credit landed on the date at y159. There were ~130px of actual map.
+
+   Now: every control is a child of one flex column on the right, top-anchored
+   under the search bar, so its buttons stack and cannot overlap whatever the
+   height. Everything that is READ (mode, date, status, legend) stays on the
+   left and stops short of that column. Short screens get a compact sheet and
+   lose the zoom buttons — pinch zoom is right there — so the column still ends
+   above the sheet. */
+.sv-content.maps .sv-rail,
+.sv-content.maps.has-route .sv-rail,
+.sv-content.maps:has(.sv-sheet.is-collapsed) .sv-rail {
+  position: absolute;
+  top: 120px;
+  bottom: auto;
+  right: 12px;
+  left: auto;
+  transform: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 510;
+}
+.sv-rail > .sv-chromebtn,
+.sv-rail > .sv-layerbtn {
+  position: static;
+  inset: auto;
+  margin: 0;
+}
+/* With a directions card or results open, the labels and layer buttons were
+   already hidden; take them out of the column too, and drop what remains
+   below the card instead of on it. */
+.sv-content.has-route .sv-rail > .sv-chromebtn,
+.sv-content.has-route .sv-rail > .sv-layerbtn,
+.sv-content.has-results .sv-rail > .sv-chromebtn,
+.sv-content.has-results .sv-rail > .sv-layerbtn { display: none; }
+.sv-content.maps.has-route .sv-rail { top: auto; bottom: 24px; }
+
+/* The left column never runs under the right one. */
+.sv-content.maps .sv-mapnote,
+.sv-content.maps .sv-speedkey {
+  max-width: calc(100% - 24px - 44px - 12px);
+}
+.sv-content.maps .sv-mapnote {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The credit stays bottom-right, just above the sheet: the control column
+   is top-anchored now and ends well above it, and bottom-left is where the
+   status note sits on a short screen. */
+.strava-screen .leaflet-bottom.leaflet-right { max-width: calc(100% - 24px); }
+
+/* Short screens: a compact sheet and no zoom buttons. */
+@media (max-height: 760px) {
+  .sv-content.maps .sv-sheet .sv-stats .sv-stat-icon { display: none; }
+  .sv-content.maps .sv-sheet .sv-stats { gap: 6px; }
+  .sv-content.maps .sv-sheet .sv-stats .sv-stat { padding-top: 6px; padding-bottom: 6px; }
+  .sv-content.maps .sv-sheet .sv-record { min-height: 44px; padding-top: 8px; padding-bottom: 8px; }
+}
+/* Measured: the column of labels + layer + locate + zoom is 245px from
+   y170; the sheet top is H-344 (H-293 compact). Zoom goes below 720px tall. */
+@media (max-height: 719px) {
+  .sv-content.maps .sv-rail .sv-zoom { display: none; }
+}
+/* Below ~630px even three buttons reach the sheet (at 587: ends 318, sheet
+   294). They turn into a row on the same line as the mode and date, which
+   end at x264 on a 435-wide screen — the row starts at 275. */
+@media (max-height: 630px) {
+  .sv-content.maps .sv-rail { flex-direction: row; }
+}
+
+
+/* ══ Chat wallpaper: calmer, and no visible grid ══════════════════════
+   Reported as needing a fix, and the close-up showed why: seven different
+   motifs (bees, pins, hexagons, wifi arcs, dashed arcs, targets, sparkles) at
+   one weight on a 150px tile, so the same bee lined up in rows and columns
+   and the room read as clutter behind the words.
+
+   Four motifs that are the app's own — bee, honeycomb cell, map pin, dashed
+   route — at varied size and angle on a 240px tile, which is too large and
+   too irregular for the eye to find the repeat. Every motif sits clear of the
+   tile edge, so nothing is sliced at a seam. Lighter ink, same ground. */
+.wa-messages {
+  background-color: #f4f5fa;
+  background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22240%22%20height%3D%22240%22%20viewBox%3D%220%200%20240%20240%22%3E%3Cg%20fill%3D%22none%22%20stroke%3D%22%237b80a6%22%20stroke-width%3D%221.5%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%20opacity%3D%22.34%22%3E%3Cg%20transform%3D%22translate(40%2040)%20rotate(-18)%20scale(1)%22%3E%3Cellipse%20rx%3D%226%22%20ry%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M-6%20-3h12M-6%202h12M-5%206.5h10%22%2F%3E%3Cellipse%20cx%3D%22-7.5%22%20cy%3D%22-8%22%20rx%3D%225%22%20ry%3D%223%22%20transform%3D%22rotate(-38%20-7.5%20-8)%22%2F%3E%3Cellipse%20cx%3D%227.5%22%20cy%3D%22-8%22%20rx%3D%225%22%20ry%3D%223%22%20transform%3D%22rotate(38%207.5%20-8)%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(124%2030)%20rotate(0)%20scale(0.85)%22%3E%3Cpath%20d%3D%22M0%20-10l8.66%205v10L0%2010l-8.66-5v-10z%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(200%2052)%20rotate(10)%20scale(0.95)%22%3E%3Cpath%20d%3D%22M-7%200a7%207%200%200%201%2014%200c0%206-7%2013-7%2013s-7-7-7-13z%22%2F%3E%3Ccircle%20r%3D%222.4%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(88%2096)%20rotate(-8)%20scale(1)%22%3E%3Cpath%20d%3D%22M-16%208q8-18%2016-8t16-8%22%20stroke-dasharray%3D%223%205%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(28%20132)%20rotate(0)%20scale(0.6)%22%3E%3Cpath%20d%3D%22M0%20-10l8.66%205v10L0%2010l-8.66-5v-10z%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(176%20124)%20rotate(22)%20scale(0.8)%22%3E%3Cellipse%20rx%3D%226%22%20ry%3D%228.5%22%2F%3E%3Cpath%20d%3D%22M-6%20-3h12M-6%202h12M-5%206.5h10%22%2F%3E%3Cellipse%20cx%3D%22-7.5%22%20cy%3D%22-8%22%20rx%3D%225%22%20ry%3D%223%22%20transform%3D%22rotate(-38%20-7.5%20-8)%22%2F%3E%3Cellipse%20cx%3D%227.5%22%20cy%3D%22-8%22%20rx%3D%225%22%20ry%3D%223%22%20transform%3D%22rotate(38%207.5%20-8)%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(56%20200)%20rotate(-12)%20scale(0.8)%22%3E%3Cpath%20d%3D%22M-7%200a7%207%200%200%201%2014%200c0%206-7%2013-7%2013s-7-7-7-13z%22%2F%3E%3Ccircle%20r%3D%222.4%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(132%20176)%20rotate(0)%20scale(1)%22%3E%3Cpath%20d%3D%22M0%20-10l8.66%205v10L0%2010l-8.66-5v-10z%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(204%20212)%20rotate(14)%20scale(0.85)%22%3E%3Cpath%20d%3D%22M-16%208q8-18%2016-8t16-8%22%20stroke-dasharray%3D%223%205%22%2F%3E%3C%2Fg%3E%3Cg%20transform%3D%22translate(212%20150)%20rotate(0)%20scale(0.5)%22%3E%3Cpath%20d%3D%22M0%20-10l8.66%205v10L0%2010l-8.66-5v-10z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E");
+  background-size: 240px 240px;
+  background-repeat: repeat;
 }
