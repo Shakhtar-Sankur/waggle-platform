@@ -63,8 +63,8 @@ chat with read receipts, voice notes and photos. See connected drivers near you
 and what platform they are working.
 
 Your platform, your region
-33 gig platforms across 83 countries, with the currency and the platform list
-resolved from where you are — 61 currencies supported. 43 languages, including
+33 gig platforms across 92 countries, with the currency and the platform list
+resolved from where you are — 70 currencies supported. 43 languages, including
 right-to-left for Arabic, Urdu and Hebrew.
 
 BUILT SMALL ON PURPOSE
