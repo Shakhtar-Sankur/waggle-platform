@@ -165,7 +165,7 @@ able to `SELECT` the thread they just inserted, and members have to be able to `
 ## Status
 
 Feature-complete, signed for release, and verified end to end against a live backend with two real
-accounts. Version 1.4 is in closed testing; it is not yet published on Google Play.
+accounts. Version 1.4.3 is in closed testing; it is not yet published on Google Play.
 
 Two things have not been exercised on real hardware and are written up as untested rather than
 claimed: push notification delivery, and one rider watching another move on the map.
