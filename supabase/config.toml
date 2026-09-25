@@ -263,7 +263,8 @@ otp_expiry = 3600
 
 [auth.sms]
 # Allow/disallow new user signups via SMS to your project.
-enable_signup = false
+# On locally for Waggle's phone sign-in; only the test numbers below work here.
+enable_signup = true
 # If enabled, users need to confirm their phone number before signing in.
 enable_confirmations = false
 # Template for sending OTP to users
@@ -272,8 +273,10 @@ template = "Your code is {{ .Code }}"
 max_frequency = "5s"
 
 # Use pre-defined map of phone number to OTP for testing.
-# [auth.sms.test_otp]
-# 4152127777 = "123456"
+# Local test numbers: no SMS is sent, the code is fixed.
+[auth.sms.test_otp]
+919000000008 = "123456"
+919000000009 = "654321"
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -294,9 +297,11 @@ max_frequency = "5s"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
+# Enabled with placeholder values so the local stack accepts phone sign-in; only
+# the test numbers above are used, so nothing is ever sent through Twilio.
+enabled = true
+account_sid = "AClocalplaceholder"
+message_service_sid = "MGlocalplaceholder"
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
