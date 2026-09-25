@@ -26,7 +26,8 @@ function passwordMeetsMinimum(pw: string): boolean {
 const STRENGTH_KEYS = ["pw_tooWeak", "pw_weak", "pw_fair", "pw_good", "pw_strong"] as const;
 const STRENGTH_COLORS = ["#ef4444", "#ef4444", "#f59e0b", "#3b9e4f", "#16c784"];
 
-export function AuthScreen() {
+/** `redirectTo`: where each app lands after sign-in (Gig: its jobs; Waggle: back to the customer). */
+export function AuthScreen({ redirectTo = "/home" }: { redirectTo?: string } = {}) {
   const navigate = useNavigate();
   const t = useT();
   const user = useAuthStore((state) => state.user);
@@ -41,7 +42,7 @@ export function AuthScreen() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  if (user) return <Navigate to="/home" replace />;
+  if (user) return <Navigate to={redirectTo} replace />;
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
@@ -61,7 +62,7 @@ export function AuthScreen() {
       } else {
         await signUp(phone, password, fullName);
       }
-      navigate("/home");
+      navigate(redirectTo);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("err_unexpected"));
     } finally {

@@ -204,13 +204,13 @@ anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
 # Raised for load testing: 250 simulated drivers refresh their sessions mid-run,
 # which passes 150 in the first few minutes. The hosted default of 150 is right
-# for real users, all of whom arrive from different addresses — a load test is
+# for real users, all of whom arrive from different addresses â€” a load test is
 # the one case where every request shares one IP.
 token_refresh = 50000
 # Number of sign up and sign-in requests that can be made in a 5 minute interval per IP address (excludes anonymous users).
 # Raised for the same reason. At the hosted default of 30, a 250-driver run signs
 # in 35 people and then every remaining identity fails with "Request rate limit
-# reached" — measured against the test project on 2026-08-24.
+# reached" â€” measured against the test project on 2026-08-24.
 sign_in_sign_ups = 50000
 # Number of OTP / Magic link verifications that can be made in a 5 minute interval per IP address.
 token_verifications = 30
@@ -381,8 +381,8 @@ allow_dynamic_registration = false
 [edge_runtime]
 enabled = true
 # Supported request policies: `oneshot`, `per_worker`.
-# `per_worker` (default) — enables hot reload during local development.
-# `oneshot` — fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
+# `per_worker` (default) â€” enables hot reload during local development.
+# `oneshot` â€” fallback mode if hot reload causes issues (e.g. in large repos or with symlinks).
 policy = "per_worker"
 # Port to attach the Chrome inspector for debugging edge functions.
 inspector_port = 8083

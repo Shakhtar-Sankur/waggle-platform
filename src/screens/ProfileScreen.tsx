@@ -1,4 +1,4 @@
-import { Bell, Bike, Bookmark, CalendarDays, Globe, Pencil, Settings, Shield, ShieldOff, Trash2, Wallet, Wrench, Camera } from "lucide-react";
+import { BadgeCheck, Bell, Bike, Bookmark, Globe, Pencil, Settings, Shield, Trash2, Wrench, Camera } from "lucide-react";
 import { WorkAppMark } from "../components/WorkAppMark";
 import { VehicleIcon } from "../components/VehicleIcon";
 import type { ReactNode } from "react";
@@ -20,30 +20,25 @@ import { useCommunityStore } from "../stores/useCommunityStore";
 import { useLocationStore } from "../stores/useLocationStore";
 import { useNotificationStore } from "../stores/useNotificationStore";
 import { useProfileStore } from "../stores/useProfileStore";
+import { useVerificationStore } from "../stores/useVerificationStore";
 import type { ProfileSettings, VehicleType } from "../types";
 import { CURRENCIES, currency, initials, km } from "../utils/format";
-
-type EarningsTab = "day" | "week" | "month";
 
 export function ProfileScreen() {
   useBrandBand("profile");
   const navigate = useNavigate();
   const t = useT();
   const [searchParams, setSearchParams] = useSearchParams();
-  // For localising weekday names in the 7-day record, below.
-  const lang = useLangStore((state) => state.lang);
   const blocked = useCommunityStore((state) => state.blocked);
-  const workers = useCommunityStore((state) => state.workers);
   const bookmarks = useCommunityStore((state) => state.bookmarks);
   const user = useAuthStore((state) => state.user);
   const updateProfile = useAuthStore((state) => state.updateProfile);
   const signOut = useAuthStore((state) => state.signOut);
   const deleteAccount = useAuthStore((state) => state.deleteAccount);
   const profile = useProfileStore();
-  const setActiveApp = useProfileStore((state) => state.setActiveApp);
+  const verifiedVehicle = useVerificationStore((state) => state.verification?.vehicle);
   const updateSettings = useProfileStore((state) => state.updateSettings);
   const logMaintenance = useProfileStore((state) => state.logMaintenance);
-  const totalDistanceKm = useLocationStore((state) => state.totalDistanceKm);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -81,82 +76,6 @@ export function ProfileScreen() {
       setAvatarBusy(false);
     }
   };
-  const [tab, setTab] = useState<EarningsTab>("week");
-  const [showAllApps, setShowAllApps] = useState(false);
-
-  /* The last seven days of real driving, read back from route_points.
-     `null` means "not loaded yet" and is deliberately distinct from an empty
-     week: a driver who has not driven must see seven empty days, not a
-     spinner that never resolves. */
-  /* Thirty days, because the earnings report's Month tab is measured from this
-     too. The 7-day list below is the tail of the same fetch rather than a
-     second query — one read, two views, and they cannot disagree. */
-  const [history, setHistory] = useState<{ day: string; km: number }[] | null>(null);
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-    SupabaseService.routeHistory(30)
-      .then((rows) => { if (!cancelled) setHistory(rows); })
-      .catch(() => { if (!cancelled) setHistory([]); });
-    return () => { cancelled = true; };
-    // Re-read after a trip ends, so the day's bar is not stale until a reload.
-  }, [user, totalDistanceKm === 0]);
-
-  /* Weekday names must follow the language the driver PICKED, not the one the
-     handset happens to be set to. Passing undefined as the locale reads the
-     browser's language, which left "Sat Sun Mon" sitting in the middle of an
-     otherwise fully Korean screen.
-     Wrapped because a tag Intl does not recognise throws, and a driver should
-     lose the localised weekday, not the whole screen. */
-  const dayFormatter = useMemo(() => {
-    try {
-      return new Intl.DateTimeFormat(lang, { weekday: "short" });
-    } catch {
-      return new Intl.DateTimeFormat(undefined, { weekday: "short" });
-    }
-  }, [lang]);
-
-  const last7 = useMemo(() => (history ?? []).slice(-7), [history]);
-  const weekKm = useMemo(() => last7.reduce((sum, d) => sum + d.km, 0), [last7]);
-  const monthKm = useMemo(
-    () => (history ?? []).reduce((sum, d) => sum + d.km, 0),
-    [history],
-  );
-  const busiestKm = useMemo(
-    () => Math.max(1, ...last7.map((d) => d.km)),   // never divide by 0
-    [last7],
-  );
-
-  /* What the Earnings Report shows for the selected tab.
-     Day stays on the live store so this card and the home screen always agree;
-     week and month come from the record. They used to be today multiplied by 7
-     and 30, which is not a report of anything. */
-  const periodKm = tab === "day" ? totalDistanceKm : tab === "week" ? weekKm : monthKm;
-  const periodLabel =
-    tab === "day" ? t("earnings_today")
-    : tab === "week" ? t("earnings_recorded")
-    : t("earnings_recordedMonth");
-
-  // 30+ platforms would swamp this screen, so show the ones operating in the
-  // driver's country (plus whatever they already picked) and hide the rest
-  // behind a toggle.
-  const country = useMemo(() => resolveCountryForLocation(), []);
-  const orderedApps = useMemo(() => workAppsForCountry(country), [country]);
-  const nearbyCount = useMemo(() => localAppCount(country), [country]);
-  const appChoices = useMemo(() => {
-    if (showAllApps) return orderedApps;
-    const shortlist = orderedApps.slice(0, Math.max(nearbyCount, 5));
-    const selected = orderedApps.find((app) => app.id === profile.activeApp);
-    const others = orderedApps.filter((app) => app.id === "others");
-    const list = [...shortlist];
-    if (selected && !list.includes(selected)) list.push(selected);
-    others.forEach((o) => {
-      if (!list.includes(o)) list.push(o);
-    });
-    return list;
-  }, [showAllApps, orderedApps, nearbyCount, profile.activeApp]);
-  const hiddenAppCount = orderedApps.length - appChoices.length;
-
   useEffect(() => {
     if (searchParams.get("settings") === "true") setSettingsOpen(true);
   }, [searchParams]);
@@ -206,29 +125,7 @@ export function ProfileScreen() {
       </section>
       </section>
 
-      <section>
-        <h3 className="profile-section-title">{t("profile_whichApp")}</h3>
-        <div className="profile-app-grid">
-          {appChoices.map((app) => (
-            <button
-              key={app.id}
-              className={profile.activeApp === app.id ? "selected" : ""}
-              onClick={() => setActiveApp(app.id)}
-            >
-              <WorkAppMark app={app} size={30} />
-              <small>{workAppLabel(app)}</small>
-              {profile.activeApp === app.id ? <em /> : null}
-            </button>
-          ))}
-        </div>
-        {hiddenAppCount > 0 ? (
-          <button className="profile-app-more" onClick={() => setShowAllApps((v) => !v)}>
-            {showAllApps
-              ? t("profile_showFewerApps")
-              : t("profile_showAllApps", { count: String(hiddenAppCount) })}
-          </button>
-        ) : null}
-      </section>
+      <RiderCard />
 
       <button className="settings-row glass-card" onClick={() => setSettingsOpen(true)}>
         <span><Settings size={18} /> {t("profile_settings")}</span>
@@ -240,7 +137,8 @@ export function ProfileScreen() {
           <h3><Wrench size={19} /> {t("profile_maintenance")}</h3>
           <span className={profile.maintenanceKm >= 900 ? "badge-dark" : "pill"}>{profile.maintenanceKm >= 900 ? t("profile_attention") : t("profile_good")}</span>
         </div>
-        <p>{t(`vehicle_${profile.vehicleType}` as "vehicle_car")}</p>
+        {/* The vehicle Gigzen verified, when there is one; the settings choice otherwise. */}
+        <p>{verifiedVehicle ? t(`gg_veh_${verifiedVehicle}` as "gg_veh_bike") : t(`vehicle_${profile.vehicleType}` as "vehicle_car")}</p>
         <small>
           {profile.maintenanceKm >= 1000
             ? t("profile_serviceOverdue")
@@ -259,67 +157,6 @@ export function ProfileScreen() {
           <div dir="ltr"><span>0 km</span><span>500 km</span><span>1000 km</span></div>
         </div>
         <Button variant="outline" onClick={logMaintenance}>{t("profile_logMaintenance")}</Button>
-      </section>
-
-      <section className="dashboard-card glass-card">
-        <div className="section-heading">
-          <h3>{t("profile_earningsReport")}</h3>
-          <div className="mini-tabs">
-            {(["day", "week", "month"] as EarningsTab[]).map((item) => (
-              <button key={item} className={tab === item ? "active" : ""} onClick={() => setTab(item)}>
-                {t(`common_${item}` as "common_day")}
-              </button>
-            ))}
-          </div>
-        </div>
-        <div className="earnings-report">
-          <p>{periodLabel}</p>
-          <strong>{currency(periodKm * profile.baseRate)}</strong>
-          <span>{km(periodKm)}</span>
-          {/* The week and month figures are read back from the server, so say
-              so while they are still arriving rather than flashing a confident
-              0 km that then jumps. */}
-          {tab !== "day" ? (
-            <small className="earnings-note">
-              {history === null ? t("history_loading") : t("earnings_recordedNote")}
-            </small>
-          ) : null}
-        </div>
-      </section>
-
-      {/* A real record, unlike the projection above it: every figure here is
-          measured from the driver's own recorded fixes. */}
-      <section className="dashboard-card glass-card">
-        <div className="section-heading">
-          <h3><CalendarDays size={19} /> {t("history_last7")}</h3>
-          <span className="pill">{km(weekKm)}</span>
-        </div>
-        {history === null ? (
-          <p className="micro-copy">{t("history_loading")}</p>
-        ) : (
-          <div className="week-history">
-            {last7.map((d) => {
-              // Parsed as local parts, not Date(string): "2026-09-04" is parsed
-              // as UTC midnight, which lands on the previous day west of London
-              // and would label every bar with the wrong weekday.
-              const [y, m, day] = d.day.split("-").map(Number);
-              const date = new Date(y, m - 1, day);
-              const isToday = date.toDateString() === new Date().toDateString();
-              return (
-                <div className={`week-history-row${isToday ? " today" : ""}`} key={d.day}>
-                  <span className="week-history-day">
-                    {dayFormatter.format(date)}
-                  </span>
-                  <div className="week-history-track">
-                    <span style={{ width: `${Math.round((d.km / busiestKm) * 100)}%` }} />
-                  </div>
-                  <span className="week-history-km">{km(d.km)}</span>
-                </div>
-              );
-            })}
-          </div>
-        )}
-        <small className="earnings-note">{t("history_note")}</small>
       </section>
 
       {/* One way in to everything the driver has done. This replaced a
@@ -422,31 +259,19 @@ function SettingsModal({
   const autoRegion = useLangStore((state) => state.autoRegion);
   const setAutoRegion = useLangStore((state) => state.setAutoRegion);
   const [vehicleType, setVehicleType] = useState<VehicleType>(profile.vehicleType);
-  const [homeAddress, setHomeAddress] = useState(profile.homeAddress);
-  const [baseRate, setBaseRate] = useState(String(profile.baseRate));
-  const [dailyGoal, setDailyGoal] = useState(String(profile.dailyGoal));
   const [shareStats, setShareStats] = useState(profile.shareStats);
   const [currencyCode, setCurrencyCode] = useState(profile.currencyCode);
 
   useEffect(() => {
     setVehicleType(profile.vehicleType);
-    setHomeAddress(profile.homeAddress);
-    setBaseRate(String(profile.baseRate));
-    setDailyGoal(String(profile.dailyGoal));
     setShareStats(profile.shareStats);
     setCurrencyCode(profile.currencyCode);
-  }, [profile.baseRate, profile.dailyGoal, profile.homeAddress, profile.shareStats, profile.vehicleType, profile.currencyCode, open]);
+  }, [profile.shareStats, profile.vehicleType, profile.currencyCode, open]);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
     onSave({
       vehicleType,
-      homeAddress,
-      baseRate: Number(baseRate) || profile.baseRate,
-      /* A goal of 0 would divide by zero in the progress line, and a negative
-         one is meaningless, so an unusable entry keeps the previous goal rather
-         than being written. Same shape as baseRate above. */
-      dailyGoal: Number(dailyGoal) > 0 ? Number(dailyGoal) : profile.dailyGoal,
       shareStats,
       /* The toggle itself is saved either way — it is the thing that says
          whether region detection is allowed to overwrite the code, so it has to
@@ -522,28 +347,6 @@ function SettingsModal({
             <VehicleButton value="bicycle" selected={vehicleType} onSelect={setVehicleType} icon={<VehicleIcon type="bicycle" size={26} />} label={t("vehicle_bicycle")} />
           </div>
         </label>
-        </section>
-
-        <section className="settings-group">
-          <h4><Wallet size={15} /> {t("settings_grpWork")}</h4>
-          <label>
-            <span>{t("settings_homeAddress")}</span>
-            <input value={homeAddress} onChange={(event) => setHomeAddress(event.target.value)} placeholder={t("settings_homeAddressPh")} />
-          </label>
-          <label>
-            <span>{t("settings_baseRate")}</span>
-            <input value={baseRate} onChange={(event) => setBaseRate(event.target.value)} inputMode="decimal" placeholder={t("settings_baseRatePh")} />
-          </label>
-          <label className="settings-row">
-            {/* home_dailyGoal, not a new key: "Daily Goal" is already
-                translated in all 43 dictionaries (it labelled the goal card
-                that used to sit on the home screen) and was left unused when
-                that card went. Reusing it means this row is translated
-                everywhere on day one, and it matches the wording of the home
-                screen's "% of your ₹1,500 daily goal". */}
-            <span>{t("home_dailyGoal")}</span>
-            <input value={dailyGoal} onChange={(event) => setDailyGoal(event.target.value)} inputMode="decimal" placeholder={t("settings_dailyGoalPh")} />
-          </label>
         </section>
 
         <section className="settings-group">
@@ -687,5 +490,40 @@ function DeleteAccountModal({
         </Button>
       </div>
     </Modal>
+  );
+}
+
+/** Who Gigzen verified: status, vehicle, plate and the UPI ID shops pay into. */
+function RiderCard() {
+  const t = useT();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
+  const verification = useVerificationStore((state) => state.verification);
+  const load = useVerificationStore((state) => state.load);
+  useEffect(() => { if (user) void load(user.id); }, [user, load]);
+  const v = verification;
+  const status = v?.status ?? "none";
+  const masked = (upi: string) => { const [name, bank] = upi.split("@"); return `${name.slice(0, 2)}${"•".repeat(Math.max(2, name.length - 2))}@${bank ?? ""}`; };
+  return (
+    <section className={`dashboard-card glass-card gg-ridercard is-${status}`}>
+      <div className="section-heading">
+        <h3><BadgeCheck size={19} /> {t("gg_riderCard")}</h3>
+        <span className={`gg-vstatus is-${status}`}>{t(`gg_v_${status}` as "gg_v_none")}</span>
+      </div>
+      {v ? (
+        <dl className="gg-facts">
+          <div><dt>{t("gg_legalName")}</dt><dd>{v.legalName}</dd></div>
+          <div><dt>{t("gg_vehicle")}</dt><dd>{t(`gg_veh_${v.vehicle}` as "gg_veh_bike")}{v.vehicleNumber ? ` · ${v.vehicleNumber}` : ""}</dd></div>
+          <div><dt>{t("gg_payInto")}</dt><dd>{masked(v.upiId)}</dd></div>
+        </dl>
+      ) : (
+        <p className="micro-copy">{t("ver_cardBody")}</p>
+      )}
+      {status === "none" || status === "rejected" ? (
+        <Button className="wide-action" onClick={() => navigate("/verify")}>{t(status === "rejected" ? "ver_fix" : "ver_cardButton")}</Button>
+      ) : (
+        <p className="micro-copy">{t("gg_changeDocs")}</p>
+      )}
+    </section>
   );
 }

@@ -134,6 +134,9 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undef
 
 export const isSupabaseConfigured = Boolean(supabaseUrl && supabaseAnonKey);
 
+/** The share_stats flag last written for this rider, so it is sent once per change rather than on every fix. */
+let sharedFlag: boolean | undefined;
+
 export const supabase: SupabaseClient | null = isSupabaseConfigured
   ? createClient(supabaseUrl!, supabaseAnonKey!, {
       auth: {
@@ -202,9 +205,21 @@ function localTimeZone(): string | undefined {
 
 
 /** Columns every worker-shaped query needs. Kept in one place so the community
- *  list and people search cannot drift apart. */
+ *  list and people search cannot drift apart.
+ *
+ *  No coordinates. Since security_fixes.sql a driver's exact position is not
+ *  readable from worker_locations by anyone else; positions come from
+ *  friend_positions(), which returns only your own and your accepted friends'.
+ *  LEGACY_WORKER_SELECT is for a backend that has not run that migration. */
 const WORKER_SELECT =
+  "id, full_name, worker_locations(active_app,today_distance_km,today_earnings,rating,tags,updated_at)";
+const LEGACY_WORKER_SELECT =
   "id, full_name, worker_locations(lat,lng,active_app,today_distance_km,today_earnings,rating,tags,updated_at)";
+
+/** True when PostgREST says the function does not exist on this backend. */
+function isMissingFunction(error: { code?: string; message?: string } | null | undefined) {
+  return error?.code === "PGRST202" || /not find the function|does not exist/i.test(error?.message ?? "");
+}
 
 /**
  * "online" if a heartbeat landed recently.
@@ -272,7 +287,9 @@ function toWorker(profile: any): Worker {
          the recency filters honest rather than handing them a fresh-looking
          reading that will never change. */
       timestamp: locUpdated || 0,
-      fallback: !loc,
+      // No coordinates is the normal case now for anyone who is not a friend:
+      // their stats are shared, their position is not.
+      fallback: !loc || loc.lat == null || loc.lng == null,
     },
     /* No invented default. This was `?? 4.8`, so every driver without a
        worker_locations row — which is every driver who has not tracked yet —
@@ -281,6 +298,39 @@ function toWorker(profile: any): Worker {
     rating: Number(loc?.rating ?? 0),
     tags: loc?.tags ?? [],
   };
+}
+
+/**
+ * Gives a profile row the position friend_positions() returned for it, if any.
+ * With `positions` null (an old backend) the row already carries its own
+ * coordinates and is returned untouched.
+ */
+function withPosition(profile: any, positions: Map<string, { lat: number; lng: number; updated_at: string }> | null) {
+  if (!positions) return profile;
+  const loc = Array.isArray(profile.worker_locations) ? profile.worker_locations[0] : profile.worker_locations;
+  const pos = positions.get(profile.id);
+  if (!loc || !pos) return profile;
+  return { ...profile, worker_locations: { ...loc, lat: pos.lat, lng: pos.lng } };
+}
+
+export interface WorkerVerification {
+  status: "pending" | "verified" | "rejected" | "suspended";
+  reviewNote: string | null;
+  legalName: string;
+  vehicle: string;
+  vehicleNumber: string | null;
+  licenceNumber: string | null;
+  upiId: string;
+  idType: string;
+}
+
+export interface VerificationForm {
+  legalName: string;
+  vehicle: "bicycle" | "bike" | "scooter" | "ev_scooter" | "auto" | "car" | "on_foot";
+  vehicleNumber?: string;
+  licenceNumber?: string;
+  upiId: string;
+  idType: "aadhaar_masked" | "voter_id" | "pan" | "passport" | "driving_licence";
 }
 
 export const SupabaseService = {
@@ -492,29 +542,174 @@ export const SupabaseService = {
       .order("created_at", { ascending: false })
       .limit(50);
     if (error) throw error;
-    return (data ?? []).map((job) => ({
-      id: job.id,
-      title: job.title,
-      pickup: job.pickup,
-      dropoff: job.dropoff,
-      distanceKm: Number(job.distance_km),
-      payout: Number(job.payout),
-      app: job.app,
-      etaMinutes: Number(job.eta_minutes),
-      status: job.status,
-    }));
+    return (data ?? []).map(mapJob);
   },
 
-  async updateJobStatus(id: string, status: Job["status"], userId: string) {
+  /**
+   * Claim a job. Returns null when another driver already has it — the check
+   * lives in the database (see supabase/dispatch.sql), because two phones can
+   * press Accept in the same second and only one of them can be right.
+   */
+  async acceptJob(id: string): Promise<Job | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase.rpc("accept_job", { p_job_id: id });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    return row ? mapJob(row) : null;
+  },
+
+  /**
+   * Open jobs within `radiusKm` of the driver, nearest first.
+   *
+   * Every unassigned job in the table used to come back, so a rider was offered
+   * pick-ups in cities they have never been to. The filter runs in the database
+   * because the driver's phone should not download the country to throw most of
+   * it away.
+   */
+  async loadNearbyJobs(lat: number, lng: number, radiusKm = 12): Promise<Job[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase.rpc("jobs_nearby", { p_lat: lat, p_lng: lng, p_radius_km: radiusKm });
+    if (error) throw error;
+    return (data ?? []).map((row: { job: Record<string, unknown> }) => mapJob(row.job));
+  },
+
+  /** Online / offline for dispatch. Separate from the social map; see supabase/availability.sql. */
+  async setAvailability(userId: string, online: boolean, lat?: number, lng?: number) {
     if (!supabase) return;
-    await supabase
+    const now = new Date().toISOString();
+    const { error } = await supabase.from("worker_availability").upsert({
+      user_id: userId,
+      online,
+      lat: lat ?? null,
+      lng: lng ?? null,
+      online_since: online ? now : null,
+      updated_at: now,
+    });
+    if (error) throw error;
+  },
+
+  /** The jobs this worker holds or has finished, newest first. */
+  async loadMyJobs(userId: string): Promise<Job[]> {
+    if (!supabase) return [];
+    const { data, error } = await supabase
       .from("jobs")
-      .update({
-        status,
-        assigned_to: status === "declined" ? null : userId,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id);
+      .select("*")
+      .eq("assigned_to", userId)
+      .in("status", ["accepted", "picked_up", "completed"])
+      .order("updated_at", { ascending: false })
+      .limit(100);
+    if (error) throw error;
+    return (data ?? []).map(mapJob);
+  },
+
+  /*
+   * Job steps. Each one is a database function that checks the worker holds the
+   * job and, for pickup and delivery, the code: the shop says the pickup code at
+   * the counter, the customer says the delivery code at the door. They answer
+   * "ok", "wrong", "locked" (five wrong tries), "not_yours" or "too_late".
+   */
+  async confirmPickup(id: string, code: string): Promise<string> {
+    if (!supabase) return "offline";
+    const { data, error } = await supabase.rpc("confirm_pickup", { p_job_id: id, p_code: code });
+    if (error) throw error;
+    return String(data);
+  },
+
+  async confirmDelivery(id: string, code: string): Promise<string> {
+    if (!supabase) return "offline";
+    const { data, error } = await supabase.rpc("confirm_delivery", { p_job_id: id, p_code: code });
+    if (error) throw error;
+    return String(data);
+  },
+
+  /** Hand a job back before pickup. After pickup the worker delivers. */
+  /** The shop says it paid this fare, and it never arrived. The shop sees the complaint. */
+  async reportUnpaid(id: string): Promise<string> {
+    if (!supabase) return "offline";
+    const { data, error } = await supabase.rpc("report_rider_unpaid", { p_job: id });
+    if (error) throw error;
+    return String(data);
+  },
+
+  async releaseJob(id: string): Promise<string> {
+    if (!supabase) return "offline";
+    const { data, error } = await supabase.rpc("release_job", { p_job_id: id });
+    if (error) throw error;
+    return String(data);
+  },
+
+  /** The customer's full address: readable only once this worker holds the job. */
+  async loadJobDetails(id: string): Promise<{ address: string; note: string | null; lat: number; lng: number } | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("job_details")
+      .select("dropoff_address, customer_note, dropoff_lat, dropoff_lng")
+      .eq("job_id", id)
+      .maybeSingle();
+    if (error || !data) return null;
+    return { address: data.dropoff_address, note: data.customer_note, lat: Number(data.dropoff_lat), lng: Number(data.dropoff_lng) };
+  },
+
+  // ---------------------------------------------------------------- worker verification
+
+  async myVerification(userId: string): Promise<WorkerVerification | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase
+      .from("worker_verifications")
+      .select("status, review_note, legal_name, vehicle, vehicle_number, licence_number, upi_id, id_type")
+      .eq("user_id", userId)
+      .maybeSingle();
+    if (error || !data) return null;
+    return {
+      status: data.status,
+      reviewNote: data.review_note,
+      legalName: data.legal_name,
+      vehicle: data.vehicle,
+      vehicleNumber: data.vehicle_number,
+      licenceNumber: data.licence_number,
+      upiId: data.upi_id,
+      idType: data.id_type,
+    };
+  },
+
+  /**
+   * Send ID, selfie and details for Gigzen to check. Photos go to the private
+   * worker-docs bucket, in the worker's own folder; only they and Gigzen's
+   * admins can open them.
+   */
+  /**
+   * Riders on a motor vehicle also send their driving licence and the vehicle's
+   * RC; the database refuses a motor vehicle without both photos.
+   */
+  async submitVerification(userId: string, form: VerificationForm, idPhoto: Blob, selfie: Blob, licencePhoto?: Blob, rcPhoto?: Blob) {
+    if (!supabase) throw new Error("Needs a connection to the server.");
+    const stamp = Date.now();
+    const idPath = `${userId}/id-${stamp}.jpg`;
+    const selfiePath = `${userId}/selfie-${stamp}.jpg`;
+    const licencePath = licencePhoto ? `${userId}/licence-${stamp}.jpg` : null;
+    const rcPath = rcPhoto ? `${userId}/rc-${stamp}.jpg` : null;
+    const uploads: [string, Blob][] = [[idPath, idPhoto], [selfiePath, selfie]];
+    if (licencePath && licencePhoto) uploads.push([licencePath, licencePhoto]);
+    if (rcPath && rcPhoto) uploads.push([rcPath, rcPhoto]);
+    for (const [path, file] of uploads) {
+      const { error } = await supabase.storage.from("worker-docs").upload(path, file, { contentType: "image/jpeg", upsert: false });
+      if (error) throw error;
+    }
+    const row = {
+      user_id: userId,
+      legal_name: form.legalName.trim(),
+      vehicle: form.vehicle,
+      vehicle_number: form.vehicleNumber?.trim().toUpperCase() || null,
+      licence_number: form.licenceNumber?.trim().toUpperCase() || null,
+      upi_id: form.upiId.trim(),
+      id_type: form.idType,
+      id_photo_path: idPath,
+      selfie_path: selfiePath,
+      licence_photo_path: licencePath,
+      rc_photo_path: rcPath,
+    };
+    const { error } = await supabase.from("worker_verifications").upsert(row, { onConflict: "user_id" });
+    if (error) throw error;
   },
 
   async loadPosts(userId?: string): Promise<FeedPost[]> {
@@ -1125,11 +1320,14 @@ export const SupabaseService = {
     // different arbitrary 500 each time. Most-recently-seen first is both
     // deterministic and the more useful answer: a driver who was online an hour
     // ago is worth suggesting, one who has not opened the app since March is not.
+    const positions = await this.friendPositions();
+    const select = positions ? WORKER_SELECT : LEGACY_WORKER_SELECT;
+
     let data: any[] | null = null;
     let error: any = null;
     ({ data, error } = await supabase
       .from("profiles")
-      .select(`${WORKER_SELECT}, last_seen`)
+      .select(`${select}, last_seen`)
       .order("last_seen", { ascending: false, nullsFirst: false })
       .limit(500));
     if (error) {
@@ -1137,7 +1335,7 @@ export const SupabaseService = {
       // fall back to a stable order rather than none at all.
       ({ data, error } = await supabase
         .from("profiles")
-        .select(WORKER_SELECT)
+        .select(select)
         .order("id", { ascending: true })
         .limit(500));
       if (error) throw error;
@@ -1145,7 +1343,22 @@ export const SupabaseService = {
 
     return (data ?? [])
       .filter((profile: any) => profile.id !== currentUserId)
-      .map(toWorker);
+      .map((profile: any) => toWorker(withPosition(profile, positions)));
+  },
+
+  /**
+   * Your own position and your accepted friends', from friend_positions().
+   * Null when this backend has not run security_fixes.sql, so callers fall back
+   * to reading coordinates the old way.
+   */
+  async friendPositions(): Promise<Map<string, { lat: number; lng: number; updated_at: string }> | null> {
+    if (!supabase) return null;
+    const { data, error } = await supabase.rpc("friend_positions");
+    if (error) {
+      if (isMissingFunction(error)) return null;
+      return new Map();   // on any other error show no positions, never someone else's
+    }
+    return new Map((data ?? []).map((p: any) => [p.user_id, p]));
   },
 
   /**
@@ -1163,18 +1376,21 @@ export const SupabaseService = {
     // otherwise match names they did not type.
     const escaped = term.replace(/[\\%_]/g, (c) => `\\${c}`);
 
+    const positions = await this.friendPositions();
+    const select = positions ? WORKER_SELECT : LEGACY_WORKER_SELECT;
+
     let data: any[] | null = null;
     let error: any = null;
     ({ data, error } = await supabase
       .from("profiles")
-      .select(`${WORKER_SELECT}, last_seen`)
+      .select(`${select}, last_seen`)
       .ilike("full_name", `%${escaped}%`)
       .limit(40));
     if (error) {
       // Same presence fallback as loadWorkers.
       ({ data, error } = await supabase
         .from("profiles")
-        .select(WORKER_SELECT)
+        .select(select)
         .ilike("full_name", `%${escaped}%`)
         .limit(40));
       if (error) throw error;
@@ -1182,7 +1398,7 @@ export const SupabaseService = {
 
     return (data ?? [])
       .filter((profile: any) => profile.id !== currentUserId)
-      .map(toWorker);
+      .map((profile: any) => toWorker(withPosition(profile, positions)));
   },
 
   // Heartbeat: mark the current user as "seen now" so others get live presence.
@@ -1228,16 +1444,16 @@ export const SupabaseService = {
     shareStats = true,
   ) {
     if (!supabase) return;
-    // "Share stats with community" used to be a placebo — stored, shown, and
-    // never enforced. If the driver has it off we do NOT publish their position
-    // to the community map at all, and the shared row is removed.
-    if (!shareStats) {
-      await this.stopSharingLocation(user.id);
-    } else {
+    // "Share stats with community" hides the rider's position from friends.
+    // It used to delete the row instead, and the customer's tracking map reads
+    // that same row while a job is carried: hiding from friends hid the rider
+    // from the person waiting for the order. Now the row is always written and
+    // the database's share_stats flag keeps it from everyone but that customer
+    // (friend_positions() and the table's read rule both honour it).
+    {
       // Deliberately does NOT write share_stats: the column only exists after
       // privacy_lockdown.sql runs, and sending it beforehand would break the
-      // upsert. Sharing-off is expressed by REMOVING the row (above), so this
-      // build behaves correctly whether or not that migration has run yet.
+      // upsert. It is set by set_location_sharing() below instead.
       const row = {
         user_id: user.id,
         lat: point.lat,
@@ -1249,14 +1465,41 @@ export const SupabaseService = {
         updated_at: new Date(point.timestamp).toISOString(),
       };
 
-      // `timezone` arrives with daily_reset.sql, so the driver's counters reset
-      // at their own midnight instead of Manila's. Before that migration the
-      // column does not exist and sending it 400s the whole upsert — which
-      // would silently stop GPS tracking, the one feature that must not break.
-      const { error } = await supabase
-        .from("worker_locations")
-        .upsert({ ...row, timezone: localTimeZone() });
-      if (error) await supabase.from("worker_locations").upsert(row);
+      // save_my_location() arrives with security_fixes.sql. After it, a plain
+      // upsert of this table fails by design: the coordinates are no longer
+      // readable, and Postgres needs to read what an upsert overwrites. The
+      // function writes the driver's own row and nobody else's.
+      const { error: rpcError } = await supabase.rpc("save_my_location", {
+        p_lat: row.lat,
+        p_lng: row.lng,
+        p_accuracy: row.accuracy ?? null,
+        p_active_app: row.active_app,
+        p_today_distance_km: row.today_distance_km,
+        p_today_earnings: row.today_earnings,
+        p_updated_at: row.updated_at,
+        p_timezone: localTimeZone() ?? null,
+      });
+      if (rpcError && isMissingFunction(rpcError)) {
+        // `timezone` arrives with daily_reset.sql, so the driver's counters reset
+        // at their own midnight instead of Manila's. Before that migration the
+        // column does not exist and sending it 400s the whole upsert — which
+        // would silently stop GPS tracking, the one feature that must not break.
+        const { error } = await supabase
+          .from("worker_locations")
+          .upsert({ ...row, timezone: localTimeZone() });
+        if (error) await supabase.from("worker_locations").upsert(row);
+      }
+    }
+    if (sharedFlag !== shareStats) {
+      const { error } = await supabase.rpc("set_location_sharing", { p_share: shareStats });
+      if (error && isMissingFunction(error)) {
+        // A backend without gig_v2.sql: the old way, removing the row, is still the private one.
+        if (!shareStats) await this.stopSharingLocation(user.id);
+      } else if (error) {
+        console.error("Could not update location sharing — position may still be visible to friends:", error);
+      } else {
+        sharedFlag = shareStats;
+      }
     }
     await supabase.from("route_points").insert({
       user_id: user.id,
@@ -2308,5 +2551,30 @@ function toUserSession(user: User, phone?: string): UserSession {
     id: user.id,
     fullName: user.user_metadata?.full_name ?? user.email?.split("@")[0] ?? "Driver",
     phone: phone ?? user.user_metadata?.phone ?? "",
+  };
+}
+
+/** One row shape, one place: loadJobs, loadMyJobs, jobs_nearby and accept_job all return it. */
+function mapJob(job: Record<string, unknown>): Job {
+  return {
+    id: String(job.id),
+    title: String(job.title),
+    pickup: String(job.pickup),
+    dropoff: String(job.dropoff),
+    distanceKm: Number(job.distance_km),
+    payout: Number(job.payout),
+    app: job.app as Job["app"],
+    etaMinutes: Number(job.eta_minutes),
+    status: job.status as Job["status"],
+    pickupLat: job.pickup_lat == null ? undefined : Number(job.pickup_lat),
+    pickupLng: job.pickup_lng == null ? undefined : Number(job.pickup_lng),
+    businessId: job.business_id == null ? undefined : String(job.business_id),
+    note: job.note == null ? undefined : String(job.note),
+    acceptedAt: job.accepted_at ? new Date(String(job.accepted_at)).getTime() : undefined,
+    pickedUpAt: job.picked_up_at ? new Date(String(job.picked_up_at)).getTime() : undefined,
+    deliveredAt: job.delivered_at ? new Date(String(job.delivered_at)).getTime() : undefined,
+    riderPaidAt: job.rider_paid_at ? new Date(String(job.rider_paid_at)).getTime() : undefined,
+    riderPayUtr: job.rider_pay_utr == null ? undefined : String(job.rider_pay_utr),
+    riderPayDisputedAt: job.rider_pay_disputed_at ? new Date(String(job.rider_pay_disputed_at)).getTime() : undefined,
   };
 }
