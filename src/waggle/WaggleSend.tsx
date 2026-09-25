@@ -8,6 +8,7 @@ import { useAuthStore } from "../stores/useAuthStore";
 import { rupees, WgFrame } from "./common";
 import { SendService, type ParcelKind, type ParcelSize, type SendQuote, type TrackedSend } from "./SendService";
 import { TrackMap } from "./TrackMap";
+import { RateRider, RiderAverage, useDeliveryRating } from "./RateRider";
 import { useWaggleLocation } from "./useWaggleLocation";
 
 const KINDS: ParcelKind[] = ["documents", "food", "clothes", "electronics", "keys", "medicine", "other"];
@@ -259,6 +260,7 @@ export function SendTrackPage() {
   const [copied, setCopied] = useState(false);
   const [cancelling, setCancelling] = useState(false);
   const told = useRef(false);
+  const [riderRating, reloadRating] = useDeliveryRating(token, send?.status === "delivered");
 
   useEffect(() => {
     let live = true;
@@ -362,12 +364,14 @@ export function SendTrackPage() {
           <section className="wg-card wg-rider">
             <span className="wg-avatar" aria-hidden>{send.rider.firstName.slice(0, 1).toUpperCase()}</span>
             <div>
-              <strong>{send.rider.firstName}</strong>
+              <strong>{send.rider.firstName} <RiderAverage rating={riderRating} /></strong>
               <span>{send.rider.vehicle ?? ""}{send.rider.plateLast4 ? ` · ••${send.rider.plateLast4}` : ""}</span>
               <small><BadgeCheck size={13} /> {t("wg_riderVerified")}</small>
             </div>
           </section>
         ) : null}
+
+        {sender && send.status === "delivered" && send.rider ? <RateRider token={token} via="send" rider={rider} rating={riderRating} onDone={reloadRating} /> : null}
 
         <section className="wg-card sd-summary">
           <dl className="gg-facts">

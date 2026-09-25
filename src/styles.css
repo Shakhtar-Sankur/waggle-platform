@@ -11798,6 +11798,24 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .gg-facts > div { display: grid; grid-template-columns: 110px 1fr; gap: 8px; font-size: 13px; }
 .gg-facts dt { color: #6b7280; }
 .gg-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+/* ---- Ratings ---- */
+.gg-starbars { display: grid; gap: 4px; margin-top: 10px; }
+.gg-starbars > div { display: grid; grid-template-columns: 34px 1fr 28px; align-items: center; gap: 8px; font-size: 12px; }
+.gg-starbars i { height: 6px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
+.gg-starbars b { display: block; height: 100%; background: #f59e0b; }
+.gg-starbars small { color: #6b7280; text-align: right; }
+.wg-rider-avg { margin-left: 6px; vertical-align: middle; }
+.wg-rr { display: grid; gap: 10px; }
+.wg-rr .wg-fine { margin: 0; }
+.wg-rr-done { padding: 12px 16px; border-radius: 16px; background: #fffbeb; }
+.biz-rate { display: grid; gap: 6px; margin-top: 6px; padding: 10px; border-radius: 12px; background: #fffbeb; border: 1px solid #fde68a; }
+.biz-rate > span { font-size: 12px; font-weight: 700; color: #92400e; }
+.biz-stars { display: flex; gap: 4px; }
+.biz-stars button { border: 0; background: none; padding: 2px; color: #cbd5e1; cursor: pointer; }
+.biz-stars button.is-on { color: #f59e0b; }
+.biz-rate-reason { padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; font: inherit; }
+.biz-rated { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; font-size: 13px; font-weight: 700; color: #92400e; }
+.biz-rated svg { color: #f59e0b; }
 .gg-more { display: block; width: 100%; margin: 8px 0 0; padding: 12px; border: 1px dashed #c7d2fe; border-radius: 14px; background: transparent; color: #3730a3; font: inherit; font-weight: 700; cursor: pointer; }
 
 /* ---- Rider hub ---- */

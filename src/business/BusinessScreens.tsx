@@ -1,5 +1,6 @@
-import { CheckCircle2, Clock3, Copy, IdCard, IndianRupee, LocateFixed, LogOut, PackagePlus, ShieldCheck, ShieldAlert, Store } from "lucide-react";
-import { useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { CheckCircle2, Clock3, Copy, IdCard, IndianRupee, LocateFixed, LogOut, PackagePlus, ShieldCheck, ShieldAlert, Star, Store } from "lucide-react";
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from "react";
+import { RatingService } from "../services/RatingService";
 import { Button } from "../components/ui/Button";
 import { BeeMark } from "../components/Wordmark";
 import { APP_NAME } from "../config/constants";
@@ -347,6 +348,9 @@ export function BusinessHomeScreen({
                     {job.status === "completed" && job.assignedTo && onPayee && onMarkPaid ? (
                       <RiderPay job={job} onPayee={onPayee} onMarkPaid={onMarkPaid} />
                     ) : null}
+                    {job.status === "completed" && job.assignedTo && onPayee && Date.now() - new Date(job.createdAt).getTime() < 7 * 86400000 ? (
+                      <ShopRateRider jobId={job.id} />
+                    ) : null}
                   </div>
                   {job.status === "open" ? (
                     <Button variant="ghost" size="sm" onClick={() => onCancel(job.id)}>{t("biz_jobCancel")}</Button>
@@ -358,6 +362,60 @@ export function BusinessHomeScreen({
         </section>
       </div>
       </div>
+    </div>
+  );
+}
+
+/** On a delivered job: how was the rider? The rider sees only their average; a reason goes to Gigzen. */
+function ShopRateRider({ jobId }: { jobId: string }) {
+  const t = useT();
+  const [rated, setRated] = useState<number | null | undefined>(undefined);
+  const [stars, setStars] = useState(0);
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    let live = true;
+    void RatingService.shopRating(jobId).then((r) => live && setRated(r)).catch(() => live && setRated(null));
+    return () => { live = false; };
+  }, [jobId]);
+  if (rated === undefined) return null;
+  if (rated) return <span className="biz-rated"><Star size={14} fill="currentColor" /> {t("bx_rrDone", { stars: String(rated) })}</span>;
+
+  async function send() {
+    setBusy(true);
+    setError("");
+    try {
+      const answer = await RatingService.rateFromShop(jobId, stars, reason);
+      if (answer === "ok" || answer === "already") setRated(stars);
+      else setError(t("biz_errGeneric"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("biz_errGeneric"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="biz-rate">
+      <span>{t("bx_rrTitle")}</span>
+      <div className="biz-stars" role="radiogroup" aria-label={t("bx_rrTitle")}>
+        {[1, 2, 3, 4, 5].map((n) => (
+          <button key={n} type="button" role="radio" aria-checked={stars === n} aria-label={t("wg_starsN", { n: String(n) })}
+            className={n <= stars ? "is-on" : ""} onClick={() => setStars(n)}>
+            <Star size={22} fill={n <= stars ? "currentColor" : "none"} />
+          </button>
+        ))}
+      </div>
+      {stars ? (
+        <>
+          {stars <= 3 ? (
+            <input className="biz-rate-reason" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={300} placeholder={t("bx_rrPh")} />
+          ) : null}
+          {error ? <p className="biz-error">{error}</p> : null}
+          <Button size="sm" disabled={busy} onClick={() => void send()}>{t("bx_rrSend")}</Button>
+        </>
+      ) : null}
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { AlertTriangle, LocateFixed, Megaphone, MessageSquareReply, Package, ShieldAlert } from "lucide-react";
+import { AlertTriangle, LocateFixed, Megaphone, MessageSquareReply, Package, ShieldAlert, Star } from "lucide-react";
+import { RatingService, type AdminRatings as AdminRatingsData } from "../services/RatingService";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "../components/ui/Button";
 import { useT } from "../i18n";
@@ -7,6 +8,49 @@ import { rupees } from "./BusinessScreens";
 import { BusinessService, type AdminNotice, type AdminTicket, type NoticeKind } from "./BusinessService";
 
 const when = (iso: string) => new Date(iso).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+/**
+ * Riders' ratings: every rating of 2 stars or less in the last 30 days, with the
+ * reason, and the riders with the lowest averages first.
+ */
+export function AdminRatings() {
+  const t = useT();
+  const [data, setData] = useState<AdminRatingsData | null>(null);
+  useEffect(() => { void RatingService.admin().then(setData).catch(() => undefined); }, []);
+  if (!data) return null;
+  return (
+    <section className="biz-card">
+      <div className="biz-card-head">
+        <strong><Star size={16} /> {t("bx_arTitle")}</strong>
+        <span className={`biz-status biz-status-${data.low.length ? "pending" : "verified"}`}>{t("bx_arLow", { n: String(data.low.length) })}</span>
+      </div>
+      {data.riders.length === 0 ? <p className="biz-help">{t("bx_arEmpty")}</p> : (
+        <ul className="biz-runs">
+          {data.riders.slice(0, 8).map((r) => (
+            <li key={r.riderId}>
+              <strong>{r.name} · {r.avg.toFixed(1)} ★</strong>
+              <span>{t("bx_arCount", { count: String(r.count) })}{r.low ? ` · ${t("bx_arLowShort", { n: String(r.low) })}` : ""}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.low.length ? (
+        <>
+          <p className="biz-help">{t("bx_arLowHelp")}</p>
+          <ul className="biz-runs">
+            {data.low.map((l, i) => (
+              <li key={i}>
+                <strong>{l.name} · {"★".repeat(l.stars)}</strong>
+                <span>{l.reason ?? t("bx_arNoReason")}</span>
+                <small>{t(`bx_arBy_${l.rater}` as "bx_arBy_shop")} · {l.job} · {when(l.at)}</small>
+              </li>
+            ))}
+          </ul>
+        </>
+      ) : null}
+    </section>
+  );
+}
 
 /**
  * The Waggle Send fee. Recorded on every Send from day one, charged only once
