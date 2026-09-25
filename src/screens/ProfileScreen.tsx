@@ -13,6 +13,7 @@ import { useLangStore, useT } from "../i18n";
 import { resolveCountryForLocation } from "../i18n/region";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
+import { RatingService, type RiderStanding } from "../services/RatingService";
 import { SupabaseService } from "../services/SupabaseService";
 import { localAppCount, workAppLabel, workAppsForCountry } from "../utils/workApps";
 import { useAuthStore } from "../stores/useAuthStore";
@@ -484,6 +485,8 @@ function RiderCard() {
   const verification = useVerificationStore((state) => state.verification);
   const load = useVerificationStore((state) => state.load);
   useEffect(() => { if (user) void load(user.id); }, [user, load]);
+  const [standing, setStanding] = useState<RiderStanding | null>(null);
+  useEffect(() => { if (user) void RatingService.mine().then(setStanding).catch(() => undefined); }, [user]);
   const v = verification;
   const status = v?.status ?? "none";
   const masked = (upi: string) => { const [name, bank] = upi.split("@"); return `${name.slice(0, 2)}${"•".repeat(Math.max(2, name.length - 2))}@${bank ?? ""}`; };
@@ -498,10 +501,25 @@ function RiderCard() {
           <div><dt>{t("gg_legalName")}</dt><dd>{v.legalName}</dd></div>
           <div><dt>{t("gg_vehicle")}</dt><dd>{t(`gg_veh_${v.vehicle}` as "gg_veh_bike")}{v.vehicleNumber ? ` · ${v.vehicleNumber}` : ""}</dd></div>
           <div><dt>{t("gg_payInto")}</dt><dd>{masked(v.upiId)}</dd></div>
+          {status === "verified" ? (
+            <div><dt>{t("gg_rating")}</dt><dd>{standing?.avg ? t("gg_ratingValue", { avg: standing.avg.toFixed(1), count: String(standing.count) }) : t("gg_ratingNone")}</dd></div>
+          ) : null}
         </dl>
       ) : (
         <p className="micro-copy">{t("ver_cardBody")}</p>
       )}
+      {standing?.count ? (
+        <div className="gg-starbars" aria-label={t("gg_rating")}>
+          {(["5", "4", "3", "2", "1"] as const).map((s) => (
+            <div key={s}>
+              <span>{s} ★</span>
+              <i><b style={{ width: `${Math.round((standing.stars[s] / standing.count) * 100)}%` }} /></i>
+              <small>{standing.stars[s]}</small>
+            </div>
+          ))}
+          <p className="micro-copy">{t("gg_ratingPrivate")}</p>
+        </div>
+      ) : null}
       {status === "none" || status === "rejected" ? (
         <Button className="wide-action" onClick={() => navigate("/verify")}>{t(status === "rejected" ? "ver_fix" : "ver_cardButton")}</Button>
       ) : (

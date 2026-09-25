@@ -4,7 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useT, type TKey } from "../i18n";
 import { BusinessTop, rupees } from "./BusinessScreens";
-import { AdminNotices, AdminTickets, SendFeeCard } from "./AdminRiders";
+import { AdminNotices, AdminRatings, AdminTickets, SendFeeCard } from "./AdminRiders";
 import {
   stateName,
   type BillingRun,
@@ -208,7 +208,9 @@ export function AdminScreen({
                   </>
                 } />
             ))
-        ) : tab !== "workers" ? null
+        ) : null}
+        {tab === "workers" ? <AdminRatings /> : null}
+        {tab !== "workers" ? null
           : workers.length === 0 ? <section className="biz-card"><p className="biz-help">{t("biz_adminEmpty")}</p></section>
           : workers.map((w) => (
             <ReviewCard key={w.userId} status={w.status} title={`${w.legalName}${w.profileName && w.profileName !== w.legalName ? ` (${w.profileName})` : ""}`}

@@ -8,6 +8,7 @@ import { shrinkImage } from "../utils/shrinkImage";
 import { BusinessService, type TrackedOrder } from "../business/BusinessService";
 import { clock, dayAndTime, minutesBetween, rememberOrder, rupees, setReorder, WgFrame } from "./common";
 import { TrackMap } from "./TrackMap";
+import { RateRider, RiderAverage, useDeliveryRating } from "./RateRider";
 
 const VEHICLE: Record<string, TKey> = {
   bike: "wg_vBike", scooter: "wg_vScooter", ev_scooter: "wg_vEv", auto: "wg_vAuto", car: "wg_vCar", bicycle: "wg_vBicycle", on_foot: "wg_vFoot",
@@ -39,6 +40,7 @@ export function TrackPage() {
   const [order, setOrder] = useState<TrackedOrder | null | undefined>(undefined);
   const [eta, setEta] = useState<number | null>(null);
   const stage = order ? stageOf(order) : null;
+  const [riderRating, reloadRating] = useDeliveryRating(token, stage === "delivered");
   // "Your rider is about 2 minutes away": once, with a buzz, so the customer can come to the door.
   const nearTold = useRef(false);
   const near = stage === "on_way" && eta != null && eta <= 3;
@@ -150,7 +152,7 @@ export function TrackPage() {
           <section className="wg-card wg-rider">
             <span className="wg-avatar" aria-hidden>{order.rider.firstName.slice(0, 1).toUpperCase()}</span>
             <div>
-              <strong>{order.rider.firstName}</strong>
+              <strong>{order.rider.firstName} <RiderAverage rating={riderRating} /></strong>
               <span>{t(VEHICLE[order.rider.vehicle] ?? "wg_vBike")}{order.rider.plateLast4 ? ` · ••${order.rider.plateLast4}` : ""}</span>
               <small><BadgeCheck size={13} /> {t("wg_riderVerified")}</small>
             </div>
@@ -159,6 +161,7 @@ export function TrackPage() {
 
         <Timeline order={order} stage={stage} />
 
+        {stage === "delivered" && order.rider ? <RateRider token={token} via="order" rider={rider} rating={riderRating} onDone={reloadRating} /> : null}
         {stage === "delivered" ? <AfterDelivery order={order} token={token} /> : null}
 
         <Receipt order={order} />
