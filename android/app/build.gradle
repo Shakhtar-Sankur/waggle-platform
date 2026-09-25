@@ -82,8 +82,11 @@ android {
         // 18: the new Waggle Gig: Home, Earnings, History, Rider hub, rider card;
         // online switches the GPS on; turn-by-turn with voice, rerouting and
         // snap-to-road; the reload-loop fix in the translator.
-        versionCode 18
-        versionName "1.6.0"
+        // 19: parcel jobs from Waggle Send (both phones while carrying it, a
+        // parcel photo before pickup); offers pause while the screen is off and
+        // come back after two minutes instead of vanishing.
+        versionCode 19
+        versionName "1.6.1"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
