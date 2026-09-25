@@ -224,7 +224,7 @@ function OrderCard({
         ))}
         {order.discountRupees ? <li className="biz-discount"><span>{t("bx_couponLine", { code: order.couponCode ?? "" })}</span><b>−{rupees(order.discountRupees)}</b></li> : null}
         {order.deliveryRupees ? <li className="biz-muted"><span>{t("bx_deliveryLine")}</span><b>{rupees(order.deliveryRupees)}</b></li> : null}
-        <li className="biz-total"><span>{t("bx_totalCash")}</span><b>{rupees(order.totalRupees)}</b></li>
+        <li className={`biz-total${order.paidOnlineAt ? " is-paid" : ""}`}><span>{t(order.paidOnlineAt ? "bx_totalPaidOnline" : "bx_totalCash")}</span><b>{rupees(order.totalRupees)}</b></li>
       </ul>
       <div className="biz-order-customer">
         <div>

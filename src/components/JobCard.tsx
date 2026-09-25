@@ -1,5 +1,6 @@
 import { Camera, CheckCircle2, Clock, MapPin, Navigation, Package, Phone, Siren, Store } from "lucide-react";
 import { MediaService } from "../services/MediaService";
+import { PaymentService } from "../services/PaymentService";
 import { useEffect, useState, type FormEvent } from "react";
 import { NavMap } from "../maps/NavMap";
 import { useJobStore, type StepAnswer } from "../stores/useJobStore";
@@ -53,6 +54,7 @@ export function JobCard({
   const [shop, setShop] = useState<ShopContact | null>(null);
   const [parcel, setParcel] = useState<SendDetails | null>(null);
   const [shooting, setShooting] = useState(false);
+  const [paidOnline, setPaidOnline] = useState(false);
   const isSend = job.source === "send";
   const address = details?.address ?? null;
   const holding = job.status === "accepted" || job.status === "picked_up";
@@ -64,6 +66,7 @@ export function JobCard({
     void SupabaseService.loadJobDetails(job.id).then((d) => live && setDetails(d));
     if (job.businessId) void GigService.shopContact(job.id).then((s) => live && setShop(s)).catch(() => undefined);
     if (isSend) void GigService.sendDetails(job.id).then((d) => live && setParcel(d)).catch(() => undefined);
+    if (job.source === "order") void PaymentService.jobPayment(job.id).then((p) => live && setPaidOnline(Boolean(p?.paidOnline))).catch(() => undefined);
     return () => { live = false; };
   }, [job.id, holding, job.businessId, isSend]);
 
@@ -152,6 +155,7 @@ export function JobCard({
         </div>
       </div>
       {job.note && holding ? <p className="job-note">{job.note}</p> : null}
+      {paidOnline && holding ? <p className="gg-paidonline"><CheckCircle2 size={15} /> {t("gg_paidOnline")}</p> : null}
       {isSend && holding && parcel ? (
         <div className="gg-parcel">
           <div className="gg-parcel-people">

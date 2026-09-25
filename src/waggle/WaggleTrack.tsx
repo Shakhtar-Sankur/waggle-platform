@@ -9,6 +9,7 @@ import { BusinessService, type TrackedOrder } from "../business/BusinessService"
 import { clock, dayAndTime, minutesBetween, rememberOrder, rupees, setReorder, WgFrame } from "./common";
 import { TrackMap } from "./TrackMap";
 import { RateRider, RiderAverage, useDeliveryRating } from "./RateRider";
+import { PayOnline } from "./PayOnline";
 
 const VEHICLE: Record<string, TKey> = {
   bike: "wg_vBike", scooter: "wg_vScooter", ev_scooter: "wg_vEv", auto: "wg_vAuto", car: "wg_vCar", bicycle: "wg_vBicycle", on_foot: "wg_vFoot",
@@ -41,6 +42,7 @@ export function TrackPage() {
   const [eta, setEta] = useState<number | null>(null);
   const stage = order ? stageOf(order) : null;
   const [riderRating, reloadRating] = useDeliveryRating(token, stage === "delivered");
+  const [paidOnline, setPaidOnline] = useState(false);
   // "Your rider is about 2 minutes away": once, with a buzz, so the customer can come to the door.
   const nearTold = useRef(false);
   const near = stage === "on_way" && eta != null && eta <= 3;
@@ -124,6 +126,8 @@ export function TrackPage() {
           </section>
         ) : null}
 
+        <PayOnline token={token} active={active} onPaid={setPaidOnline} />
+
         {order.status === "dispatched" && order.deliveryCode ? (
           <section className="wg-card wg-code">
             <div>
@@ -164,7 +168,7 @@ export function TrackPage() {
         {stage === "delivered" && order.rider ? <RateRider token={token} via="order" rider={rider} rating={riderRating} onDone={reloadRating} /> : null}
         {stage === "delivered" ? <AfterDelivery order={order} token={token} /> : null}
 
-        <Receipt order={order} />
+        <Receipt order={order} paidOnline={paidOnline} />
 
         <div className="wg-help">
           {order.shop.phone ? <a className="wg-btn wg-btn-soft" href={`tel:${order.shop.phone}`}><Phone size={16} /> {t("wg_callShop")}</a> : null}
@@ -216,7 +220,7 @@ function Timeline({ order, stage }: { order: TrackedOrder; stage: Stage }) {
   );
 }
 
-function Receipt({ order }: { order: TrackedOrder }) {
+function Receipt({ order, paidOnline }: { order: TrackedOrder; paidOnline: boolean }) {
   const t = useT();
   const count = order.items.reduce((s, l) => s + l.qty, 0);
   return (
@@ -246,7 +250,7 @@ function Receipt({ order }: { order: TrackedOrder }) {
         <div><dt>{t("wg_deliveryFee")}</dt><dd>{order.deliveryRupees ? rupees(order.deliveryRupees) : t("wg_free")}</dd></div>
         <div className="wg-grand"><dt>{t("wg_toPay")}</dt><dd>{rupees(order.totalRupees)}</dd></div>
       </dl>
-      <p className="wg-paynote">{t(order.status === "delivered" ? "wg_paidOnDelivery" : "wg_payOnDelivery")}{order.shop.gstin ? ` ${t("wg_gstIncluded")}` : ""}</p>
+      <p className="wg-paynote">{t(paidOnline ? "pay_receiptPaid" : order.status === "delivered" ? "wg_paidOnDelivery" : "wg_payOnDelivery")}{order.shop.gstin ? ` ${t("wg_gstIncluded")}` : ""}</p>
       <div className="wg-deliver-to">
         <MapPin size={16} />
         <div>

@@ -1,4 +1,5 @@
-import { AlertTriangle, LocateFixed, Megaphone, MessageSquareReply, Package, ShieldAlert, Star } from "lucide-react";
+import { AlertTriangle, CreditCard, LocateFixed, Megaphone, MessageSquareReply, Package, ShieldAlert, Star } from "lucide-react";
+import { PaymentService, type AdminOnlinePay } from "../services/PaymentService";
 import { RatingService, type AdminRatings as AdminRatingsData } from "../services/RatingService";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "../components/ui/Button";
@@ -8,6 +9,75 @@ import { rupees } from "./BusinessScreens";
 import { BusinessService, type AdminNotice, type AdminTicket, type NoticeKind } from "./BusinessService";
 
 const when = (iso: string) => new Date(iso).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+/**
+ * Online payment (Razorpay with Route): the master switch, Waggle's cut of each
+ * payment, and each shop's linked account. A shop without one stays pay on delivery.
+ */
+export function OnlinePayCard() {
+  const t = useT();
+  const [view, setView] = useState<AdminOnlinePay | null>(null);
+  const [fee, setFee] = useState("2");
+  const [accounts, setAccounts] = useState<Record<string, string>>({});
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const [saved, setSaved] = useState("");
+  const load = () => PaymentService.adminView().then((v) => {
+    setView(v);
+    setFee(String(v.feeBps / 100));
+    setAccounts(Object.fromEntries(v.shops.map((s) => [s.id, s.account ?? ""])));
+  }).catch(() => undefined);
+  useEffect(() => { void load(); }, []);
+  if (!view) return null;
+
+  async function run(action: () => Promise<void>, done?: string) {
+    setBusy(true);
+    setError("");
+    setSaved("");
+    try {
+      await action();
+      await load();
+      if (done) setSaved(done);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("biz_errGeneric"));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const linked = view.shops.filter((s) => s.account).length;
+  return (
+    <section className="biz-card">
+      <div className="biz-card-head">
+        <strong><CreditCard size={16} /> {t("bx_opTitle")}</strong>
+        <span className={`biz-status biz-status-${view.live ? "verified" : "pending"}`}>{t(view.live ? "bx_opOn" : "bx_opOff")}</span>
+      </div>
+      <p className="biz-help">{t("bx_opHelp", { linked: String(linked), total: String(view.shops.length), paid: String(view.paid30d) })}</p>
+      <label className="biz-field"><span>{t("bx_opFee")}</span>
+        <input value={fee} onChange={(e) => setFee(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" />
+      </label>
+      <div className="biz-decide">
+        <Button disabled={busy || view.live} onClick={() => void run(() => PaymentService.adminSet(true, Number(fee)))}>{t("bx_opTurnOn")}</Button>
+        <Button variant="outline" disabled={busy || !view.live} onClick={() => void run(() => PaymentService.adminSet(false))}>{t("bx_opTurnOff")}</Button>
+      </div>
+      <p className="biz-help">{t("bx_opAccountsHelp")}</p>
+      <ul className="biz-runs">
+        {view.shops.map((s) => (
+          <li key={s.id} className="biz-op-shop">
+            <strong>{s.name}</strong>
+            <div className="biz-op-row">
+              <input value={accounts[s.id] ?? ""} placeholder="acc_XXXXXXXXXXXX" onChange={(e) => setAccounts((a) => ({ ...a, [s.id]: e.target.value.trim() }))} />
+              <Button size="sm" variant="outline" disabled={busy || (accounts[s.id] ?? "") === (s.account ?? "")}
+                onClick={() => void run(() => PaymentService.adminSetAccount(s.id, accounts[s.id] ?? ""), t("bx_opSaved", { shop: s.name }))}>{t("bx_opSave")}</Button>
+            </div>
+          </li>
+        ))}
+      </ul>
+      {saved ? <p className="biz-ok" role="status">{saved}</p> : null}
+      {error ? <p className="biz-error" role="alert">{error}</p> : null}
+    </section>
+  );
+}
 
 /**
  * Riders' ratings: every rating of 2 stars or less in the last 30 days, with the

@@ -4,7 +4,7 @@ import { Link, NavLink } from "react-router-dom";
 import { Button } from "../components/ui/Button";
 import { useT, type TKey } from "../i18n";
 import { BusinessTop, rupees } from "./BusinessScreens";
-import { AdminNotices, AdminRatings, AdminTickets, SendFeeCard } from "./AdminRiders";
+import { AdminNotices, AdminRatings, AdminTickets, OnlinePayCard, SendFeeCard } from "./AdminRiders";
 import {
   stateName,
   type BillingRun,
@@ -171,6 +171,7 @@ export function AdminScreen({
         ) : tab === "month" ? (
           <>
             <MonthEndCard onMonthEnd={onMonthEnd} runs={runs} />
+            <OnlinePayCard />
             <SendFeeCard />
           </>
         ) : tab === "hub" ? (

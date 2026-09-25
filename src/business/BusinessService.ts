@@ -288,6 +288,8 @@ export interface Order {
   discountRupees: number;
   couponCode: string | null;
   scheduledFor: string | null;
+  /** Paid online through Razorpay (payments_v1.sql): collect nothing on delivery. */
+  paidOnlineAt?: string | null;
 }
 
 export interface PublicShop {
@@ -703,6 +705,7 @@ function toOrder(row: any): Order {
     discountRupees: (row.discount_paise ?? 0) / 100,
     couponCode: row.coupon_code ?? null,
     scheduledFor: row.scheduled_for ?? null,
+    paidOnlineAt: row.paid_online_at ?? null,
   };
 }
 
