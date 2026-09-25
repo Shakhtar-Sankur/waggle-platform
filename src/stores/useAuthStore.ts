@@ -11,6 +11,9 @@ interface AuthState {
   initSession: () => Promise<void>;
   signIn: (phone: string, password: string) => Promise<void>;
   signUp: (phone: string, password: string, fullName: string) => Promise<void>;
+  /** Phone sign-in: text a code, then check it. Resolves `true` when the account is new and needs a name. */
+  sendOtp: (phone: string) => Promise<void>;
+  verifyOtp: (phone: string, code: string) => Promise<boolean>;
   signOut: () => void;
   deleteAccount: () => Promise<void>;
   updateProfile: (updates: Partial<Pick<UserSession, "fullName" | "phone">>) => void;
@@ -118,6 +121,17 @@ export const useAuthStore = create<AuthState>()(
         // Same reasoning as signIn: no local-only accounts. An account that
         // exists on one phone and nowhere else is worse than a clear failure.
         throw new Error(translate("err_signUpUnavailable"));
+      },
+      sendOtp: async (phone) => {
+        if (!isSupabaseConfigured) throw new Error(translate("err_signInUnavailable"));
+        await SupabaseService.sendOtp(phone);
+      },
+      verifyOtp: async (phone, code) => {
+        if (!isSupabaseConfigured) throw new Error(translate("err_signInUnavailable"));
+        if (!/^\d{6}$/.test(code)) throw new Error(translate("otp_errCode"));
+        const { user, isNew } = await SupabaseService.verifyOtp(phone, code);
+        set({ user });
+        return isNew;
       },
       signOut: async () => {
         // Clear local state first so logout is instant and reliable even if the

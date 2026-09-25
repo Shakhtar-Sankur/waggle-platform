@@ -10,6 +10,7 @@ import { HomePage } from "./WaggleHome";
 import { SearchPage } from "./WaggleSearch";
 import { ShopPage } from "./WaggleShop";
 import { TrackPage } from "./WaggleTrack";
+import { OTP_ENABLED, PhoneSignIn } from "./WaggleAuth";
 
 /**
  * Waggle, the customer app: the third app from the same code and the same
@@ -29,7 +30,8 @@ export default function WaggleApp() {
         <Route path="/search" element={<SearchPage />} />
         <Route path="/orders" element={<OrdersPage />} />
         <Route path="/account" element={<AccountPage />} />
-        <Route path="/auth" element={<AuthScreen redirectTo="/account" />} />
+        <Route path="/auth" element={OTP_ENABLED ? <PhoneSignIn redirectTo="/account" /> : <AuthScreen redirectTo="/account" />} />
+        <Route path="/auth/password" element={<AuthScreen redirectTo="/account" />} />
         <Route path="/shop/:id" element={<ShopPage />} />
         <Route path="/order/:token" element={<TrackPage />} />
         <Route path="/group/:token" element={<GroupPage />} />

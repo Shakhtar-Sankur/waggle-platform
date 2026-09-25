@@ -392,6 +392,33 @@ export const SupabaseService = {
     return toUserSession(data.user, phone);
   },
 
+  /** Phone sign-in, step 1: text a 6-digit code to this Indian mobile number. */
+  async sendOtp(phone: string): Promise<void> {
+    assertSupabase();
+    const { error } = await withNetworkContext(() => supabase!.auth.signInWithOtp({ phone: indianE164(phone) }));
+    if (error) throw describeNetworkFailure(error) ?? error;
+  },
+
+  /**
+   * Phone sign-in, step 2: the code. Signs in, or creates the account on first
+   * use. `isNew` means the profile has no name yet, so the app asks for one.
+   */
+  async verifyOtp(phone: string, code: string): Promise<{ user: UserSession; isNew: boolean }> {
+    assertSupabase();
+    const e164 = indianE164(phone);
+    const { data, error } = await withNetworkContext(() => supabase!.auth.verifyOtp({ phone: e164, token: code, type: "sms" }));
+    if (error) throw describeNetworkFailure(error) ?? error;
+    if (!data.user) throw new Error("No user returned from Supabase.");
+    const { data: profile } = await supabase!.from("profiles").select("full_name").eq("id", data.user.id).maybeSingle();
+    if (!profile) {
+      // A first sign-in: the row starts nameless, and the app asks for the name next.
+      const { error: insertError } = await supabase!.from("profiles").insert({ id: data.user.id, full_name: "", phone: e164, updated_at: new Date().toISOString() });
+      if (insertError && insertError.code !== "23505") throw insertError;
+    }
+    const name = (profile?.full_name ?? "").trim();
+    return { user: { ...toUserSession(data.user, e164), fullName: name }, isNew: !name };
+  },
+
   async signOut() {
     if (!supabase) return;
     await supabase.auth.signOut();
@@ -2539,6 +2566,13 @@ function isSameLocalDay(a: number, b: number): boolean {
     da.getMonth() === db.getMonth() &&
     da.getDate() === db.getDate()
   );
+}
+
+/** "98765 43210", "+91 98765-43210" → "+919876543210". */
+function indianE164(phone: string) {
+  const digits = phone.replace(/\D/g, "").replace(/^(91|0)(?=\d{10}$)/, "");
+  if (!/^[6-9]\d{9}$/.test(digits)) throw new Error("Enter a 10-digit Indian mobile number.");
+  return `+91${digits}`;
 }
 
 function phoneToEmail(phone: string) {
