@@ -25,6 +25,7 @@ import {
   UsersRound,
   Wallet,
   X,
+  LifeBuoy,
 } from "lucide-react";
 import type { ReactNode } from "react";
 import { ChallengeIcon } from "../components/ChallengeIcon";
@@ -32,7 +33,8 @@ import { APP_NAME } from "../config/constants";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { RiderHub } from "../gig/RiderHub";
 import { Button } from "../components/ui/Button";
 import { Modal } from "../components/ui/Modal";
 import { ReportDialog, type ReportTarget } from "../components/ReportDialog";
@@ -49,7 +51,7 @@ import { currency, initials, km, timeAgo } from "../utils/format";
 import { isTrending, rankReels } from "../utils/reelRank";
 import { getWorkApp, workAppLabel } from "../utils/workApps";
 
-type FbTab = "home" | "reels" | "friends" | "groups";
+type FbTab = "hub" | "home" | "reels" | "friends" | "groups";
 
 /**
  * A display handle for the timeline, derived from the driver's name.
@@ -149,7 +151,9 @@ export function CommunityScreen() {
     navigate("/messages", { state: { openThreadId: threadId } });
   };
 
-  const [tab, setTab] = useState<FbTab>("home");
+  // The rider hub first: what Gigzen is telling riders matters more than the feed.
+  const [searchParams] = useSearchParams();
+  const [tab, setTab] = useState<FbTab>(() => (searchParams.get("tab") === "feed" ? "home" : "hub"));
   const [postBody, setPostBody] = useState("");
   const [query, setQuery] = useState("");
   // People matching the search box. Searched on the server rather than filtered
@@ -439,7 +443,8 @@ export function CommunityScreen() {
 
       {/* Facebook top navigation tabs */}
       <nav className="fb-tabs" role="tablist">
-        <FbTabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={22} />} label={t("nav_home")} />
+        <FbTabButton active={tab === "hub"} onClick={() => setTab("hub")} icon={<LifeBuoy size={22} />} label={t("gg_hubTab")} />
+        <FbTabButton active={tab === "home"} onClick={() => setTab("home")} icon={<Home size={22} />} label={t("gg_feedTab")} />
         <FbTabButton active={tab === "reels"} onClick={() => setTab("reels")} icon={<Clapperboard size={22} />} label={t("fb_reels")} />
         <FbTabButton
           active={tab === "friends"}
@@ -450,6 +455,8 @@ export function CommunityScreen() {
         />
         <FbTabButton active={tab === "groups"} onClick={() => setTab("groups")} icon={<Users size={22} />} label={t("fb_groups")} />
       </nav>
+
+      {tab === "hub" ? <RiderHub /> : null}
 
       {tab === "home" ? (
         <div className="fb-body">

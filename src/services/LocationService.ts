@@ -84,8 +84,8 @@ export const LocationService = {
          collecting and buffering; this side drains it. See TripTrackingService. */
       try {
         await TripTracking.start({
-          title: translate("track_notifTitle"),
-          text: translate("track_notifBody"),
+          title: translate("gg_notifTitle"),
+          text: translate("gg_notifBody"),
           ...trip,
         });
         return drainFromService(onUpdate);

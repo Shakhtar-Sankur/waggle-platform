@@ -40,3 +40,11 @@ agents/
 # pointed at the retired project — so every clone inherited a CLI aimed at a
 # dead database that reports success.
 supabase/.temp/
+
+# The Business and customer builds, like dist/ for Gig: produced by the build, never edited.
+dist-business/
+dist-waggle/
+# Gradle output captured while building the three APKs.
+gradle-*.log
+# A port-shuffling backup of the local Supabase config.
+supabase/config.toml.bak-ports

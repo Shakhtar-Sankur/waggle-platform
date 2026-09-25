@@ -72,8 +72,18 @@ android {
         // chat message leaving the other person's screen at once.
         // 15: Routes map controls in one column that cannot overlap on short
         // screens, the map credit back above the sheet, a calmer chat wallpaper.
-        versionCode 15
-        versionName "1.4.3"
+        // 16: Waggle jobs from real shops (verification with licence and RC
+        // photos, pickup and delivery codes, the road route to the customer).
+        // Needed the day production took business.sql: older builds can no
+        // longer save location or change jobs under the new rules.
+        // 17: the job list loads and updates live from the moment the app opens,
+        // alerts for new jobs nearby, and "Pay from shops" (the shop's UPI
+        // payment for each delivery, with "Not received").
+        // 18: the new Waggle Gig: Home, Earnings, History, Rider hub, rider card;
+        // online switches the GPS on; turn-by-turn with voice, rerouting and
+        // snap-to-road; the reload-loop fix in the translator.
+        versionCode 18
+        versionName "1.6.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

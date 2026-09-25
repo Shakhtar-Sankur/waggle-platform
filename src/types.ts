@@ -39,7 +39,8 @@ export type WorkAppId =
 
 export type VehicleType = "car" | "motorcycle" | "bicycle";
 
-export type JobStatus = "open" | "accepted" | "declined" | "completed";
+/** open → accepted → picked_up (shop's code) → completed (customer's code). */
+export type JobStatus = "open" | "accepted" | "picked_up" | "completed" | "declined" | "cancelled";
 
 export type MessageStatus = "sent" | "delivered" | "read";
 
@@ -117,6 +118,9 @@ export interface Worker {
 
 export interface Job {
   id: string;
+  /** Where the pick-up is. Missing on jobs created before dispatch existed. */
+  pickupLat?: number;
+  pickupLng?: number;
   title: string;
   pickup: string;
   dropoff: string;
@@ -125,6 +129,17 @@ export interface Job {
   app: WorkAppId;
   etaMinutes: number;
   status: JobStatus;
+  /** Set on Waggle jobs posted by a business through Waggle Business. */
+  businessId?: string;
+  note?: string;
+  acceptedAt?: number;
+  pickedUpAt?: number;
+  deliveredAt?: number;
+  /** A shop job: the shop recorded paying the fare by UPI, with this reference. */
+  riderPaidAt?: number;
+  riderPayUtr?: string;
+  /** The worker said that payment never arrived. */
+  riderPayDisputedAt?: number;
 }
 
 export interface ChatMessage {

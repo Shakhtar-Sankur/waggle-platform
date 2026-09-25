@@ -221,7 +221,6 @@ export const useLocationStore = create<LocationState>()(
              read settings itself, and while the phone is locked the WebView is
              suspended — so anything the notification shows has to have been
              handed over before the screen went off. */
-          const profile = useProfileStore.getState();
           stopWatching = await LocationService.watchPosition(
             (next) => {
               get().updatePosition(next);
@@ -231,11 +230,9 @@ export const useLocationStore = create<LocationState>()(
                  on the notification whenever the app is awake. */
               void TripTracking.sync?.({ distanceKm: get().totalDistanceKm }).catch(() => {});
             },
-            {
-              rate: profile.baseRate,
-              currency: currencySymbol(),
-              unit: "km",
-            },
+            // No rate: the notification shows distance and time online. A
+            // Waggle rider's pay is the fare on each job, not km times a rate.
+            { rate: 0, currency: currencySymbol(), unit: "km" },
             /* Revoked mid-trip. Stop rather than keep a LIVE panel over a
                number that can no longer move, and say why. */
             () => {
@@ -264,7 +261,7 @@ export const useLocationStore = create<LocationState>()(
           syncLocation(point, 0);
           useNotificationStore
             .getState()
-            .push(translate("notif_gpsActive"), translate("notif_gpsActiveBody"), "location");
+            .push(translate("gg_gpsOn"), translate("gg_gpsOnBody"), "location");
         } catch (error) {
           set({ permission: "denied", isTracking: false });
           useNotificationStore
@@ -281,7 +278,7 @@ export const useLocationStore = create<LocationState>()(
         stopWatching = null;
         trackingStartedAt = null;
         set({ isTracking: false });
-        useNotificationStore.getState().push(translate("notif_sessionEnded"), translate("notif_sessionEndedBody"), "location");
+        useNotificationStore.getState().push(translate("gg_gpsOff"), translate("gg_gpsOffBody"), "location");
       },
       updatePosition: (point) => {
         const state = get();

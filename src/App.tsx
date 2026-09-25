@@ -7,8 +7,10 @@ import { Toasts } from "./components/Toasts";
 import { NotificationService } from "./services/NotificationService";
 import { SupabaseService } from "./services/SupabaseService";
 import { useAuthStore } from "./stores/useAuthStore";
+import { AVAILABILITY_REFRESH_MS, useAvailabilityStore } from "./stores/useAvailabilityStore";
 import { useChatStore } from "./stores/useChatStore";
 import { useCommunityStore } from "./stores/useCommunityStore";
+import { useJobStore } from "./stores/useJobStore";
 import { useLocationStore } from "./stores/useLocationStore";
 import { useNotificationStore } from "./stores/useNotificationStore";
 import { useProfileStore } from "./stores/useProfileStore";
@@ -16,14 +18,19 @@ import { applyDirection, useLangStore } from "./i18n";
 import { countryToCurrency, resolveCountryForLocation } from "./i18n/region";
 import { AuthScreen } from "./screens/AuthScreen";
 import { CommunityScreen } from "./screens/CommunityScreen";
-import { HomeScreen } from "./screens/HomeScreen";
+import { BottomNav } from "./components/BottomNav";
+import { Header } from "./components/Header";
+import { GigEarnings } from "./gig/GigEarnings";
+import { GigHistory } from "./gig/GigHistory";
+import { GigHome } from "./gig/GigHome";
 import { MessagesScreen } from "./screens/MessagesScreen";
 import { NotificationsScreen } from "./screens/NotificationsScreen";
 import { PrivacyScreen } from "./screens/PrivacyScreen";
 import { ActivityScreen } from "./screens/ActivityScreen";
 import { ProfileScreen } from "./screens/ProfileScreen";
-import { RoutesScreen } from "./screens/RoutesScreen";
 import { TermsScreen } from "./screens/TermsScreen";
+import { VerificationScreen } from "./screens/VerificationScreen";
+import { DropMap } from "./components/DropMap";
 
 export default function App() {
   const user = useAuthStore((state) => state.user);
@@ -80,6 +87,19 @@ export default function App() {
     return () => document.removeEventListener("visibilitychange", onVisible);
   }, [ensureToday, hydrateFromServer]);
 
+  /* An online worker's row goes stale after 15 minutes and is then treated as
+     offline (supabase/availability.sql). Refresh it every two minutes while the
+     app is open and visible, whichever tab the worker is on. */
+  const online = useAvailabilityStore((state) => state.online);
+  useEffect(() => {
+    if (!online || !user) return undefined;
+    const tick = () => {
+      if (document.visibilityState === "visible") void useAvailabilityStore.getState().refresh();
+    };
+    const timer = window.setInterval(tick, AVAILABILITY_REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [online, user?.id]);
+
   useEffect(() => {
     if (!isTracking) return undefined;
     const timer = window.setInterval(tickElapsed, 60000);
@@ -128,6 +148,12 @@ export default function App() {
     void useCommunityStore.getState().loadBlocks();
     void useCommunityStore.getState().loadBookmarks();
     void NotificationService.initPush(user.id);
+    // The worker's jobs and pay, from the moment the app opens, not only after going online.
+    void useJobStore.getState().loadCloudJobs(user.id, useAvailabilityStore.getState().online);
+    // Still online from last time: the GPS goes with it, as it does when the switch is pressed.
+    if (useAvailabilityStore.getState().online && !useLocationStore.getState().isTracking) {
+      void useLocationStore.getState().startTracking();
+    }
 
     /* Realtime has to carry the driver's token BEFORE anything subscribes.
      *
@@ -145,6 +171,12 @@ export default function App() {
      * never created after the effect has been torn down. */
     let cancelled = false;
     let unsubscribe: Array<() => void> = [];
+    // Jobs change often across a city; one reload for a burst of changes.
+    let jobsTimer = 0;
+    const reloadJobs = () => {
+      window.clearTimeout(jobsTimer);
+      jobsTimer = window.setTimeout(() => void useJobStore.getState().loadCloudJobs(user.id, useAvailabilityStore.getState().online), 1500);
+    };
 
     void (async () => {
       /* A failure here must not take the subscriptions down with it. Realtime
@@ -166,11 +198,14 @@ export default function App() {
       SupabaseService.subscribeToTable("chat_messages", () => void loadCloudChats(user.id)),
       SupabaseService.subscribeToTable("notifications", () => void loadCloudNotifications(user.id)),
       SupabaseService.subscribeToTable("connections", () => void loadConnections(user.id)),
+      // New jobs nearby, a job taken by someone else, a shop paying for a delivery.
+      SupabaseService.subscribeToTable("jobs", reloadJobs),
       ];
     })();
 
     return () => {
       cancelled = true;
+      window.clearTimeout(jobsTimer);
       unsubscribe.forEach((fn) => fn());
     };
     /* Keyed on the id, not the object — the same trap the presence heartbeat
@@ -206,6 +241,7 @@ export default function App() {
       if (document.visibilityState !== "visible") return;
       void loadCloudNotifications(user.id);
       void loadConnections(user.id);
+      void useJobStore.getState().loadCloudJobs(user.id, useAvailabilityStore.getState().online);
     };
     const timer = window.setInterval(refresh, 20000);
     document.addEventListener("visibilitychange", refresh);
@@ -221,13 +257,78 @@ export default function App() {
       <ConsentGate />
       <Routes>
         <Route path="/auth" element={<AuthScreen />} />
+        {/* Dev-only visual preview of a screen without signing in. Vite replaces
+            import.meta.env.DEV with false in a production build, so this route is
+            removed by the bundler and can never reach a release APK. */}
+        {/* Dev-only: look at any screen without signing in. Vite replaces
+            import.meta.env.DEV with false in a production build, so these routes
+            are dropped by the bundler and can never reach a release APK. */}
+        {import.meta.env.DEV
+          ? ([
+              ["home", <GigHome />],
+              ["earnings", <GigEarnings />],
+              ["history", <GigHistory />],
+              ["community", <CommunityScreen />],
+              ["messages", <MessagesScreen />],
+              ["profile", <ProfileScreen />],
+              ["activity", <ActivityScreen />],
+              ["notifications", <NotificationsScreen />],
+              ["verify", <VerificationScreen preview />],
+              ["drop-route", (
+                <main className="page-shell">
+                  <section className="dashboard-card glass-card">
+                    <DropMap start={{ lat: 20.3553, lng: 85.8245 }} to={{ lat: 20.2893, lng: 85.8412 }} />
+                  </section>
+                </main>
+              )],
+            ] as const).map(([name, screen]) => (
+              <Route
+                key={name}
+                path={`/preview/${name}`}
+                element={
+                  <div className="app-frame">
+                    <Header title={APP_NAME} />
+                    {screen}
+                    <BottomNav />
+                  </div>
+                }
+              />
+            ))
+          : null}
         <Route path="/privacy" element={<PrivacyScreen />} />
         <Route path="/terms" element={<TermsScreen />} />
         <Route
           path="/home"
           element={
             <AppShell title={APP_NAME}>
-              <HomeScreen />
+              <GigHome />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/earnings"
+          element={
+            <AppShell title="Earnings">
+              <GigEarnings />
+            </AppShell>
+          }
+        />
+        <Route
+          path="/history"
+          element={
+            <AppShell title="History">
+              <GigHistory />
+            </AppShell>
+          }
+        />
+        {/* The old tabs, for links and notifications that still point at them. */}
+        <Route path="/jobs" element={<Navigate to="/home" replace />} />
+        <Route path="/routes" element={<Navigate to="/home" replace />} />
+        <Route
+          path="/verify"
+          element={
+            <AppShell title="Get verified">
+              <VerificationScreen />
             </AppShell>
           }
         />
@@ -236,14 +337,6 @@ export default function App() {
           element={
             <AppShell title="Community" header={false}>
               <CommunityScreen />
-            </AppShell>
-          }
-        />
-        <Route
-          path="/routes"
-          element={
-            <AppShell title="Routes" header={false}>
-              <RoutesScreen />
             </AppShell>
           }
         />

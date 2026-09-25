@@ -10,7 +10,7 @@ import { Modal } from "./ui/Modal";
 export function ConsentGate() {
   const t = useT();
   const user = useAuthStore((state) => state.user);
-  // Shared, because HomeScreen must not open its own modal in front of this one.
+  // Shared, because JobsScreen must not open its own modal in front of this one.
   const accepted = useConsentStore((state) => state.accepted);
   const accept = useConsentStore((state) => state.accept);
   const [locationAck, setLocationAck] = useState(false);
@@ -28,17 +28,17 @@ export function ConsentGate() {
     <Modal
       open
       title={t("consent_title")}
-      description={t("consent_intro")}
+      description={t("gg_consentIntro")}
     >
       <div className="consent-panel">
         <article className="consent-item">
           <MapPin size={22} />
           <div>
-            <strong>{t("consent_locationTitle")}</strong>
-            <p>{t("consent_locationBody")}</p>
+            <strong>{t("gg_consentLocTitle")}</strong>
+            <p>{t("gg_consentLocBody")}</p>
           </div>
           <label className="toggle-row">
-            <input type="checkbox" aria-label={t("consent_locationTitle")} checked={locationAck} onChange={(e) => setLocationAck(e.target.checked)} />
+            <input type="checkbox" aria-label={t("gg_consentLocTitle")} checked={locationAck} onChange={(e) => setLocationAck(e.target.checked)} />
           </label>
         </article>
 

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Waggle for customers: the indigo mark on white (Gig is white on indigo, Business white on navy). -->
+    <color name="ic_launcher_background">#FFFFFF</color>
+</resources>

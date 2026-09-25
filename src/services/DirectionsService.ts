@@ -14,6 +14,13 @@
  */
 
 const OSRM = "https://router.project-osrm.org/route/v1/driving/";
+/**
+ * Mapbox, when a key is set: the same OSRM-style answer, from a server that
+ * knows today's traffic ("driving-traffic"), free for the first 100,000 routes
+ * a month. Without a key, or if Mapbox fails, OSRM answers as before.
+ */
+const MAPBOX_TOKEN = (import.meta.env.VITE_MAPBOX_TOKEN as string | undefined) || "";
+const MAPBOX = "https://api.mapbox.com/directions/v5/mapbox/driving-traffic/";
 const TIMEOUT_MS = 9000;
 
 export interface DirectionStep {
@@ -24,13 +31,17 @@ export interface DirectionStep {
   /** Street name, when the road has one. */
   road: string;
   metres: number;
+  /** Where the manoeuvre happens, for "in 200 m, turn left". */
+  at?: [number, number];
 }
 
 export interface Directions {
   positions: [number, number][];
   km: number;
-  /** Free-flow minutes. No traffic model exists behind this number. */
+  /** Minutes: free-flow from OSRM, with today's traffic from Mapbox (see `traffic`). */
   minutes: number;
+  /** True when `minutes` includes live traffic. */
+  traffic?: boolean;
   steps: DirectionStep[];
   /**
    * Average speed the driver has actually achieved on roads near this route,
@@ -52,14 +63,22 @@ export async function directionsBetween(
   to: { lat: number; lng: number },
 ): Promise<Directions[] | null> {
   const coords = `${from.lng.toFixed(6)},${from.lat.toFixed(6)};${to.lng.toFixed(6)},${to.lat.toFixed(6)}`;
+  if (MAPBOX_TOKEN) {
+    const viaMapbox = await fetchRoutes(
+      `${MAPBOX}${coords}?overview=full&geometries=geojson&steps=true&alternatives=true&access_token=${encodeURIComponent(MAPBOX_TOKEN)}`,
+      true,
+    );
+    if (viaMapbox) return viaMapbox;
+  }
+  return fetchRoutes(`${OSRM}${coords}?overview=full&geometries=geojson&steps=true&alternatives=3`, false);
+}
+
+async function fetchRoutes(url: string, traffic: boolean): Promise<Directions[] | null> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
 
   try {
-    const res = await fetch(
-      `${OSRM}${coords}?overview=full&geometries=geojson&steps=true&alternatives=3`,
-      { signal: controller.signal },
-    );
+    const res = await fetch(url, { signal: controller.signal });
     if (!res.ok) return null;
     const body = await res.json();
     if (body?.code !== "Ok" || !body.routes?.length) return null;
@@ -77,6 +96,7 @@ export async function directionsBetween(
         modifier: s?.maneuver?.modifier ?? undefined,
         road: s?.name || "",
         metres: Math.round(s?.distance ?? 0),
+        at: Array.isArray(s?.maneuver?.location) ? [s.maneuver.location[1], s.maneuver.location[0]] as [number, number] : undefined,
       }))
       // OSRM emits zero-length steps at junctions; they read as noise in a list.
       .filter((s: DirectionStep, i: number, all: DirectionStep[]) =>
@@ -88,6 +108,7 @@ export async function directionsBetween(
         km: Math.round((route.distance ?? 0) / 100) / 10,
         minutes: Math.max(1, Math.round((route.duration ?? 0) / 60)),
         steps,
+        traffic,
       };
     };
 

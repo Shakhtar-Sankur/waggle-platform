@@ -6,7 +6,20 @@ import type { WorkApp } from "../types";
  * Named for the waggle dance — how a returning bee tells the hive where it has
  * been, which is the thing this app does between drivers.
  */
-export const APP_NAME = "Waggle";
+/* "Waggle Gig" from September 2026: the gig workers' app in a family that will
+   also have Waggle Business for shops and a customer app. The qualifier says
+   whose app this is. The Play package stays com.gigzen.waggle — it is permanent
+   once uploaded, and the name is not. */
+/**
+ * Which app this build is. The same code builds Waggle Gig (workers) and Waggle
+ * Business (shops and restaurants): `npm run dev:business` / `build:business`
+ * set VITE_APP_FLAVOR=business through .env.business, and the Waggle customer app
+ * sets VITE_APP_FLAVOR=waggle through .env.waggle. Anything else is Gig.
+ */
+export const APP_FLAVOR: "gig" | "business" | "waggle" =
+  import.meta.env.VITE_APP_FLAVOR === "business" ? "business" : import.meta.env.VITE_APP_FLAVOR === "waggle" ? "waggle" : "gig";
+
+export const APP_NAME = APP_FLAVOR === "business" ? "Waggle Business" : APP_FLAVOR === "waggle" ? "Waggle" : "Waggle Gig";
 
 /**
  * The full name, for the places that need the company attached: the Play Store

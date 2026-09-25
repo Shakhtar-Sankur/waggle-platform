@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The launch animation: the point draws the W.
+
+    One movement, start to end. The node travels the whole letter along the
+    exact path the mark is made of, and the stroke appears behind it as it
+    goes — so the app opens by drawing its own logo rather than by revealing
+    a finished one.
+
+    The two animations below are the same motion described twice, and they
+    have to stay in step:
+
+      - pinGroup moves along `pathData`, which is the SAME path data as the
+        run in ic_launcher_waggle_anim.xml. If one is edited and the other is
+        not, the point drifts off the line it is supposed to be drawing.
+      - run reveals itself with trimPathEnd 0 to 1 over the same duration and
+        the same interpolator, so the stroke ends exactly where the point is.
+
+    Both use a linear interpolator ON PURPOSE. Easing would desynchronise
+    them: trimPathEnd eases along the path's LENGTH while a motion path eases
+    along its own parameterisation, and the two are not the same function, so
+    the point would run ahead of the ink in the curved sections and lag in the
+    straight ones. Linear keeps the dot on the tip of the stroke throughout.
+
+    560ms, under the 1000ms Android allows a splash icon before it truncates
+    the drawable, and inside the 600ms windowSplashScreenAnimationDuration in
+    values/styles.xml. Those two numbers have to stay in step: the theme value
+    is how long the system WAITS, and a drawable that runs longer gets cut off
+    mid-movement.
+-->
+<animated-vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:drawable="@drawable/ic_launcher_waggle_anim">
+
+    <!-- The point travels the letter. -->
+    <target android:name="pinGroup">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyXName="translateX"
+                android:propertyYName="translateY"
+                android:pathData="M11,15 C 12.5,30 15,35 17.5,35 C 20,35 22.5,26 24,22 C 25.5,26 28,35 30.5,35 C 33,34 35,28 36,18"
+                android:duration="560"
+                android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+
+    <!-- The ink follows it. -->
+    <target android:name="run">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:animation">
+            <objectAnimator
+                android:propertyName="trimPathEnd"
+                android:valueFrom="0"
+                android:valueTo="1"
+                android:duration="560"
+                android:interpolator="@android:interpolator/linear" />
+        </aapt:attr>
+    </target>
+</animated-vector>

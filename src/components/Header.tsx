@@ -1,10 +1,11 @@
-import { Bell, Settings } from "lucide-react";
+import { Bell, MessageCircle, Settings } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { APP_NAME } from "../config/constants";
 import { useT } from "../i18n";
 import { BeeMark, MARK_SIZE, Wordmark } from "./Wordmark";
 import { useNotificationStore } from "../stores/useNotificationStore";
+import { useChatStore } from "../stores/useChatStore";
 import { Button } from "./ui/Button";
 
 interface HeaderProps {
@@ -20,6 +21,7 @@ export function Header({ title }: HeaderProps) {
   const unread = useNotificationStore(
     (state) => state.notifications.filter((notification) => !notification.read).length,
   );
+  const unreadChats = useChatStore((state) => state.threads.filter((thread) => thread.unreadCount > 0).length);
 
   // The header starts transparent on the page background and only takes on a
   // surface once content has scrolled under it — so at rest the screen reads as
@@ -52,6 +54,8 @@ export function Header({ title }: HeaderProps) {
     Notifications: t("notif_title"),
     Community: t("nav_community"),
     Routes: t("nav_routes"),
+    Earnings: t("gg_navEarnings"),
+    History: t("gg_navHistory"),
   };
 
   const isHome = title === APP_NAME;
@@ -80,6 +84,13 @@ export function Header({ title }: HeaderProps) {
           </h1>
         )}
         <div className="header-actions">
+          {/* Messages left the bottom bar for Earnings and History; it lives here, on every screen. */}
+          {title !== "Messages" ? (
+            <Button variant="ghost" size="icon" className="header-icon" onClick={() => navigate("/messages")} aria-label={t("nav_messages")}>
+              <MessageCircle size={19} />
+              {unreadChats > 0 ? <span className="header-dot" /> : null}
+            </Button>
+          ) : null}
           <Button
             variant="ghost"
             size="icon"
