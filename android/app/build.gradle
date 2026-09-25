@@ -85,8 +85,10 @@ android {
         // 19: parcel jobs from Waggle Send (both phones while carrying it, a
         // parcel photo before pickup); offers pause while the screen is off and
         // come back after two minutes instead of vanishing.
-        versionCode 19
-        versionName "1.6.1"
+        // 20: English only; the rider's rating (average and breakdown) on the
+        // rider card; "paid online, collect nothing" on an order paid online.
+        versionCode 20
+        versionName "1.6.2"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.

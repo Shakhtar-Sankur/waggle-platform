@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Release signing reuses Waggle Gig's upload key: android/local.properties
+// holds the keystore name and passwords (gitignored), so they live in one place.
+def gigProperties = new Properties()
+def gigPropertiesFile = rootProject.file('../android/local.properties')
+if (gigPropertiesFile.exists()) {
+    gigPropertiesFile.withReader('UTF-8') { reader -> gigProperties.load(reader) }
+}
+def gigKeystore = gigProperties.getProperty('release.keystore')
+
 android {
     namespace = "com.gigzen.waggle.business"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -14,8 +23,10 @@ android {
         // 4: fixes 1.1.1 reloading everything about 450 times a second; the live
         // map of riders; Rider hub notices and help requests for admins.
         // 5: the Waggle Send fee switch for admins (waived until Gigzen's UPI).
-        versionCode 5
-        versionName "1.1.3"
+        // 6: rating riders on delivered jobs, "paid online" on orders; for admins,
+        // riders' ratings and the online payment switch. First release-signed build.
+        versionCode 6
+        versionName "1.2.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -23,8 +34,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (gigKeystore != null) {
+                storeFile rootProject.file("../android/app/${gigKeystore}")
+                storePassword gigProperties.getProperty('release.keystore.password')
+                keyAlias gigProperties.getProperty('release.key.alias')
+                keyPassword gigProperties.getProperty('release.key.password')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (gigKeystore != null) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }

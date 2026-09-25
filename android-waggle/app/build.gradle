@@ -1,5 +1,14 @@
 apply plugin: 'com.android.application'
 
+// Release signing reuses Waggle Gig's upload key: android/local.properties
+// holds the keystore name and passwords (gitignored), so they live in one place.
+def gigProperties = new Properties()
+def gigPropertiesFile = rootProject.file('../android/local.properties')
+if (gigPropertiesFile.exists()) {
+    gigPropertiesFile.withReader('UTF-8') { reader -> gigProperties.load(reader) }
+}
+def gigKeystore = gigProperties.getProperty('release.keystore')
+
 android {
     namespace = "com.gigzen.waggle.app"
     compileSdk = rootProject.ext.compileSdkVersion
@@ -11,8 +20,10 @@ android {
         // 3: smooth live rider on the road, ETA countdown, "2 minutes away".
         // 4: Waggle Send: book a parcel, pay the rider directly, track it and
         // share the recipient's link.
-        versionCode 4
-        versionName "1.0.3"
+        // 5: rating the rider, the rider's average on tracking, paying an order
+        // online (when switched on). First release-signed build.
+        versionCode 5
+        versionName "1.1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
@@ -20,8 +31,21 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    signingConfigs {
+        release {
+            if (gigKeystore != null) {
+                storeFile rootProject.file("../android/app/${gigKeystore}")
+                storePassword gigProperties.getProperty('release.keystore.password')
+                keyAlias gigProperties.getProperty('release.key.alias')
+                keyPassword gigProperties.getProperty('release.key.password')
+            }
+        }
+    }
     buildTypes {
         release {
+            if (gigKeystore != null) {
+                signingConfig signingConfigs.release
+            }
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
