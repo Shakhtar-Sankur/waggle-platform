@@ -33,7 +33,6 @@ export function GigHome() {
   const user = useAuthStore((s) => s.user);
   const jobs = useJobStore((s) => s.jobs);
   const dismissed = useJobStore((s) => s.dismissed);
-  const declineJob = useJobStore((s) => s.declineJob);
   const verification = useVerificationStore((s) => s.verification);
   const loadVerification = useVerificationStore((s) => s.load);
   const online = useAvailabilityStore((s) => s.online);
@@ -49,7 +48,7 @@ export function GigHome() {
   const verified = verification?.status === "verified";
   const running = jobs.filter((j) => j.status === "accepted" || j.status === "picked_up");
   const offers = online && verified && running.length === 0
-    ? jobs.filter((j) => j.status === "open" && !dismissed.includes(j.id)).slice(0, 3)
+    ? jobs.filter((j) => j.status === "open" && !dismissed.includes(j.id) && !isSnoozed(j.id, now)).slice(0, 3)
     : [];
   const doneToday = jobs.filter((j) => j.status === "completed").length;
 
@@ -74,14 +73,20 @@ export function GigHome() {
     // Again whenever a notification arrives: a zone alert shows here the moment Gigzen posts it.
   }, [here.fallback, Math.round(here.lat * 50), Math.round(here.lng * 50), notificationCount]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Offers time out on this phone; the job stays open for other riders.
+  // Offers time out on this phone; the job stays open for other riders. The
+  // clock runs only while the rider can see the screen: an offer that arrived
+  // while the app was in the background starts its 45 seconds when they look.
   useEffect(() => {
-    if (!offers.length) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    const timer = window.setInterval(() => {
+      if (document.visibilityState !== "visible") pauseOffers(1000);
+      setNow(Date.now());
+    }, 1000);
     return () => window.clearInterval(timer);
-  }, [offers.length]);
+  }, []);
   useEffect(() => {
-    for (const job of offers) if (offerSecondsLeft(job.id, now) <= 0) declineJob(job.id);
+    // Timed out: rested for two minutes, then offered again if nobody took it.
+    // Only Skip hides an offer for good (declineJob).
+    for (const job of offers) if (offerSecondsLeft(job.id, now) <= 0) snoozeOffer(job.id);
   }, [now]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const alert = notices.find((n) => n.kind === "zone_alert");
@@ -202,6 +207,27 @@ export function GigHome() {
 /* ------------------------------------------------------------------ offer timer */
 
 const firstSeen = new Map<string, number>();
+/** Offers that timed out, and when they may come back. */
+const snoozed = new Map<string, number>();
+const SNOOZE_MS = 2 * 60 * 1000;
+
+function snoozeOffer(jobId: string) {
+  firstSeen.delete(jobId);
+  snoozed.set(jobId, Date.now() + SNOOZE_MS);
+}
+
+function isSnoozed(jobId: string, now: number) {
+  const until = snoozed.get(jobId);
+  if (until == null) return false;
+  if (until > now) return true;
+  snoozed.delete(jobId);
+  return false;
+}
+
+/** The screen is hidden: hold every offer's clock where it is. */
+function pauseOffers(ms: number) {
+  for (const [id, at] of firstSeen) firstSeen.set(id, at + ms);
+}
 
 /** Seconds left on an offer, counted from when this phone first showed it. */
 export function offerSecondsLeft(jobId: string, now = Date.now()): number {

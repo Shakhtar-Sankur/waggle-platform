@@ -238,7 +238,7 @@ export function JobsScreen() {
         </div>
         <p className="micro-copy" dir="auto">{t("home_rateLine", { rate: currencyPrecise(baseRate) })}</p>
         <div className="tracking-actions">
-          <Button onClick={isTracking ? stopTracking : startTracking}>
+          <Button onClick={() => (isTracking ? stopTracking() : void startTracking())}>
             {isTracking ? t("home_stopTracking") : t("home_startTracking")}
           </Button>
         </div>

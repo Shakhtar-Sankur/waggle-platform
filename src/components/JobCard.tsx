@@ -1,9 +1,10 @@
-import { CheckCircle2, Clock, MapPin, Navigation, Phone, Siren, Store } from "lucide-react";
+import { Camera, CheckCircle2, Clock, MapPin, Navigation, Package, Phone, Siren, Store } from "lucide-react";
+import { MediaService } from "../services/MediaService";
 import { useEffect, useState, type FormEvent } from "react";
 import { NavMap } from "../maps/NavMap";
 import { useJobStore, type StepAnswer } from "../stores/useJobStore";
 import { SupabaseService } from "../services/SupabaseService";
-import { GigService, type ShopContact } from "../gig/GigService";
+import { GigService, type SendDetails, type ShopContact } from "../gig/GigService";
 import { kmBetween } from "../gig/gigFormat";
 import type { Job } from "../types";
 import { currency, km } from "../utils/format";
@@ -50,6 +51,9 @@ export function JobCard({
   const [message, setMessage] = useState("");
   const [details, setDetails] = useState<{ address: string; note: string | null; lat: number; lng: number } | null>(null);
   const [shop, setShop] = useState<ShopContact | null>(null);
+  const [parcel, setParcel] = useState<SendDetails | null>(null);
+  const [shooting, setShooting] = useState(false);
+  const isSend = job.source === "send";
   const address = details?.address ?? null;
   const holding = job.status === "accepted" || job.status === "picked_up";
 
@@ -59,8 +63,24 @@ export function JobCard({
     let live = true;
     void SupabaseService.loadJobDetails(job.id).then((d) => live && setDetails(d));
     if (job.businessId) void GigService.shopContact(job.id).then((s) => live && setShop(s)).catch(() => undefined);
+    if (isSend) void GigService.sendDetails(job.id).then((d) => live && setParcel(d)).catch(() => undefined);
     return () => { live = false; };
-  }, [job.id, holding, job.businessId]);
+  }, [job.id, holding, job.businessId, isSend]);
+
+  async function photograph() {
+    const picked = await MediaService.pickImage();
+    if (!picked) return;
+    setShooting(true);
+    setMessage("");
+    try {
+      await GigService.uploadParcelPhoto(job.id, picked.full);
+      setParcel((p) => (p ? { ...p, photoTaken: true } : p));
+    } catch (err) {
+      setMessage(err instanceof Error ? err.message : t("job_stepError"));
+    } finally {
+      setShooting(false);
+    }
+  }
 
   const navigateTo =
     job.status === "accepted" && job.pickupLat != null && job.pickupLng != null ? { lat: job.pickupLat, lng: job.pickupLng }
@@ -98,7 +118,7 @@ export function JobCard({
 
       <div className="job-card-top">
         <div>
-          <span className="pill"><Store size={14} /> {job.businessId ? t("gg_shopJob") : "Waggle"}</span>
+          <span className="pill">{isSend ? <><Package size={14} /> {t("gg_parcelJob")}</> : <><Store size={14} /> {job.businessId ? t("gg_shopJob") : "Waggle"}</>}</span>
           <h4>{job.title}</h4>
         </div>
         <strong className="gg-fare">{currency(job.payout)}<small>{t("gg_allYours")}</small></strong>
@@ -132,6 +152,20 @@ export function JobCard({
         </div>
       </div>
       {job.note && holding ? <p className="job-note">{job.note}</p> : null}
+      {isSend && holding && parcel ? (
+        <div className="gg-parcel">
+          <div className="gg-parcel-people">
+            <a href={`tel:${parcel.pickupPhone}`}><Phone size={14} /> <span><small>{t("gg_parcelFrom")}</small>{parcel.pickupName}</span></a>
+            <a href={`tel:${parcel.dropPhone}`}><Phone size={14} /> <span><small>{t("gg_parcelTo")}</small>{parcel.dropName}</span></a>
+          </div>
+          {job.status === "accepted" ? <p className="gg-parcel-collect">{t("gg_parcelCollect", { fare: currency(parcel.fare), name: parcel.pickupName })}</p> : null}
+          {job.status === "accepted" ? (
+            parcel.photoTaken
+              ? <p className="gg-parcel-photo is-done"><CheckCircle2 size={15} /> {t("gg_parcelPhotoDone")}</p>
+              : <button type="button" className="gg-parcel-photo" onClick={() => void photograph()} disabled={shooting}><Camera size={16} /> {shooting ? t("gg_parcelPhotoSaving") : t("gg_parcelPhoto")}</button>
+          ) : null}
+        </div>
+      ) : null}
       {details?.note && details.note !== job.note && job.status === "picked_up" ? <p className="job-note">{details.note}</p> : null}
       {/* Turn-by-turn to the shop, then to the customer. */}
       {job.status === "accepted" && job.pickupLat != null && job.pickupLng != null ? (
@@ -181,7 +215,7 @@ export function JobCard({
             {job.status === "accepted" ? (
               <Button type="button" variant="outline" disabled={busy} onClick={() => void run(() => releaseJob(job.id))}>{t("job_handBack")}</Button>
             ) : null}
-            <Button type="submit" disabled={busy || code.length !== 4}>
+            <Button type="submit" disabled={busy || code.length !== 4 || (isSend && job.status === "accepted" && !parcel?.photoTaken)}>
               {t(job.status === "accepted" ? "job_confirmPickup" : "job_confirmDelivery")}
             </Button>
           </div>

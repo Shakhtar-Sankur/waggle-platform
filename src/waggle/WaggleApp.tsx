@@ -1,4 +1,5 @@
 import { Navigate, Route, Routes } from "react-router-dom";
+import { SendPage, SendTrackPage } from "./WaggleSend";
 import { Toasts } from "../components/Toasts";
 import { AuthScreen } from "../screens/AuthScreen";
 import { useAuthStore } from "../stores/useAuthStore";
@@ -32,6 +33,8 @@ export default function WaggleApp() {
         <Route path="/shop/:id" element={<ShopPage />} />
         <Route path="/order/:token" element={<TrackPage />} />
         <Route path="/group/:token" element={<GroupPage />} />
+        <Route path="/send" element={<SendPage />} />
+        <Route path="/send/:token" element={<SendTrackPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </>

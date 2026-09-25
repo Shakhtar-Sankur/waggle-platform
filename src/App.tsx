@@ -152,7 +152,7 @@ export default function App() {
     void useJobStore.getState().loadCloudJobs(user.id, useAvailabilityStore.getState().online);
     // Still online from last time: the GPS goes with it, as it does when the switch is pressed.
     if (useAvailabilityStore.getState().online && !useLocationStore.getState().isTracking) {
-      void useLocationStore.getState().startTracking();
+      void useLocationStore.getState().startTracking({ quiet: true });
     }
 
     /* Realtime has to carry the driver's token BEFORE anything subscribes.

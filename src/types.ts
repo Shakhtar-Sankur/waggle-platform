@@ -131,6 +131,10 @@ export interface Job {
   status: JobStatus;
   /** Set on Waggle jobs posted by a business through Waggle Business. */
   businessId?: string;
+  /** Where the job came from: a shop in the app, its API, a customer order, or a customer's Send. */
+  source?: "app" | "api" | "order" | "send";
+  /** The order or Send code the job carries. */
+  externalRef?: string;
   note?: string;
   acceptedAt?: number;
   pickedUpAt?: number;

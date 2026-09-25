@@ -26,7 +26,8 @@ interface LocationState {
   /** Rolling this-week totals — drive the Strava-style challenge progress. */
   weekDistanceKm: number;
   weekEarnings: number;
-  startTracking: () => Promise<void>;
+  /** `quiet`: resuming after the app reopened, so no "You're online" toast. */
+  startTracking: (options?: { quiet?: boolean }) => Promise<void>;
   stopTracking: () => void;
   updatePosition: (point: LocationPoint) => void;
   /**
@@ -195,7 +196,7 @@ export const useLocationStore = create<LocationState>()(
       activeWeek: weekKey(),
       weekDistanceKm: 0,
       weekEarnings: 0,
-      startTracking: async () => {
+      startTracking: async (options) => {
         try {
           const point = await LocationService.currentPosition();
 
@@ -259,9 +260,11 @@ export const useLocationStore = create<LocationState>()(
             activeDate: todayKey(),
           });
           syncLocation(point, 0);
-          useNotificationStore
-            .getState()
-            .push(translate("gg_gpsOn"), translate("gg_gpsOnBody"), "location");
+          if (!options?.quiet) {
+            useNotificationStore
+              .getState()
+              .push(translate("gg_gpsOn"), translate("gg_gpsOnBody"), "location");
+          }
         } catch (error) {
           set({ permission: "denied", isTracking: false });
           useNotificationStore

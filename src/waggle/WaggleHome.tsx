@@ -7,6 +7,8 @@ import { rupees, WgFrame } from "./common";
 import { LocationSheet } from "./LocationSheet";
 import { useWaggleLocation } from "./useWaggleLocation";
 import { WaggleService, type NearbyShop, type Segment } from "./WaggleService";
+import { SendService, type MySend } from "./SendService";
+import { useAuthStore } from "../stores/useAuthStore";
 
 type Tab = Segment | "send" | "drive";
 type Filter = "open" | "rated" | "free" | "veg" | "fast";
@@ -78,11 +80,13 @@ export function HomePage() {
           ))}
         </nav>
 
-        {tab === "send" || tab === "drive" ? (
+        {tab === "send" ? (
+          <SendTab />
+        ) : tab === "drive" ? (
           <section className="wg-card wg-soon">
-            <span className="wg-soon-icon">{tab === "send" ? <Truck size={28} /> : <Bike size={28} />}</span>
-            <h2>{t(tab === "send" ? "wg_sendTitle" : "wg_driveTitle")}</h2>
-            <p>{t(tab === "send" ? "wg_sendSoon" : "wg_driveSoon")}</p>
+            <span className="wg-soon-icon"><Bike size={28} /></span>
+            <h2>{t("wg_driveTitle")}</h2>
+            <p>{t("wg_driveSoon")}</p>
           </section>
         ) : !place ? (
           <section className="wg-card wg-empty">
@@ -154,5 +158,49 @@ function ShopCard({ shop }: { shop: NearbyShop }) {
         </span>
       </div>
     </Link>
+  );
+}
+
+/** The Send tab: book a parcel, and the customer's recent Sends. */
+function SendTab() {
+  const t = useT();
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const [mine, setMine] = useState<MySend[]>([]);
+  useEffect(() => {
+    if (!user) return;
+    let live = true;
+    SendService.mine().then((m) => live && setMine(m)).catch(() => undefined);
+    return () => { live = false; };
+  }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <>
+      <section className="wg-card sd-hero">
+        <span className="wg-soon-icon"><Truck size={28} /></span>
+        <h2>{t("sd_heroTitle")}</h2>
+        <p>{t("sd_heroSub")}</p>
+        <ul className="sd-points">
+          <li>{t("sd_point1")}</li>
+          <li>{t("sd_point2")}</li>
+          <li>{t("sd_point3")}</li>
+        </ul>
+        <button type="button" className="wg-btn wg-btn-primary wg-btn-block" onClick={() => navigate("/send")}>{t("sd_start")}</button>
+      </section>
+      {mine.length ? (
+        <section className="wg-card">
+          <h2 className="wg-h2">{t("sd_yourSends")}</h2>
+          <ul className="sd-mine">
+            {mine.slice(0, 8).map((s) => (
+              <li key={s.token}>
+                <Link to={`/send/${s.token}`}>
+                  <span><b>{s.dropName}</b><small>{s.pickupArea} → {s.dropArea} · #{s.code}</small></span>
+                  <em className={`is-${s.status}`}>{t(`sd_st_${s.status}` as TKey)}</em>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
   );
 }
