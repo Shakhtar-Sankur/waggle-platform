@@ -110,7 +110,7 @@ export const LANGUAGES: LanguageOption[] = [
 const en = {
   sv_collapseSheet: "Hide panel", sv_expandSheet: "Show panel",
   sv_friendsNearby: "{count} nearby",
-  sv_friendsTab: "Friends", sv_friendsSharing: "{count} sharing right now", settings_grpRegion: "Region & language", settings_grpVehicle: "Your vehicle", settings_grpWork: "Work & earnings", settings_grpPrivacy: "Privacy", settings_currencyAuto: "Set from your location. Turn off auto to choose.",
+  sv_friendsTab: "Friends", sv_friendsSharing: "{count} sharing right now", settings_grpRegion: "Region", settings_grpVehicle: "Your vehicle", settings_grpWork: "Work & earnings", settings_grpPrivacy: "Privacy", settings_currencyAuto: "Set from your location. Turn off auto to choose.",
   wa_photoReady: "Photo ready to send", wa_removePhoto: "Remove photo",
   wa_reply: "Reply", wa_react: "React", wa_replyingTo: "Replying to {name}", wa_cancelReply: "Cancel reply", wa_originalGone: "Original message deleted", wa_reactions: "Reactions",
     fb_compose: "Write a post",
@@ -1426,7 +1426,7 @@ const en = {
   income_emptyBody: "Tap Start Tracking to begin a delivery session — your live income and earnings will appear here in real time.",
   profile_whichApp: "Which app are you working for now?",
   profile_settings: "Settings",
-  profile_settingsSub: "Language, vehicle, alerts, privacy",
+  profile_settingsSub: "Region, vehicle, alerts, privacy",
   profile_maintenance: "Vehicle Maintenance",
   profile_achievements: "Achievements",
   profile_earningsReport: "Earnings Report",
@@ -5954,7 +5954,14 @@ export const useLangStore = create<LangState>()(
       applyLang: (lang) => set({ lang }),
       setAutoRegion: (autoRegion) => set({ autoRegion }),
     }),
-    { name: "masaya_lang" },
+    {
+      name: "masaya_lang",
+      // English only for now: the Waggle screens are written in English and the
+      // other dictionaries predate them. A phone that picked another language in
+      // an older build is brought back to English; the dictionaries stay for later.
+      version: 1,
+      migrate: (saved) => ({ ...(saved as Partial<LangState>), lang: "en" as Lang }),
+    },
   ),
 );
 
