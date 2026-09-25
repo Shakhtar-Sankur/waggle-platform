@@ -1206,6 +1206,17 @@ export const BusinessService = {
     await rpc("submit_payment", { p_amount_paise: Math.round(amountRupees * 100), p_utr: utr, p_invoice: invoiceId ?? null });
   },
 
+  /** The Waggle Send fee: what it is, and whether customers pay it yet. */
+  async sendFee(): Promise<{ live: boolean; rupees: number; upiId: string | null }> {
+    const { data, error } = await need().from("company_settings").select("send_fee_live, send_fee_paise, upi_id").maybeSingle();
+    if (error || !data) return { live: false, rupees: 15, upiId: null };
+    return { live: Boolean(data.send_fee_live), rupees: Number(data.send_fee_paise ?? 1500) / 100, upiId: data.upi_id ?? null };
+  },
+
+  async setSendFee(live: boolean, rupeesAmount?: number): Promise<void> {
+    await rpc("admin_set_send_fee", { p_live: live, p_paise: rupeesAmount == null ? null : Math.round(rupeesAmount * 100) });
+  },
+
   async company(): Promise<Company | null> {
     const { data, error } = await need().from("company_settings").select("*").maybeSingle();
     if (error || !data) return null;
