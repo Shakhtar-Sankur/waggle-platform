@@ -13,8 +13,9 @@ android {
         // for admins.
         // 4: fixes 1.1.1 reloading everything about 450 times a second; the live
         // map of riders; Rider hub notices and help requests for admins.
-        versionCode 4
-        versionName "1.1.2"
+        // 5: the Waggle Send fee switch for admins (waived until Gigzen's UPI).
+        versionCode 5
+        versionName "1.1.3"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
