@@ -394,8 +394,17 @@ inspector_port = 8083
 # The Deno major version to use.
 deno_version = 2
 
-# [edge_runtime.secrets]
-# secret_key = "env(SECRET_VALUE)"
+# Local values live in supabase/.env (gitignored). In production they are set
+# with `supabase secrets set`, never here.
+[edge_runtime.secrets]
+RAZORPAY_KEY_ID = "env(RAZORPAY_KEY_ID)"
+RAZORPAY_KEY_SECRET = "env(RAZORPAY_KEY_SECRET)"
+RAZORPAY_WEBHOOK_SECRET = "env(RAZORPAY_WEBHOOK_SECRET)"
+RAZORPAY_API = "env(RAZORPAY_API)"
+
+# Razorpay calls this with its own signature, not a Supabase token.
+[functions.pay-webhook]
+verify_jwt = false
 
 [analytics]
 enabled = true

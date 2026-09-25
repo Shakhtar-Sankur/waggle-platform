@@ -11798,6 +11798,19 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
 .gg-facts > div { display: grid; grid-template-columns: 110px 1fr; gap: 8px; font-size: 13px; }
 .gg-facts dt { color: #6b7280; }
 .gg-facts dd { margin: 0; font-weight: 600; overflow-wrap: anywhere; }
+/* ---- Online payment ---- */
+.wg-payonline { display: grid; gap: 10px; border: 1px solid #c7d2fe; }
+.wg-payonline strong { display: flex; align-items: center; gap: 8px; }
+.wg-payonline small { display: block; margin-top: 2px; color: #64748b; }
+.wg-paid { display: flex; align-items: center; gap: 12px; background: #ecfdf5; color: #065f46; }
+.wg-paid span { display: grid; }
+.wg-paid small { color: #047857; }
+.gg-paidonline { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; padding: 10px 12px; border-radius: 12px; background: #ecfdf5; color: #065f46; font-weight: 700; font-size: 13px; }
+.biz-total.is-paid span { color: #047857; }
+.biz-op-shop { display: grid; gap: 6px; }
+.biz-op-row { display: flex; gap: 8px; }
+.biz-op-row input { flex: 1; min-width: 0; padding: 8px 10px; border: 1px solid #e2e8f0; border-radius: 10px; font: inherit; }
+
 /* ---- Phone sign-in ---- */
 .wg-otp { max-width: 440px; margin: 0 auto; }
 .wg-otp-card { display: grid; gap: 14px; padding: 24px 20px; }
