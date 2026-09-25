@@ -1,4 +1,4 @@
-import { AlertTriangle, LocateFixed, Megaphone, MessageSquareReply, ShieldAlert } from "lucide-react";
+import { AlertTriangle, LocateFixed, Megaphone, MessageSquareReply, Package, ShieldAlert } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "../components/ui/Button";
 import { useT } from "../i18n";
@@ -7,6 +7,51 @@ import { rupees } from "./BusinessScreens";
 import { BusinessService, type AdminNotice, type AdminTicket, type NoticeKind } from "./BusinessService";
 
 const when = (iso: string) => new Date(iso).toLocaleString([], { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+
+/**
+ * The Waggle Send fee. Recorded on every Send from day one, charged only once
+ * Gigzen has its own UPI: turning it on without one is refused by the database.
+ */
+export function SendFeeCard() {
+  const t = useT();
+  const [fee, setFee] = useState<{ live: boolean; rupees: number; upiId: string | null } | null>(null);
+  const [amount, setAmount] = useState("15");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  const load = () => BusinessService.sendFee().then((f) => { setFee(f); setAmount(String(f.rupees)); }).catch(() => undefined);
+  useEffect(() => { void load(); }, []);
+  async function save(live: boolean) {
+    setBusy(true);
+    setError("");
+    try {
+      await BusinessService.setSendFee(live, Number(amount));
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("biz_errGeneric"));
+    } finally {
+      setBusy(false);
+    }
+  }
+  if (!fee) return null;
+  return (
+    <section className="biz-card">
+      <div className="biz-card-head">
+        <strong><Package size={16} /> {t("bx_sendFeeTitle")}</strong>
+        <span className={`biz-status biz-status-${fee.live ? "verified" : "pending"}`}>{t(fee.live ? "bx_sendFeeLive" : "bx_sendFeeWaived")}</span>
+      </div>
+      <p className="biz-help">{t(fee.live ? "bx_sendFeeLiveHelp" : "bx_sendFeeWaivedHelp", { upi: fee.upiId ?? "—" })}</p>
+      <label className="biz-field"><span>{t("bx_sendFeeAmount")}</span>
+        <input value={amount} onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ""))} inputMode="decimal" />
+      </label>
+      {!fee.upiId ? <p className="biz-error">{t("bx_sendFeeNeedsUpi")}</p> : null}
+      {error ? <p className="biz-error" role="alert">{error}</p> : null}
+      <div className="biz-decide">
+        <Button disabled={busy || fee.live || !fee.upiId} onClick={() => void save(true)}>{t("bx_sendFeeTurnOn")}</Button>
+        <Button variant="outline" disabled={busy || !fee.live} onClick={() => void save(false)}>{t("bx_sendFeeTurnOff")}</Button>
+      </div>
+    </section>
+  );
+}
 
 /**
  * Gigzen's side of the Rider hub: post news, a safety notice or a zone alert
