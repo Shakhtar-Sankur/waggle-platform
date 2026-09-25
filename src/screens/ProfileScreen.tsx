@@ -9,7 +9,7 @@ import { Modal } from "../components/ui/Modal";
 import { GigzenByline } from "../components/GigzenMark";
 import { Wordmark } from "../components/Wordmark";
 import { COMPANY_SITE } from "../config/constants";
-import { FULL_COVERAGE, LANGUAGES, coverageOf, useLangStore, useT, type Lang } from "../i18n";
+import { useLangStore, useT } from "../i18n";
 import { resolveCountryForLocation } from "../i18n/region";
 import { useBrandBand } from "../hooks/useBrandBand";
 import { MediaService } from "../services/MediaService";
@@ -254,8 +254,6 @@ function SettingsModal({
   const t = useT();
   const notifPrefs = useNotificationStore((state) => state.prefs);
   const setNotifPref = useNotificationStore((state) => state.setPref);
-  const lang = useLangStore((state) => state.lang);
-  const setLang = useLangStore((state) => state.setLang);
   const autoRegion = useLangStore((state) => state.autoRegion);
   const setAutoRegion = useLangStore((state) => state.setAutoRegion);
   const [vehicleType, setVehicleType] = useState<VehicleType>(profile.vehicleType);
@@ -301,21 +299,6 @@ function SettingsModal({
           <label className="toggle-row">
             <span>{t("settings_autoRegion")}</span>
             <input type="checkbox" checked={autoRegion} onChange={(event) => setAutoRegion(event.target.checked)} />
-          </label>
-          <label>
-            <span>{t("settings_language")}</span>
-            <select value={lang} onChange={(event) => setLang(event.target.value as Lang)}>
-              {/* Twenty-seven of the forty-three cover the core screens and
-                  fall back to English for the rest. Saying so here costs one
-                  clause and stops the surprise happening after the choice. */}
-              {LANGUAGES.map((l) => (
-                <option key={l.code} value={l.code}>
-                  {coverageOf(l.code) < FULL_COVERAGE
-                    ? `${l.label} — ${t("settings_langPartial")}`
-                    : l.label}
-                </option>
-              ))}
-            </select>
           </label>
           <label>
             <span>{t("settings_currency")}</span>
