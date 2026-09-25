@@ -11904,3 +11904,56 @@ p, .wa-bubble p, .tw-post-body, .fb-friend-empty, .settings-hint {
    above the Routes screen's bottom sheet everywhere; none of these has one. */
 .nav-map .leaflet-bottom, .gg-map .leaflet-bottom, .biz-livemap-map .leaflet-bottom, .wg-map .leaflet-bottom { bottom: 0 !important; }
 .nav-map .leaflet-control-attribution, .gg-map .leaflet-control-attribution, .biz-livemap-map .leaflet-control-attribution, .wg-map .leaflet-control-attribution { font-size: 9px; opacity: .75; margin: 0 !important; }
+
+/* Each map keeps its own layers to itself. Leaflet stacks its panes at z-index
+   400 and up, which put the Business live map on top of the bottom bar while
+   scrolling. isolation gives every map a stacking context of its own. */
+.nav-map, .gg-map, .biz-livemap-map, .wg-map { position: relative; z-index: 0; isolation: isolate; }
+
+/* ============================================================================
+   Waggle Send: booking and tracking (sd-), and the rider's parcel parts (gg-parcel).
+   ============================================================================ */
+.sd-head { display: flex; gap: 12px; align-items: flex-start; margin: 4px 2px 12px; }
+.sd-head h1 { margin: 0; font-size: 22px; }
+.sd-head p { margin: 4px 0 0; color: #475569; font-size: 14px; }
+.sd-head-icon { display: grid; place-items: center; flex: none; width: 48px; height: 48px; border-radius: 14px; background: #eef2ff; color: #4338ca; }
+.sd-stop .wg-h2 { display: flex; align-items: center; gap: 8px; }
+.sd-dot { width: 12px; height: 12px; border-radius: 50%; background: #0f172a; box-shadow: 0 0 0 3px #e2e8f0; }
+.sd-stop.is-to .sd-dot { background: #4f46e5; box-shadow: 0 0 0 3px #e0e7ff; }
+.sd-stop .wg-fine { margin: 0 0 6px; }
+.sd-gap { margin-top: 14px; }
+.sd-sizes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+.sd-sizes button { display: grid; gap: 2px; padding: 10px; border: 1px solid #e2e8f0; border-radius: 12px; background: #fff; font: inherit; text-align: left; cursor: pointer; }
+.sd-sizes button.is-on { border-color: #818cf8; background: #eef2ff; }
+.sd-sizes b { font-size: 13.5px; color: #0f172a; }
+.sd-sizes small { font-size: 11.5px; color: #64748b; line-height: 1.3; }
+.sd-banned { border: 1px solid #fecaca; background: #fff7f7; }
+.sd-banned .wg-h2 { display: flex; align-items: center; gap: 8px; color: #991b1b; }
+.sd-banned p { margin: 0 0 10px; font-size: 13.5px; color: #7f1d1d; line-height: 1.45; }
+.sd-feepay { display: grid; gap: 8px; margin-top: 10px; }
+.sd-hero .sd-points { margin: 4px 0 14px; padding-left: 18px; display: grid; gap: 6px; text-align: left; color: #334155; font-size: 14px; }
+.sd-mine { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.sd-mine a { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; border-radius: 12px; background: #f8fafc; color: inherit; text-decoration: none; }
+.sd-mine span { display: grid; gap: 2px; min-width: 0; }
+.sd-mine small { color: #64748b; font-size: 12px; }
+.sd-mine em { font-style: normal; font-size: 11.5px; font-weight: 800; padding: 3px 9px; border-radius: 999px; background: #eef2ff; color: #3730a3; white-space: nowrap; }
+.sd-mine em.is-delivered { background: #dcfce7; color: #166534; }
+.sd-mine em.is-cancelled { background: #f1f5f9; color: #64748b; }
+.sd-payrider { border: 2px solid #bbf7d0; background: #f0fdf4; }
+.sd-payrider .wg-link { justify-self: start; margin-top: 8px; }
+.sd-actions { display: grid; gap: 8px; margin: 4px 0 8px; }
+.sd-summary .gg-facts > div { grid-template-columns: 96px 1fr; }
+
+.gg-parcel { display: grid; gap: 8px; margin: 8px 0; }
+.gg-parcel-people { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.gg-parcel-people a { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border: 1px solid #c7d2fe; border-radius: 12px; background: #eef2ff; color: #312e81; text-decoration: none; font-weight: 700; font-size: 13.5px; }
+.gg-parcel-people span { display: grid; min-width: 0; }
+.gg-parcel-people small { font-weight: 600; font-size: 11px; color: #6366f1; }
+.gg-parcel-collect { margin: 0; padding: 8px 10px; border-radius: 10px; background: #fffbeb; color: #92400e; font-size: 13px; font-weight: 600; }
+.gg-parcel-photo { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 11px; border: 2px dashed #f59e0b; border-radius: 12px; background: #fff; color: #92400e; font: inherit; font-weight: 800; cursor: pointer; }
+.gg-parcel-photo.is-done { margin: 0; border: 0; justify-content: flex-start; padding: 6px 0; background: none; color: #166534; font-size: 13px; }
+
+/* Every map, in all three apps, keeps its layers inside itself. Leaflet stacks
+   its panes and controls at z-index 400 to 1000, so without this a map slides
+   over sticky headers and bottom bars as the page scrolls. */
+.leaflet-container { z-index: 0; isolation: isolate; }

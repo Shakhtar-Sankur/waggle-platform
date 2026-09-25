@@ -74,6 +74,21 @@ export interface Ticket {
   jobId: string | null;
 }
 
+/** A customer's parcel, for the rider carrying it: both people and what it is. */
+export interface SendDetails {
+  code: string;
+  pickupName: string;
+  pickupPhone: string;
+  dropName: string;
+  dropPhone: string;
+  kind: string;
+  size: string;
+  fragile: boolean;
+  description: string | null;
+  fare: number;
+  photoTaken: boolean;
+}
+
 export interface ShopContact {
   name: string;
   phone: string | null;
@@ -166,6 +181,24 @@ export const GigService = {
 
   async shopContact(jobId: string): Promise<ShopContact | null> {
     return rpc<ShopContact | null>("job_shop_contact", { p_job: jobId });
+  },
+
+  async sendDetails(jobId: string): Promise<SendDetails | null> {
+    const d = await rpc<any>("job_send_details", { p_job: jobId });
+    if (!d) return null;
+    return {
+      code: d.code, pickupName: d.pickup_name, pickupPhone: d.pickup_phone, dropName: d.drop_name, dropPhone: d.drop_phone,
+      kind: d.kind, size: d.size, fragile: Boolean(d.fragile), description: d.description ?? null, fare: Number(d.fare), photoTaken: Boolean(d.photo_taken),
+    };
+  },
+
+  /** The parcel photo, the rider's proof of what they took. Required before the pickup code. */
+  async uploadParcelPhoto(jobId: string, photo: Blob): Promise<void> {
+    const path = `${jobId}/${crypto.randomUUID()}.jpg`;
+    const { error } = await need().storage.from("send-photos").upload(path, photo, { contentType: "image/jpeg", upsert: false });
+    if (error) throw new Error(error.message);
+    const answer = await rpc<string>("record_parcel_photo", { p_job: jobId, p_path: path });
+    if (answer !== "ok") throw new Error(answer === "not_yours" ? "This parcel is not yours to photograph." : "The photo could not be saved.");
   },
 
   /** Where pickups have been in the last 14 days near the rider: counts in ~1 km squares. */

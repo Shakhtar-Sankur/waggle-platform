@@ -2569,6 +2569,8 @@ function mapJob(job: Record<string, unknown>): Job {
     pickupLat: job.pickup_lat == null ? undefined : Number(job.pickup_lat),
     pickupLng: job.pickup_lng == null ? undefined : Number(job.pickup_lng),
     businessId: job.business_id == null ? undefined : String(job.business_id),
+    source: (job.source as Job["source"]) ?? undefined,
+    externalRef: job.external_ref == null ? undefined : String(job.external_ref),
     note: job.note == null ? undefined : String(job.note),
     acceptedAt: job.accepted_at ? new Date(String(job.accepted_at)).getTime() : undefined,
     pickedUpAt: job.picked_up_at ? new Date(String(job.picked_up_at)).getTime() : undefined,

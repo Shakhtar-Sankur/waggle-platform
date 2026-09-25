@@ -1574,7 +1574,7 @@ export function RoutesScreen() {
             {!dayStats && (
               <button
                 className={`sv-record ${isTracking ? "stop" : ""}`}
-                onClick={isTracking ? stopTracking : startTracking}
+                onClick={() => (isTracking ? stopTracking() : void startTracking())}
               >
                 {isTracking ? <><Square size={18} fill="currentColor" /> {t("home_stopTracking")}</> : <><span className="sv-record-dot" /> {t("home_startTracking")}</>}
               </button>
